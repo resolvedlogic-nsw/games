@@ -78,7 +78,10 @@ def api_move(request, game_id):
     ok, msg = game.move_player(player_id, target_row, target_col)
     p_id = request.session.get('player_id', 0)
     state = game.get_state_dict(player_id=p_id)
+    
     state['move_ok'] = ok
+    state['message'] = msg  # <-- ADD THIS LINE to pass "TARGET_FOUND" to JS
+    
     if not ok:
         state['error'] = msg
     return JsonResponse(state)

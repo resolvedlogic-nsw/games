@@ -2,7 +2,7 @@ import json
 import random
 from collections import deque
 from django.db import models
-
+import string, random
 
 # ─── Tile connectivity ────────────────────────────────────────────────────────
 #
@@ -34,7 +34,9 @@ DIR_DELTA = {0: (-1, 0), 1: (0, 1), 2: (1, 0), 3: (0, -1)}  # row,col
 
 
 class Game(models.Model):
-    """Stores the complete mutable game state as JSON blobs."""
+    room_code = models.CharField(max_length=6, unique=True, null=True, blank=True)
+    mode = models.CharField(max_length=20, default='pass_and_play') # 'pass_and_play' or 'couch_play'
+    status = models.CharField(max_length=20, default='waiting') # 'waiting' or 'playing'
 
     tiles_json     = models.TextField(default='[]')
     spare_json     = models.TextField(default='{}')
@@ -45,6 +47,13 @@ class Game(models.Model):
     created_at     = models.DateTimeField(auto_now_add=True)
     updated_at     = models.DateTimeField(auto_now=True)
 
+    @classmethod
+    def generate_room_code(cls):
+        """Generates a random 4-letter uppercase code"""
+        while True:
+            code = ''.join(random.choices(string.ascii_uppercase, k=4))
+            if not cls.objects.filter(room_code=code).exists():
+                return code
     # ── JSON helpers ──────────────────────────────────────────────────────────
 
     @property
@@ -84,8 +93,10 @@ class Game(models.Model):
     @classmethod
     def new_game(cls, num_players=2):
         game = cls(num_players=num_players)
-        game._initialise_board()
-        game._initialise_players(num_players)
+        # Capture the deck returned by the board builder
+        deck = game._initialise_board()
+        # Deal the deck to the players
+        game._initialise_players(num_players, deck)
         game.save()
         return game
 
@@ -155,19 +166,30 @@ class Game(models.Model):
 
         self.tiles = grid
         self.spare = spare_tile
+        return char_ids        
 
     def _initialise_players(self, num_players):
         corners = [(0, 0), (0, 6), (6, 6), (6, 0)]
         colors  = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12']
         names   = ['Red', 'Blue', 'Green', 'Yellow']
+        random.shuffle(deck)
+        cards_per_player = len(deck) // num_players
         players = []
         for i in range(min(num_players, 4)):
+            
+            player_deck = deck[i * cards_per_player : (i + 1) * cards_per_player]
+            
+            first_target = player_deck.pop(0) if player_deck else None
+            
             players.append({
                 'id': i,
                 'name': names[i],
                 'color': colors[i],
                 'row': corners[i][0],
                 'col': corners[i][1],
+                'deck': player_deck,
+                'current_target': first_target,
+                'score': 0
             })
         self.players = players
 
@@ -274,13 +296,30 @@ class Game(models.Model):
         if (target_row, target_col) not in reachable:
             return False, "Cell not reachable"
 
+        # Update position
         p['row'] = target_row
         p['col'] = target_col
+        
+        # --- NEW HUNTING LOGIC ---
+        target_hit = False
+        landed_tile = self.tiles[target_row][target_col]
+        
+        # If the tile has a character, and it matches the player's current target...
+        if landed_tile.get('character') and landed_tile['character'] == p['current_target']:
+            p['score'] += 1
+            # Flip the next card (or set to None if they found them all)
+            p['current_target'] = p['deck'].pop(0) if p['deck'] else None
+            target_hit = True
+        # -------------------------
+
         self.players = players
         self.current_turn = (self.current_turn + 1) % self.num_players
         self.last_push = None
         self.save()
-        return True, "Moved"
+        
+        # Pass a special message if they found the treasure
+        msg = "TARGET_FOUND" if target_hit else "Moved"
+        return True, msg
 
     def rotate_spare(self):
         spare = self.spare
