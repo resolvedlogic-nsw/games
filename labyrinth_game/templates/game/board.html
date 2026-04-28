@@ -717,22 +717,102 @@ async function rotateSpareTile() {
 
 async function pushTile(direction, index) {
   if (phase !== 'push') { toast('Push phase only!', true); return; }
-  const st = await post(`/${GAME_ID}/push/`, { direction, index });
-  if (!st.push_ok) { toast(st.error || 'Cannot reverse the previous push', true); return; }
+  
+  // 1. Lock the UI during animation
+  phase = 'animating';
+
+  const grid = document.getElementById('grid');
+  const tiles = Array.from(grid.querySelectorAll('.tile'));
+  
+  // Find all tiles in the row/col being pushed
+  const movingTiles = tiles.filter(t => parseInt(t.dataset[direction === 'left' || direction === 'right' ? 'row' : 'col']) === index);
+
+  // Sort them so index 0 is top/left and 6 is bottom/right
+  movingTiles.sort((a, b) => {
+    const key = direction === 'left' || direction === 'right' ? 'col' : 'row';
+    return parseInt(a.dataset[key]) - parseInt(b.dataset[key]);
+  });
+
+  // Calculate dynamic pixel sizes (handles responsive mobile resizing)
+  const rootStyles = getComputedStyle(document.documentElement);
+  const cellPx = parseInt(rootStyles.getPropertyValue('--cell')) || 72;
+  const gapPx = parseInt(rootStyles.getPropertyValue('--gap')) || 3;
+  const step = cellPx + gapPx;
+
+  let moveX = 0, moveY = 0;
+  let startLeft = 0, startTop = 0;
+  let ejectedTile;
+
+  // Setup animation vectors based on direction
+  if (direction === 'left') { moveX = step; startLeft = -step; startTop = index * step; ejectedTile = movingTiles[6]; }
+  if (direction === 'right') { moveX = -step; startLeft = 7 * step; startTop = index * step; ejectedTile = movingTiles[0]; }
+  if (direction === 'top') { moveY = step; startTop = -step; startLeft = index * step; ejectedTile = movingTiles[6]; }
+  if (direction === 'bottom') { moveY = -step; startTop = 7 * step; startLeft = index * step; ejectedTile = movingTiles[0]; }
+
+  // 2. Clone the spare tile and position it just outside the grid
+  const spareContainer = document.getElementById('spare-tile');
+  const incoming = spareContainer.querySelector('.tile').cloneNode(true);
+  incoming.style.position = 'absolute';
+  incoming.style.left = startLeft + 'px';
+  incoming.style.top = startTop + 'px';
+  incoming.style.transition = 'transform 0.4s ease-in-out';
+  incoming.style.zIndex = '100';
+  grid.appendChild(incoming);
+
+  // 3. Prep the moving tiles
+  movingTiles.forEach(t => {
+    t.style.transition = 'transform 0.4s ease-in-out';
+  });
+
+  // 4. Calculate coordinates to make the ejected tile "fly" to the spare box
+  const spareRect = spareContainer.getBoundingClientRect();
+  const ejectRect = ejectedTile.getBoundingClientRect();
+  const targetX = spareRect.left - ejectRect.left;
+  const targetY = spareRect.top - ejectRect.top;
+  ejectedTile.style.zIndex = '101';
+
+  // Force DOM to acknowledge new elements before animating
+  void incoming.offsetWidth;
+
+  // 5. Fire the sliding animations!
+  const transformStr = `translate(${moveX}px, ${moveY}px)`;
+  incoming.style.transform = transformStr;
+  
+  movingTiles.forEach(t => {
+    if (t !== ejectedTile) {
+      t.style.transform = transformStr; // Slide row/col
+    }
+  });
+
+  // Shrink, spin, and fly the ejected tile to the box
+  ejectedTile.style.transform = `translate(${targetX}px, ${targetY}px) scale(0.6) rotate(180deg)`;
+  ejectedTile.style.opacity = '0.2';
+  spareContainer.style.opacity = '0.3'; 
+
+  // 6. Wait for the CSS animation to finish AND the server to respond
+  const [st] = await Promise.all([
+    post(`/${GAME_ID}/push/`, { direction, index }),
+    new Promise(r => setTimeout(r, 450))
+  ]);
+
+  spareContainer.style.opacity = '1';
+
+  if (!st.push_ok) {
+    toast(st.error || 'Cannot reverse the previous push', true);
+    phase = 'push';
+    render(state);
+    return;
+  }
+
+  // 7. Update to the new state and snap the grid back into standard HTML
   state = st;
   phase = 'move';
 
-  // Compute reachable for current player
-  const cp = state.current_player;
-  if (cp.id === MY_ID) {
-    const freshSt = await (await fetch(`/${GAME_ID}/state/`)).json();
-    freshSt.reachable = freshSt.reachable || [];
-    // re-fetch with player_id context
+  if (state.current_player.id === MY_ID) {
+    const freshSt = await (await fetch(`/${GAME_ID}/state/?pid=${MY_ID}`)).json();
+    state = freshSt;
   }
-  // Reload state with reachable info
-  const stateWithReachable = await (await fetch(`/${GAME_ID}/state/?pid=${MY_ID}`)).json();
-  // Server always computes reachable for current player session
-  state = stateWithReachable;
+
   render(state);
   toast('Now move your token — click a green tile');
 }
