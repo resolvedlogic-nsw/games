@@ -168,7 +168,7 @@ class Game(models.Model):
         self.spare = spare_tile
         return char_ids        
 
-    def _initialise_players(self, num_players):
+    def _initialise_players(self, num_players, deck):
         corners = [(0, 0), (0, 6), (6, 6), (6, 0)]
         colors  = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12']
         names   = ['Red', 'Blue', 'Green', 'Yellow']
