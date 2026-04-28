@@ -109,7 +109,6 @@ class Game(models.Model):
         }
 
     def _initialise_board(self):
-        # This matches your specific Row layout perfectly
         fixed_layout = {
             (0, 0): ('l', 1),   # RB
             (0, 2): ('t', 1),   # RBL
@@ -129,44 +128,49 @@ class Game(models.Model):
             (6, 6): ('l', 3),   # TL
         }
 
+        # 1. Prepare exactly 24 unique characters
         all_chars = list(range(1, 38))
         random.shuffle(all_chars)
         char_ids = all_chars[:24]
         char_iter = iter(char_ids)
 
+        # 2. Build the movable pool (34 tiles total)
         movable_pool = []
-        for _ in range(12):
-            movable_pool.append(self._make_tile('i', 0))
-        for _ in range(10):
-            movable_pool.append(self._make_tile('l', 0))
-        for _ in range(6):
-            movable_pool.append(self._make_tile('l', 0, character=next(char_iter)))
-        for _ in range(6):
-            movable_pool.append(self._make_tile('t', 0, character=next(char_iter)))
+        for _ in range(12): movable_pool.append(self._make_tile('i', 0))
+        for _ in range(10): movable_pool.append(self._make_tile('l', 0))
+        for _ in range(6):  movable_pool.append(self._make_tile('l', 0, character=next(char_iter)))
+        for _ in range(6):  movable_pool.append(self._make_tile('t', 0, character=next(char_iter)))
 
         for t in movable_pool:
             t['rotation'] = random.randint(0, 3)
 
         random.shuffle(movable_pool)
 
+        # Extract the spare
         spare_tile = movable_pool.pop()
         spare_tile['rotation'] = random.randint(0, 3)
 
         movable_iter = iter(movable_pool)
+
+        # 3. Build the Grid
         grid = []
         for row in range(7):
             grid_row = []
             for col in range(7):
                 if row % 2 == 0 and col % 2 == 0:
                     shape, rot = fixed_layout[(row, col)]
-                    grid_row.append(self._make_tile(shape, rot, fixed=True))
+                    # Assign a character ONLY if it is a T-junction
+                    char = next(char_iter) if shape == 't' else None
+                    grid_row.append(self._make_tile(shape, rot, character=char, fixed=True))
                 else:
                     grid_row.append(next(movable_iter))
             grid.append(grid_row)
 
         self.tiles = grid
         self.spare = spare_tile
-        return char_ids        
+        
+        # Return the exact 24 IDs so _initialise_players can deal them out
+        return char_ids   
 
     def _initialise_players(self, num_players, deck):
         corners = [(0, 0), (0, 6), (6, 6), (6, 0)]
