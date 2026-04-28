@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Labyrinth – Game {{ game.id }}</title>
+{% load static %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   LABYRINTH – board.html stylesheet
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --gold:       #c9a84c;
+  --gold-dim:   rgba(201,168,76,0.35);
+  --dark:       #0a0806;
+  --dark2:      #120e05;
+  --cell:       72px;   /* tile size on board */
+  --gap:        3px;
+  --board-w:    calc(7 * var(--cell) + 6 * var(--gap));
+  --reachable:  rgba(100,220,100,0.25);
+  --reach-bdr:  #64dc64;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--dark);
+  color: #d4c09a;
+  font-family: 'Crimson Pro', Georgia, serif;
+  overflow-x: hidden;
+}
+
+body {
+  background-image:
+    radial-gradient(ellipse at 15% 15%, #241505 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 85%, #160e02 0%, transparent 45%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Top bar ──────────────────────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--gold-dim);
+  background: linear-gradient(to bottom, rgba(20,14,3,0.95), rgba(10,8,6,0.95));
+  backdrop-filter: blur(4px);
+  position: sticky; top: 0; z-index: 100;
+}
+
+.topbar-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 1.1rem;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+}
+
+.turn-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+}
+
+.player-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.3);
+  display: inline-block;
+}
+
+.phase-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.7;
+}
+
+.home-link {
+  font-size: 0.8rem;
+  color: var(--gold-dim);
+  text-decoration: none;
+  letter-spacing: 0.1em;
+  transition: color 0.2s;
+}
+.home-link:hover { color: var(--gold); }
+
+/* ── Layout ───────────────────────────────────────────────── */
+.game-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 200px 1fr 200px;
+  grid-template-rows: 1fr;
+  gap: 0;
+  padding: 20px;
+  align-items: start;
+  justify-items: center;
+}
+
+/* ── Side panels ──────────────────────────────────────────── */
+.side-panel {
+  padding: 16px;
+  width: 100%;
+}
+
+.panel-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: var(--gold);
+  opacity: 0.6;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--gold-dim);
+  padding-bottom: 6px;
+}
+
+/* ── Spare tile panel ─────────────────────────────────────── */
+.spare-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.spare-tile-container {
+  position: relative;
+  width: 80px; height: 80px;
+}
+
+.rotate-btn {
+  background: linear-gradient(135deg, #4a3410, #8b6914);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold);
+  padding: 8px 20px;
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+.rotate-btn:hover {
+  background: linear-gradient(135deg, #8b6914, #c9a84c);
+  color: var(--dark);
+  box-shadow: 0 0 16px rgba(201,168,76,0.3);
+}
+
+/* ── Players list ─────────────────────────────────────────── */
+.player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.player-card {
+  padding: 10px 12px;
+  border: 1px solid rgba(201,168,76,0.15);
+  background: rgba(20,14,4,0.6);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s;
+}
+.player-card.active-player {
+  border-color: var(--gold);
+  background: rgba(201,168,76,0.08);
+  box-shadow: 0 0 16px rgba(201,168,76,0.15);
+}
+
+.player-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.2);
+  flex-shrink: 0;
+}
+
+.player-info { flex: 1; min-width: 0; }
+.player-name {
+  font-size: 0.85rem;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.player-pos {
+  font-size: 0.7rem;
+  opacity: 0.5;
+  letter-spacing: 0.05em;
+}
+
+/* ── Board area ───────────────────────────────────────────── */
+.board-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+/* ── Push arrows ──────────────────────────────────────────── */
+.push-row {
+  display: grid;
+  grid-template-columns: var(--cell) repeat(7, var(--cell) var(--gap)) var(--cell);
+  /* simplify: just use flex for arrow rows */
+  display: flex;
+  gap: var(--gap);
+  width: calc(var(--board-w) + 2 * var(--cell) + 2 * var(--gap));
+}
+
+.push-arrow {
+  width: var(--cell);
+  height: var(--cell);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--gold);
+  opacity: 0.4;
+  transition: all 0.2s;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+.push-arrow:hover:not(:disabled) {
+  opacity: 1;
+  text-shadow: 0 0 12px var(--gold);
+  transform: scale(1.1);
+}
+.push-arrow:disabled { opacity: 0.1; cursor: default; }
+.push-arrow.spacer { pointer-events: none; opacity: 0; }
+
+/* ── Board with side arrows ───────────────────────────────── */
+.board-with-sides {
+  display: flex;
+  gap: var(--gap);
+  align-items: flex-start;
+}
+
+.side-arrows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+/* ── Grid ─────────────────────────────────────────────────── */
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(7, var(--cell));
+  grid-template-rows: repeat(7, var(--cell));
+  gap: var(--gap);
+  background: #050302;
+  border: 1px solid rgba(201,168,76,0.2);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.8),
+    0 20px 60px rgba(0,0,0,0.9),
+    inset 0 0 40px rgba(0,0,0,0.5);
+  position: relative;
+}
+
+/* ── Tile ─────────────────────────────────────────────────── */
+.tile {
+  width: var(--cell);
+  height: var(--cell);
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+  transition: box-shadow 0.15s, transform 0.15s;
+  background: #1a1206;
+}
+
+.tile img.tile-base {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  /* rotation applied via transform on wrapper */
+}
+
+.tile img.tile-char {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  /* counter-rotate the character so it stays upright */
+}
+
+.tile-inner {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.tile.reachable {
+  cursor: pointer;
+  box-shadow: inset 0 0 0 2px var(--reach-bdr), 0 0 12px rgba(100,220,100,0.3);
+}
+.tile.reachable::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--reachable);
+  pointer-events: none;
+  animation: pulse-green 1.2s ease-in-out infinite;
+}
+@keyframes pulse-green {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.9; }
+}
+
+.tile.player-here::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.04);
+  z-index: 5;
+}
+
+/* ── Player tokens on tiles ───────────────────────────────── */
+.token-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px;
+}
+
+.token {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.7);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.7);
+  flex-shrink: 0;
+}
+
+/* ── Spare tile ───────────────────────────────────────────── */
+.spare-tile {
+  width: 80px; height: 80px;
+}
+
+/* ── Phase indicator ──────────────────────────────────────── */
+.phase-indicator {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.phase-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  opacity: 0.4;
+  transition: opacity 0.3s;
+  letter-spacing: 0.05em;
+}
+.phase-step.active { opacity: 1; color: var(--gold); }
+.phase-step.done   { opacity: 0.6; text-decoration: line-through; }
+
+.phase-num {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  flex-shrink: 0;
+}
+
+/* ── Toast notifications ──────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: rgba(20,14,4,0.95);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold);
+  padding: 10px 24px;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 999;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+#toast.error { border-color: #dc6464; color: #dc6464; }
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 900px) {
+  :root { --cell: 52px; }
+  .game-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    padding: 10px;
+  }
+  .side-panel { padding: 8px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Top bar ──────────────────────────────────────────────────── -->
+<div class="topbar">
+  <a href="{% url 'game:index' %}" class="home-link">← New Game</a>
+  <div class="topbar-title">Labyrinth</div>
+  <div class="turn-badge">
+    <span id="tb-name" class="player-name"></span>
+    <span id="tb-dot" class="player-dot"></span>
+    <span id="tb-phase" class="phase-label"></span>
+  </div>
+</div>
+
+<!-- ── Main layout ──────────────────────────────────────────────── -->
+<div class="game-layout">
+
+  <!-- Left panel: spare tile + rotate -->
+  <div class="side-panel">
+    <div class="panel-title">Spare Tile</div>
+    <div class="spare-wrapper">
+      <div class="spare-tile-container" id="spare-tile"></div>
+      <button class="rotate-btn" onclick="rotateSpareTile()">↻ Rotate</button>
+    </div>
+
+    <div style="margin-top: 24px;">
+      <div class="panel-title">Phase</div>
+      <div class="phase-indicator">
+        <div class="phase-step" id="ph-push">
+          <div class="phase-num">1</div>
+          <span>Push a tile</span>
+        </div>
+        <div class="phase-step" id="ph-move">
+          <div class="phase-num">2</div>
+          <span>Move token</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Centre: board -->
+  <div class="board-area" id="board-area">
+    <!-- Rendered by JS -->
+  </div>
+
+  <!-- Right panel: players -->
+  <div class="side-panel">
+    <div class="panel-title">Adventurers</div>
+    <div class="player-list" id="player-list"></div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ════════════════════════════════════════════════════════════════ -->
+<script>
+const GAME_ID   = {{ game.id }};
+const MY_ID     = {{ player_id }};
+const IMG_BASE  = "{% static 'images/' %}";
+
+// Phase: 'push' or 'move'
+let phase = 'push';
+let state = {{ state_json|safe }};
+
+// ── Tile image helpers ────────────────────────────────────────────
+
+function shapeImg(shape) {
+  const map = { 'i': 'shapei.png', 'l': 'shapel.png', 't': 'shapet.png' };
+  return IMG_BASE + map[shape];
+}
+
+function charImg(id) {
+  const n = String(id).padStart(2, '0');
+  return IMG_BASE + `character${n}.png`;
+}
+
+function rotDeg(r) { return r * 90; }
+
+// ── Build the board HTML ──────────────────────────────────────────
+
+function buildBoard(st) {
+  const area = document.getElementById('board-area');
+
+  const reachSet = new Set((st.reachable || []).map(([r,c]) => `${r},${c}`));
+  const playerMap = {};  // "row,col" → [players]
+  for (const p of st.players) {
+    const key = `${p.row},${p.col}`;
+    if (!playerMap[key]) playerMap[key] = [];
+    playerMap[key].push(p);
+  }
+
+  const lp = st.last_push;
+
+  // Build push-arrow disabling logic
+  function arrowDisabled(dir, idx) {
+    if (phase !== 'push') return true;
+    // Disabled if it would reverse last push
+    const rev = { left:'right', right:'left', top:'bottom', bottom:'top' };
+    if (lp && rev[dir] === lp.direction && idx === lp.index) return true;
+    return false;
+  }
+
+  // Movable row/col indices (1,3,5)
+  const movable = [1, 3, 5];
+
+  // ── Top push row ──────────────────────────────────────────────
+  let topRowHTML = '<div class="push-row">';
+  topRowHTML += '<button class="push-arrow spacer" disabled></button>';
+  for (let c = 0; c < 7; c++) {
+    if (movable.includes(c)) {
+      const dis = arrowDisabled('top', c) ? 'disabled' : '';
+      topRowHTML += `<button class="push-arrow" ${dis} title="Push column ${c} down" onclick="pushTile('top',${c})">▼</button>`;
+    } else {
+      topRowHTML += '<button class="push-arrow spacer" disabled></button>';
+    }
+  }
+  topRowHTML += '<button class="push-arrow spacer" disabled></button>';
+  topRowHTML += '</div>';
+
+  // ── Grid with side arrows ─────────────────────────────────────
+  let gridHTML = '<div class="board-with-sides">';
+
+  // Left arrows
+  gridHTML += '<div class="side-arrows">';
+  for (let r = 0; r < 7; r++) {
+    if (movable.includes(r)) {
+      const dis = arrowDisabled('left', r) ? 'disabled' : '';
+      gridHTML += `<button class="push-arrow" style="height:var(--cell)" ${dis} title="Push row ${r} right" onclick="pushTile('left',${r})">▶</button>`;
+    } else {
+      gridHTML += `<button class="push-arrow spacer" style="height:var(--cell)" disabled></button>`;
+    }
+  }
+  gridHTML += '</div>';
+
+  // Grid cells
+  gridHTML += '<div class="board-grid" id="grid">';
+  for (let r = 0; r < 7; r++) {
+    for (let c = 0; c < 7; c++) {
+      const tile = st.tiles[r][c];
+      const key  = `${r},${c}`;
+      const isReachable = reachSet.has(key);
+      const playersHere = playerMap[key] || [];
+
+      let cls = 'tile';
+      if (isReachable) cls += ' reachable';
+      if (playersHere.length) cls += ' player-here';
+
+      let clickAttr = '';
+      if (isReachable && phase === 'move') {
+        clickAttr = `onclick="moveTo(${r},${c})"`;
+      }
+
+      // Character counter-rotation: base rotates, char must counter-rotate to stay upright
+      const cDeg = -rotDeg(tile.rotation);
+
+      gridHTML += `<div class="${cls}" data-row="${r}" data-col="${c}" ${clickAttr}>`;
+      gridHTML += `  <div class="tile-inner" style="transform:rotate(${rotDeg(tile.rotation)}deg)">`;
+      gridHTML += `    <img class="tile-base" src="${shapeImg(tile.shape)}" alt="">`;
+      if (tile.character) {
+        gridHTML += `    <img class="tile-char" src="${charImg(tile.character)}" style="transform:rotate(${cDeg}deg)" alt="">`;
+      }
+      gridHTML += `  </div>`;
+
+      // Player tokens
+      if (playersHere.length) {
+        gridHTML += '<div class="token-layer">';
+        for (const p of playersHere) {
+          gridHTML += `<div class="token" style="background:${p.color}" title="${p.name}"></div>`;
+        }
+        gridHTML += '</div>';
+      }
+
+      gridHTML += '</div>';
+    }
+  }
+  gridHTML += '</div>';
+
+  // Right arrows
+  gridHTML += '<div class="side-arrows">';
+  for (let r = 0; r < 7; r++) {
+    if (movable.includes(r)) {
+      const dis = arrowDisabled('right', r) ? 'disabled' : '';
+      gridHTML += `<button class="push-arrow" style="height:var(--cell)" ${dis} title="Push row ${r} left" onclick="pushTile('right',${r})">◀</button>`;
+    } else {
+      gridHTML += `<button class="push-arrow spacer" style="height:var(--cell)" disabled></button>`;
+    }
+  }
+  gridHTML += '</div>';
+
+  gridHTML += '</div>';  // board-with-sides
+
+  // ── Bottom push row ───────────────────────────────────────────
+  let botRowHTML = '<div class="push-row">';
+  botRowHTML += '<button class="push-arrow spacer" disabled></button>';
+  for (let c = 0; c < 7; c++) {
+    if (movable.includes(c)) {
+      const dis = arrowDisabled('bottom', c) ? 'disabled' : '';
+      botRowHTML += `<button class="push-arrow" ${dis} title="Push column ${c} up" onclick="pushTile('bottom',${c})">▲</button>`;
+    } else {
+      botRowHTML += '<button class="push-arrow spacer" disabled></button>';
+    }
+  }
+  botRowHTML += '<button class="push-arrow spacer" disabled></button>';
+  botRowHTML += '</div>';
+
+  area.innerHTML = topRowHTML + gridHTML + botRowHTML;
+}
+
+function buildSpare(st) {
+  const container = document.getElementById('spare-tile');
+  const tile = st.spare;
+  const cDeg = -rotDeg(tile.rotation);
+  let html = `<div class="tile spare-tile">`;
+  html += `  <div class="tile-inner" style="transform:rotate(${rotDeg(tile.rotation)}deg)">`;
+  html += `    <img class="tile-base" src="${shapeImg(tile.shape)}" alt="" style="width:100%;height:100%;object-fit:cover">`;
+  if (tile.character) {
+    html += `    <img class="tile-char" src="${charImg(tile.character)}" style="transform:rotate(${cDeg}deg);width:100%;height:100%;object-fit:cover" alt="">`;
+  }
+  html += `  </div>`;
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+function buildPlayers(st) {
+  const list = document.getElementById('player-list');
+  list.innerHTML = '';
+  for (const p of st.players) {
+    const isActive = p.id === st.current_player.id;
+    const card = document.createElement('div');
+    card.className = 'player-card' + (isActive ? ' active-player' : '');
+    card.innerHTML = `
+      <div class="player-avatar" style="background:${p.color}"></div>
+      <div class="player-info">
+        <div class="player-name">${p.name}</div>
+        <div class="player-pos">Row ${p.row}, Col ${p.col}</div>
+      </div>
+    `;
+    list.appendChild(card);
+  }
+}
+
+function buildTopBar(st) {
+  const cp = st.current_player;
+  document.getElementById('tb-name').textContent = cp.name;
+  document.getElementById('tb-dot').style.background = cp.color;
+  document.getElementById('tb-phase').textContent = phase === 'push' ? 'Push Phase' : 'Move Phase';
+}
+
+function buildPhaseIndicator() {
+  const ph1 = document.getElementById('ph-push');
+  const ph2 = document.getElementById('ph-move');
+  if (phase === 'push') {
+    ph1.className = 'phase-step active';
+    ph2.className = 'phase-step';
+  } else {
+    ph1.className = 'phase-step done';
+    ph2.className = 'phase-step active';
+  }
+}
+
+function render(st) {
+  buildBoard(st);
+  buildSpare(st);
+  buildPlayers(st);
+  buildTopBar(st);
+  buildPhaseIndicator();
+}
+
+// ── Toast ─────────────────────────────────────────────────────────
+
+let toastTimer = null;
+function toast(msg, isError=false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show' + (isError ? ' error' : '');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 2500);
+}
+
+// ── API helpers ───────────────────────────────────────────────────
+
+async function post(url, body) {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return r.json();
+}
+
+// ── Actions ───────────────────────────────────────────────────────
+
+async function rotateSpareTile() {
+  if (phase !== 'push') { toast('You can only rotate during the push phase', true); return; }
+  const st = await post(`/${GAME_ID}/rotate-spare/`, {});
+  state = st;
+  render(state);
+}
+
+async function pushTile(direction, index) {
+  if (phase !== 'push') { toast('Push phase only!', true); return; }
+  const st = await post(`/${GAME_ID}/push/`, { direction, index });
+  if (!st.push_ok) { toast(st.error || 'Cannot reverse the previous push', true); return; }
+  state = st;
+  phase = 'move';
+
+  // Compute reachable for current player
+  const cp = state.current_player;
+  if (cp.id === MY_ID) {
+    const freshSt = await (await fetch(`/${GAME_ID}/state/`)).json();
+    freshSt.reachable = freshSt.reachable || [];
+    // re-fetch with player_id context
+  }
+  // Reload state with reachable info
+  const stateWithReachable = await (await fetch(`/${GAME_ID}/state/?pid=${MY_ID}`)).json();
+  // Server always computes reachable for current player session
+  state = stateWithReachable;
+  render(state);
+  toast('Now move your token — click a green tile');
+}
+
+async function moveTo(row, col) {
+  if (phase !== 'move') { toast('Move phase only!', true); return; }
+  const st = await post(`/${GAME_ID}/move/`, { player_id: MY_ID, row, col });
+  if (!st.move_ok) { toast(st.error || 'Cannot move there', true); return; }
+  state = st;
+  phase = 'push';
+  render(state);
+  toast(`${state.current_player.name}'s turn`);
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+render(state);
+</script>
+</body>
+</html>

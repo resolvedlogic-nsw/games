@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Labyrinth</title>
+{% load static %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --dark: #0a0806;
+    --dark2: #1a1208;
+    --parchment: #f5e6c8;
+    --ink: #1c1004;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    background: var(--dark);
+    background-image:
+      radial-gradient(ellipse at 20% 20%, #2a1a05 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, #1a0d02 0%, transparent 50%),
+      repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(201,168,76,0.03) 40px, rgba(201,168,76,0.03) 41px),
+      repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(201,168,76,0.03) 40px, rgba(201,168,76,0.03) 41px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Crimson Pro', Georgia, serif;
+    overflow: hidden;
+  }
+
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.15;
+    pointer-events: none;
+    animation: drift 20s ease-in-out infinite alternate;
+  }
+  .orb-1 { width: 400px; height: 400px; background: #8b4513; top: -100px; left: -100px; animation-delay: 0s; }
+  .orb-2 { width: 300px; height: 300px; background: #c9a84c; bottom: -80px; right: -80px; animation-delay: -10s; }
+  @keyframes drift { from { transform: translate(0,0); } to { transform: translate(30px, 20px); } }
+
+  .card {
+    position: relative;
+    background: linear-gradient(145deg, #1e1507, #0f0b04);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 4px;
+    padding: 60px 70px;
+    text-align: center;
+    max-width: 480px;
+    width: 90%;
+    box-shadow:
+      0 0 0 1px rgba(201,168,76,0.08),
+      0 40px 80px rgba(0,0,0,0.8),
+      inset 0 1px 0 rgba(201,168,76,0.15);
+  }
+
+  .card::before, .card::after {
+    content: '';
+    position: absolute;
+    width: 40px; height: 40px;
+    border-color: var(--gold);
+    border-style: solid;
+    opacity: 0.5;
+  }
+  .card::before { top: 12px; left: 12px; border-width: 1px 0 0 1px; }
+  .card::after  { bottom: 12px; right: 12px; border-width: 0 1px 1px 0; }
+
+  .title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 900;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+    text-shadow:
+      0 0 40px rgba(201,168,76,0.4),
+      0 2px 4px rgba(0,0,0,0.8);
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    color: rgba(201,168,76,0.5);
+    font-style: italic;
+    font-size: 1.1rem;
+    letter-spacing: 0.15em;
+    margin-bottom: 50px;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(201,168,76,0.4), transparent);
+  }
+  .divider-gem {
+    width: 6px; height: 6px;
+    background: var(--gold);
+    transform: rotate(45deg);
+    opacity: 0.6;
+  }
+
+  label {
+    display: block;
+    color: rgba(201,168,76,0.7);
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .player-select {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 40px;
+  }
+
+  .player-btn {
+    width: 56px; height: 56px;
+    background: transparent;
+    border: 1px solid rgba(201,168,76,0.3);
+    color: rgba(201,168,76,0.6);
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .player-btn:hover, .player-btn.active {
+    background: rgba(201,168,76,0.12);
+    border-color: var(--gold);
+    color: var(--gold);
+    box-shadow: 0 0 20px rgba(201,168,76,0.2);
+  }
+
+  .start-btn {
+    width: 100%;
+    padding: 16px 32px;
+    background: linear-gradient(135deg, #8b6914, #c9a84c, #8b6914);
+    background-size: 200% 100%;
+    border: none;
+    color: var(--dark);
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .start-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.1), transparent);
+  }
+  .start-btn:hover {
+    background-position: 100% 0;
+    box-shadow: 0 0 30px rgba(201,168,76,0.4), 0 4px 20px rgba(0,0,0,0.4);
+    transform: translateY(-1px);
+  }
+
+  form { margin: 0; }
+</style>
+</head>
+<body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="card">
+  <h1 class="title">Labyrinth</h1>
+  <p class="subtitle">The Board Game</p>
+  <div class="divider"><div class="divider-gem"></div></div>
+
+  <form method="POST" action="{% url 'game:new_game' %}">
+    {% csrf_token %}
+    <label>Number of Adventurers</label>
+    <div class="player-select">
+      <button type="button" class="player-btn active" data-n="2" onclick="selectPlayers(this)">2</button>
+      <button type="button" class="player-btn" data-n="3" onclick="selectPlayers(this)">3</button>
+      <button type="button" class="player-btn" data-n="4" onclick="selectPlayers(this)">4</button>
+    </div>
+    <input type="hidden" name="num_players" id="num_players" value="2">
+    <button type="submit" class="start-btn">Enter the Labyrinth</button>
+  </form>
+</div>
+
+<script>
+function selectPlayers(el) {
+  document.querySelectorAll('.player-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('num_players').value = el.dataset.n;
+}
+</script>
+</body>
+</html>
