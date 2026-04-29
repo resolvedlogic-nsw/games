@@ -19,7 +19,7 @@ import string, random
 BASE_EXITS = {
     'i': {0, 2},          # N, S
     'l': {0, 1},          # N, E
-    't': {0, 1, 3},       # N, E, W
+    't': {0, 1, 2},       # N, E, S (Top, Right, Bottom - matches your image perfectly)
 }
 
 def rotate_exits(exits, rotation):
@@ -110,22 +110,29 @@ class Game(models.Model):
 
     def _initialise_board(self):
         fixed_layout = {
-            (0, 0): ('l', 1),   # RB
-            (0, 2): ('t', 1),   # RBL
-            (0, 4): ('t', 1),   # RBL
-            (0, 6): ('l', 2),   # BL
-            (2, 0): ('t', 0),   # TRB
-            (2, 2): ('t', 0),   # TRB
-            (2, 4): ('t', 1),   # RBL
-            (2, 6): ('t', 2),   # TBL
-            (4, 0): ('t', 0),   # TRB
-            (4, 2): ('t', 3),   # TRL
-            (4, 4): ('t', 2),   # TBL
-            (4, 6): ('t', 2),   # TBL
-            (6, 0): ('l', 0),   # TR
-            (6, 2): ('t', 3),   # TRL
-            (6, 4): ('t', 3),   # TRL
-            (6, 6): ('l', 3),   # TL
+            # ROW 1 (Index 0)
+            (0, 0): ('l', 1),   # RB  (Right, Bottom)
+            (0, 2): ('t', 1),   # RBL (Points Down)
+            (0, 4): ('t', 1),   # RBL (Points Down)
+            (0, 6): ('l', 2),   # BL  (Bottom, Left)
+            
+            # ROW 3 (Index 2)
+            (2, 0): ('t', 0),   # TRB (Points Right)
+            (2, 2): ('t', 0),   # TRB (Points Right)
+            (2, 4): ('t', 1),   # RBL (Points Down)
+            (2, 6): ('t', 2),   # TBL (Points Left)
+            
+            # ROW 5 (Index 4)
+            (4, 0): ('t', 0),   # TRB (Points Right)
+            (4, 2): ('t', 3),   # TRL (Points Up)
+            (4, 4): ('t', 2),   # TBL (Points Left)
+            (4, 6): ('t', 2),   # TBL (Points Left)
+            
+            # ROW 7 (Index 6)
+            (6, 0): ('l', 0),   # TR  (Top, Right)
+            (6, 2): ('t', 3),   # TRL (Points Up)
+            (6, 4): ('t', 3),   # TRL (Points Up)
+            (6, 6): ('l', 3),   # TL  (Top, Left)
         }
 
         # 1. Prepare exactly 24 unique characters
