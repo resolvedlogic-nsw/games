@@ -335,14 +335,15 @@ class Game(models.Model):
         players = self.players
         current_player = players[self.current_turn]
 
-        reachable = []
-        if player_id is not None and player_id == current_player['id']:
-            reachable = [list(x) for x in self.reachable_cells(
-                current_player['row'], current_player['col']
-            )]
+        # FIX: Always calculate reachable cells for the current player's turn!
+        reachable = [list(x) for x in self.reachable_cells(
+            current_player['row'], current_player['col']
+        )]
 
         return {
             'game_id': self.pk,
+            'room_code': self.room_code,
+            'mode': self.mode,
             'tiles': self.tiles,
             'spare': self.spare,
             'players': players,

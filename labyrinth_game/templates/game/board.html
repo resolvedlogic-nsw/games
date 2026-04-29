@@ -876,10 +876,7 @@ async function pushTile(direction, index) {
   state = st;
   phase = 'move';
 
-  if (state.current_player.id === MY_ID) {
-    const freshSt = await (await fetch(`/${GAME_ID}/state/?pid=${MY_ID}`)).json();
-    state = freshSt;
-  }
+ 
 
   render(state);
   toast('Now move your token — click a green tile');
