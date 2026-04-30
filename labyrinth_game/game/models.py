@@ -298,6 +298,9 @@ class Game(models.Model):
     # ── Move player ───────────────────────────────────────────────────────────
 
     def move_player(self, player_id, target_row, target_col):
+        # OVERRIDE: Ignore the frontend, always use the actual turn!
+        player_id = self.current_turn 
+        
         players = self.players
         p = next((x for x in players if x['id'] == player_id), None)
         if p is None:
