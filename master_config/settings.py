@@ -33,7 +33,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'labyrinth.urls'
+ROOT_URLCONF = 'master_config.urls'
 
 TEMPLATES = [
     {
