@@ -8,6 +8,6 @@ urlpatterns = [
     path('knightstrap/', include('knightstrap.urls')),
     path('cinqo/', include('cinqo.urls')),
     path('fivecrowns/', include('fivecrowns.urls')),
-    path('labyrinth/', include('labyrinth_game.urls')),
+    path('labyrinth_game/', include('labyrinth_game.urls')),
      
 ]

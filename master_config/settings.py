@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -17,7 +18,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'gamehub',
     'knightstrap',
-    'labyrinth',
+    'labyrinth_game',
     'fivecrowns',
     'cinqo',
 ]
@@ -37,7 +38,7 @@ ROOT_URLCONF = 'master_config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [os.path.join(BASE_DIR, 'gamehub/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -50,7 +51,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'labyrinth.wsgi.application'
+WSGI_APPLICATION = 'master_config.wsgi.application'
 
 DATABASES = {
     'default': {
