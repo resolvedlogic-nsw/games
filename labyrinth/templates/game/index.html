@@ -185,7 +185,7 @@
   <p class="subtitle">The Board Game</p>
   <div class="divider"><div class="divider-gem"></div></div>
 
-  <form method="POST" action="{% url 'game:new_game' %}">
+  <form method="POST" action="{% url 'labyrinth:new_game' %}">
     {% csrf_token %}
     <label>Number of Adventurers</label>
     <div class="player-select">
