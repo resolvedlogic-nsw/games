@@ -39,9 +39,9 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            os.path.join(BASE_DIR, 'cinqo'),
-            os.path.join(BASE_DIR, 'fivecrowns'),
-            os.path.join(BASE_DIR, 'davidextra'),]
+            BASE_DIR / 'gamehub' / 'templates',
+            BASE_DIR / 'labyrinth' / 'templates',
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
