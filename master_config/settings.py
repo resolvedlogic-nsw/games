@@ -41,7 +41,7 @@ TEMPLATES = [
         'DIRS': [
             os.path.join(BASE_DIR, 'cinqo'),
             os.path.join(BASE_DIR, 'fivecrowns'),
-            os.path.join(BASE_DIR, 'davidextra'),
+            os.path.join(BASE_DIR, 'davidextra'),]
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
