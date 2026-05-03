@@ -18,7 +18,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'gamehub',
     'knightstrap',
-    'labyrinth_game',
+    'labyrinth',
     'fivecrowns',
     'cinqo',
 ]
@@ -38,7 +38,10 @@ ROOT_URLCONF = 'master_config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'gamehub/templates')],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'cinqo'),
+            os.path.join(BASE_DIR, 'fivecrowns'),
+            os.path.join(BASE_DIR, 'davidextra'),
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

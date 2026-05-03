@@ -10,9 +10,7 @@
             padding: 40px;
             text-align: center;
         }
-        h1 {
-            margin-bottom: 30px;
-        }
+        h1 { margin-bottom: 30px; }
         .button-container {
             display: flex;
             flex-direction: column;
@@ -30,9 +28,7 @@
             border-radius: 8px;
             transition: background 0.2s;
         }
-        a.game-button:hover {
-            background: #005fa3;
-        }
+        a.game-button:hover { background: #005fa3; }
     </style>
 </head>
 <body>
@@ -40,10 +36,11 @@
     <h1>Game Launcher</h1>
 
     <div class="button-container">
-        <a class="game-button" href="/games/cinqo/index.html">Play Cinqo</a>
-        <a class="game-button" href="/games/fivecrowns/fc.html">Play Five Crowns</a>
-        <a class="game-button" href="/games/knightstrap/game.html">Play Knightstrap</a>
-        <a class="game-button" href="/labyrinth_game/">Play Labyrinth (Django)</a>
+        <!-- The Hub (Brain) now points to the Pawn's "namespace" -->
+        <a class="game-button" href="{% url 'cinqo:index' %}">Play Cinqo</a>
+        <a class="game-button" href="{% url 'fivecrowns:index' %}">Play Five Crowns</a>
+        <a class="game-button" href="{% url 'knightstrap:index' %}">Play Knightstrap</a>
+        <a class="game-button" href="{% url 'labyrinth:index' %}">Play Labyrinth</a>
     </div>
 
 </body>
