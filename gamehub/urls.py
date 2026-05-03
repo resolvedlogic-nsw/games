@@ -4,5 +4,5 @@ from . import views
 app_name = 'gamehub'
 
 urlpatterns = [
-    path('', views.index, name='index'),
+    path('', views.hub_home, name='home'),
 ]
