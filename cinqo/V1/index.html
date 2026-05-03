@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cinq-O Dice</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div id="app">
+        <div id="scoreboard">
+            <div class="player active">P1: <span id="p1score">0</span></div>
+            <div class="player">P2: <span id="p2score">0</span></div>
+            <div id="roll-counter">Rolls: <span id="rolls">0</span>/5</div>
+        </div>
+        
+        <div id="stack-area">
+            <div class="area-label">STACK (Required)</div>
+            <div id="stack-total" class="stack-total">0</div>
+        </div>
+        
+        <div id="game-container">
+            <aside id="left-sidebar">
+                <table id="hi-table" class="reference-table">
+                    <thead>
+                        <tr><th colspan="2">HI 🢁</th></tr>
+                        <tr><th>&#x1F3B2;</th><th>=</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>30</td><td>10</td></tr>
+                        <tr><td>29</td><td>8</td></tr>
+                        <tr><td>28</td><td>7</td></tr>
+                        <tr><td>27</td><td>6</td></tr>
+                        <tr><td>26</td><td>5</td></tr>
+                        <tr><td>25</td><td>4</td></tr>
+                        <tr><td>24</td><td>3</td></tr>
+                        <tr><td>23</td><td>2</td></tr>
+                        <tr><td>22</td><td>1</td></tr>
+                    </tbody>
+                </table>
+                <table id="lo-table" class="reference-table">
+                    <thead>
+                        <tr><th colspan="2">LO 🢃</th></tr>
+                        <tr><th>&#x1F3B2;</th><th>=</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>5</td><td>10</td></tr>
+                        <tr><td>6</td><td>8</td></tr>
+                        <tr><td>7</td><td>7</td></tr>
+                        <tr><td>8</td><td>6</td></tr>
+                        <tr><td>9</td><td>5</td></tr>
+                        <tr><td>10</td><td>4</td></tr>
+                        <tr><td>11</td><td>3</td></tr>
+                        <tr><td>12</td><td>2</td></tr>
+                        <tr><td>13</td><td>1</td></tr>
+                    </tbody>
+                </table>
+            </aside>
+            <div id="dice-table"></div>
+            <aside id="right-sidebar">
+                <div class="tally-container p1-tally">
+                    <h3>P1 LOG</h3>
+                    <ul id="p1-history"></ul>
+                </div>
+                <div class="tally-container p2-tally">
+                    <h3>P2 LOG</h3>
+                    <ul id="p2-history"></ul>
+                </div>
+            </aside>
+        </div>
+        
+        <div id="bank-area">
+            <div class="area-label">BANK (Optional)</div>
+        </div>
+        
+        <div id="controls">
+            <button id="rollBtn">Roll Dice</button>
+            <button id="endTurnBtn" disabled>End Turn</button>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>

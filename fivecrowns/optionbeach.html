@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InspireU Disability Support</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,800;1,300;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ocean:       #1A6B8A;
+    --ocean-mid:   #2A8FAF;
+    --ocean-light: #B8DDE8;
+    --ocean-wash:  #E8F4F8;
+    --sand:        #F5ECD7;
+    --sand-mid:    #EDD9B0;
+    --dune:        #C8A96E;
+    --sunset:      #D9782D;
+    --amber:       #EFA641;
+    --olive:       #A6985A;
+    --white:       #FEFCF8;
+    --charcoal:    #1E2D35;
+    --mid:         #4A6572;
+    --light-border:#D6EAF0;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 17px; }
+
+  body {
+    font-family: "DM Sans", sans-serif;
+    background: var(--white);
+    color: var(--charcoal);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── SKIP LINK ── */
+  .skip-link {
+    position: absolute; top: -100px; left: 1rem;
+    background: var(--ocean); color: white;
+    padding: 0.75rem 1.5rem; border-radius: 0 0 10px 10px;
+    font-weight: 600; z-index: 9999;
+    transition: top 0.2s; text-decoration: none;
+  }
+  .skip-link:focus { top: 0; }
+
+  /* ── NAV — floats over the hero ── */
+  header nav {
+    position: absolute; top: 0; left: 0; right: 0;
+    padding: 1.4rem 3rem;
+    display: flex; align-items: center; justify-content: space-between;
+    z-index: 100;
+    /* Subtle gradient so nav text is readable over the sky */
+    background: linear-gradient(to bottom, rgba(20,40,50,0.55) 0%, transparent 100%);
+  }
+
+  .logo-link {
+    text-decoration: none;
+    display: flex; align-items: center; gap: 0.85rem;
+  }
+  .logo-svg-wrap {
+    width: 54px; height: 54px; flex-shrink: 0;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+    transition: transform 0.35s ease;
+  }
+  .logo-link:hover .logo-svg-wrap { transform: rotate(-6deg) scale(1.1); }
+
+  .logo-wordmark { display: flex; flex-direction: column; line-height: 1.1; }
+  .logo-wordmark strong {
+    font-family: "Fraunces", serif;
+    font-size: 1.3rem; font-weight: 800;
+    color: white; letter-spacing: -0.01em;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  }
+  .logo-wordmark span {
+    font-size: 0.68rem; color: rgba(255,255,255,0.75);
+    letter-spacing: 0.12em; text-transform: uppercase; font-weight: 400;
+  }
+
+  .nav-links { display: flex; gap: 0.3rem; list-style: none; align-items: center; }
+  .nav-links a {
+    text-decoration: none; color: rgba(255,255,255,0.85);
+    font-size: 0.88rem; font-weight: 500;
+    padding: 0.5rem 1rem; border-radius: 50px;
+    transition: background 0.2s, color 0.2s;
+  }
+  .nav-links a:hover, .nav-links a:focus {
+    background: rgba(255,255,255,0.15); color: white; outline: none;
+  }
+  .nav-links a:focus-visible { outline: 3px solid white; outline-offset: 3px; }
+  .nav-cta {
+    background: var(--sunset) !important; color: white !important;
+    font-weight: 600 !important; border-radius: 50px !important;
+    box-shadow: 0 4px 18px rgba(217,120,45,0.45) !important;
+    transition: background 0.2s, transform 0.15s !important;
+  }
+  .nav-cta:hover, .nav-cta:focus {
+    background: #b85f20 !important;
+    transform: translateY(-1px);
+  }
+
+  /* ── HERO — full-width photo ── */
+  .hero {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    min-height: 600px;
+    max-height: 900px;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .hero-bg {
+    position: absolute; inset: 0;
+    background-image: url("coast.png");
+    background-size: cover;
+    background-position: center 30%;
+    width: 100%; height: 100%;
+    /* Subtle slow zoom for drama */
+    animation: heroZoom 20s ease-in-out infinite alternate;
+  }
+  @keyframes heroZoom {
+    from { transform: scale(1); }
+    to   { transform: scale(1.06); }
+  }
+
+  /* Layered overlays for text legibility */
+  .hero-overlay-bottom {
+    position: absolute; inset: 0;
+    /* Dark gradient from bottom — where text sits */
+    background: linear-gradient(
+      to top,
+      rgba(15, 30, 38, 0.88) 0%,
+      rgba(15, 30, 38, 0.55) 35%,
+      rgba(15, 30, 38,  0.1) 65%,
+      transparent 100%
+    );
+    z-index: 1;
+  }
+
+  /* Subtle left tint to add depth */
+  .hero-overlay-side {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      to right,
+      rgba(26, 107, 138, 0.25) 0%,
+      transparent 60%
+    );
+    z-index: 1;
+  }
+
+  /* The actual hero content — sits above overlays */
+  .hero-content {
+    position: relative; z-index: 2;
+    width: 100%;
+    padding: 0 3.5rem 4.5rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: flex-end;
+    gap: 3rem;
+  }
+
+  .hero-text { max-width: 850px; }
+
+  .ndis-pill {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.3);
+    backdrop-filter: blur(8px);
+    color: white; padding: 0.4rem 1rem; border-radius: 50px;
+    font-size: 0.76rem; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; margin-bottom: 1.2rem; display: block;
+    width: fit-content;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+  .ndis-dot {
+    width: 7px; height: 7px; background: var(--amber);
+    border-radius: 50%; animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .hero h1 {
+    font-family: "Fraunces", serif;
+    font-size: clamp(3rem, 6vw, 5.5rem);
+    font-weight: 800;
+    color: white; line-height: 1.0;
+    letter-spacing: -0.025em;
+    margin-bottom: 1.2rem;
+    text-shadow: 0 4px 30px rgba(0,0,0,0.4);
+    animation: fadeUp 0.7s 0.1s ease both;
+  }
+  .hero h1 em {
+    font-style: italic; font-weight: 300;
+    color: var(--ocean-light);
+  }
+  .hero h1 .warm { color: var(--amber); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero p {
+    font-size: 1.1rem; color: rgba(255,255,255,0.82);
+    max-width: 560px; margin-bottom: 2.2rem;
+    font-weight: 300; line-height: 1.85;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.35);
+    animation: fadeUp 0.7s 0.25s ease both;
+  }
+
+  .hero-ctas {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    animation: fadeUp 0.7s 0.35s ease both;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--ocean), var(--ocean-mid));
+    color: white; padding: 0.95rem 2.2rem; border-radius: 50px;
+    text-decoration: none; font-weight: 600; font-size: 0.95rem;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    box-shadow: 0 6px 28px rgba(26,107,138,0.5);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-primary:hover, .btn-primary:focus {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 36px rgba(26,107,138,0.6); outline: none;
+  }
+  .btn-primary:focus-visible { outline: 3px solid white; outline-offset: 4px; }
+
+  .btn-warm {
+    background: linear-gradient(135deg, var(--sunset), var(--amber));
+    color: white; padding: 0.95rem 2.2rem; border-radius: 50px;
+    text-decoration: none; font-weight: 600; font-size: 0.95rem;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    box-shadow: 0 6px 28px rgba(217,120,45,0.45);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-warm:hover, .btn-warm:focus {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 36px rgba(217,120,45,0.6); outline: none;
+  }
+  .btn-warm:focus-visible { outline: 3px solid white; outline-offset: 4px; }
+
+  /* Stats panel — floats bottom right over hero */
+  .hero-stats {
+    background: rgba(15, 30, 38, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 1.8rem 2rem;
+    display: flex; flex-direction: column; gap: 1.4rem;
+    min-width: 200px;
+    animation: fadeUp 0.7s 0.5s ease both;
+  }
+  .hero-stat-item { text-align: center; }
+  .hero-stat-num {
+    font-family: "Fraunces", serif;
+    font-size: 2rem; font-weight: 800; color: var(--amber);
+    line-height: 1;
+  }
+  .hero-stat-label {
+    font-size: 0.72rem; color: rgba(255,255,255,0.65);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    font-weight: 500; margin-top: 0.2rem;
+  }
+  .hero-stat-divider {
+    height: 1px; background: rgba(255,255,255,0.12);
+  }
+
+  /* Wave separator into next section */
+  .wave-sep {
+    display: block; width: 100%; overflow: hidden; line-height: 0;
+    margin-top: -2px;
+  }
+  .wave-sep svg { display: block; width: 100%; }
+
+  /* ── TRUST BAR ── */
+  .trust-bar {
+    background: var(--charcoal);
+    padding: 1.6rem 3rem;
+    display: flex; align-items: center; justify-content: center;
+    gap: 3rem; flex-wrap: wrap;
+  }
+  .trust-item {
+    display: flex; align-items: center; gap: 0.65rem;
+    font-size: 0.85rem; color: rgba(255,255,255,0.7); font-weight: 400;
+  }
+  .trust-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--ocean), var(--ocean-mid));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; color: white; flex-shrink: 0;
+  }
+
+  /* ── SERVICES ── */
+  .services-section {
+    background: var(--ocean-wash);
+    padding: 5.5rem 3rem 6rem;
+  }
+  .section-header { text-align: center; margin-bottom: 3.5rem; }
+  .section-tag {
+    display: inline-block;
+    font-size: 0.75rem; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ocean); margin-bottom: 0.6rem;
+  }
+  .section-header h2 {
+    font-family: "Fraunces", serif;
+    font-size: clamp(2rem, 4vw, 3rem); font-weight: 800;
+    color: var(--charcoal); line-height: 1.1; margin-bottom: 0.6rem;
+  }
+  .section-header h2 em { font-style: italic; color: var(--ocean); font-weight: 300; }
+  .section-header p {
+    color: var(--mid); font-size: 0.95rem;
+    font-weight: 300; max-width: 480px; margin: 0 auto; line-height: 1.8;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.4rem; max-width: 1160px; margin: 0 auto;
+  }
+  .service-card {
+    background: var(--white); border-radius: 22px;
+    padding: 2rem 1.8rem 2.2rem;
+    border: 1px solid var(--light-border);
+    position: relative; overflow: hidden;
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+  .service-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 50px rgba(26,107,138,0.12);
+  }
+  .service-card::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    border-radius: 22px 22px 0 0;
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 0.35s ease;
+  }
+  .service-card:hover::before { transform: scaleX(1); }
+  .sc-ocean::before  { background: linear-gradient(90deg, var(--ocean), var(--ocean-mid)); }
+  .sc-sunset::before { background: linear-gradient(90deg, var(--sunset), var(--amber)); }
+  .sc-olive::before  { background: linear-gradient(90deg, var(--olive), var(--dune)); }
+  .sc-amber::before  { background: linear-gradient(90deg, var(--amber), var(--dune)); }
+
+  .svc-icon {
+    width: 54px; height: 54px; border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.7rem; margin-bottom: 1.2rem;
+  }
+  .sc-ocean  .svc-icon { background: var(--ocean-wash); }
+  .sc-sunset .svc-icon { background: #FFF0E6; }
+  .sc-olive  .svc-icon { background: #F5F2E6; }
+  .sc-amber  .svc-icon { background: #FFF7E6; }
+
+  .service-card h3 {
+    font-family: "Fraunces", serif;
+    font-size: 1.2rem; font-weight: 600; color: var(--charcoal);
+    margin-bottom: 0.6rem; line-height: 1.2;
+  }
+  .service-card p {
+    font-size: 0.87rem; color: var(--mid); line-height: 1.75; font-weight: 300;
+  }
+  .svc-link {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    margin-top: 1.2rem; font-size: 0.82rem; font-weight: 600;
+    text-decoration: none; transition: gap 0.2s;
+  }
+  .sc-ocean  .svc-link { color: var(--ocean); }
+  .sc-sunset .svc-link { color: var(--sunset); }
+  .sc-olive  .svc-link { color: var(--olive); }
+  .sc-amber  .svc-link { color: #B8860B; }
+  .svc-link:hover { gap: 0.6rem; }
+  .svc-link:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; border-radius: 4px; }
+
+  /* ── ABOUT ── */
+  .about-section {
+    background: var(--charcoal);
+    padding: 6rem 3rem;
+    position: relative; overflow: hidden;
+  }
+  .about-section::before {
+    content: ""; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      rgba(26,107,138,0.06) 0px, rgba(26,107,138,0.06) 1px,
+      transparent 1px, transparent 32px
+    );
+  }
+  .about-inner {
+    max-width: 1160px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 5rem; align-items: center;
+    position: relative; z-index: 1;
+  }
+  .about-quote {
+    font-family: "Fraunces", serif;
+    font-size: clamp(1.7rem, 3vw, 2.7rem);
+    font-weight: 300; font-style: italic;
+    color: white; line-height: 1.4;
+    border-left: 4px solid var(--amber); padding-left: 2rem;
+  }
+  .about-quote strong {
+    font-weight: 800; font-style: normal; color: var(--ocean-light);
+  }
+  .about-right .section-tag { color: var(--ocean-light); }
+  .about-right p {
+    color: rgba(255,255,255,0.65); font-size: 0.93rem;
+    line-height: 1.9; font-weight: 300; margin-bottom: 1rem;
+  }
+  .values-list { list-style: none; margin-top: 1.5rem; }
+  .values-list li {
+    display: flex; align-items: flex-start; gap: 0.9rem;
+    padding: 0.65rem 0;
+    font-size: 0.9rem; color: rgba(255,255,255,0.8);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .values-list li:last-child { border-bottom: none; }
+  .val-dot {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--ocean), var(--ocean-mid));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; color: white; flex-shrink: 0; margin-top: 1px;
+  }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    background: linear-gradient(90deg, var(--sunset), var(--amber), var(--dune));
+    padding: 2.5rem 3rem;
+    display: flex; justify-content: center; gap: 0;
+  }
+  .stat {
+    text-align: center; flex: 1; max-width: 220px;
+    padding: 0 2rem;
+    border-right: 1px solid rgba(255,255,255,0.25);
+  }
+  .stat:last-child { border-right: none; }
+  .stat-num {
+    font-family: "Fraunces", serif;
+    font-size: 2.6rem; font-weight: 800;
+    color: white; line-height: 1;
+  }
+  .stat-label {
+    font-size: 0.78rem; color: rgba(255,255,255,0.85);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    font-weight: 500; margin-top: 0.3rem;
+  }
+
+  /* ── CONTACT ── */
+  .contact-section {
+    background: var(--sand);
+    padding: 6rem 3rem;
+    position: relative;
+  }
+  .contact-inner {
+    max-width: 1160px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 5rem; align-items: start;
+  }
+  .contact-left h2 {
+    font-family: "Fraunces", serif;
+    font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 800;
+    color: var(--charcoal); line-height: 1.1; margin-bottom: 1rem;
+  }
+  .contact-left h2 em { font-style: italic; font-weight: 300; color: var(--ocean); }
+  .contact-left p {
+    color: var(--mid); font-size: 0.93rem;
+    line-height: 1.85; font-weight: 300; margin-bottom: 1rem;
+  }
+
+  /* Logo feature */
+  .logo-feature {
+    display: flex; align-items: center; gap: 1.2rem;
+    background: white; border-radius: 18px;
+    padding: 1.3rem 1.8rem; margin-top: 1.5rem;
+    border: 1px solid var(--light-border);
+    box-shadow: 0 4px 20px rgba(26,107,138,0.08);
+  }
+  .logo-feature svg { width: 60px; height: 60px; flex-shrink: 0; }
+  .lf-text strong {
+    display: block; font-family: "Fraunces", serif;
+    font-size: 1.05rem; font-weight: 800; color: var(--charcoal);
+  }
+  .lf-text span { font-size: 0.8rem; color: var(--mid); font-weight: 300; }
+
+  .contact-cards { display: flex; flex-direction: column; gap: 1rem; }
+  .contact-card {
+    background: white; border-radius: 18px; padding: 1.4rem 1.8rem;
+    display: flex; align-items: center; gap: 1.2rem;
+    text-decoration: none; color: var(--charcoal);
+    border: 1px solid var(--light-border);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  }
+  .contact-card:hover, .contact-card:focus {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(26,107,138,0.12);
+    border-color: var(--ocean-light); outline: none;
+  }
+  .contact-card:focus-visible { outline: 3px solid var(--ocean); outline-offset: 4px; }
+  .cc-icon {
+    width: 50px; height: 50px; border-radius: 14px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+  }
+  .ico-ocean  { background: var(--ocean-wash); }
+  .ico-sunset { background: #FFF0E6; }
+  .ico-olive  { background: #F5F2E6; }
+  .ico-amber  { background: #FFF7E6; }
+.cc-text { 
+  min-width: 0; /* This is the magic flexbox shrinking rule */
+}
+.cc-text strong {
+  display: block; 
+  font-weight: 600; 
+  font-size: 0.93rem; 
+  color: var(--charcoal);
+  overflow-wrap: break-word; /* This forces the long email to wrap on mobile */
+  word-break: break-word;
+}
+.cc-text span { 
+  font-size: 0.8rem; 
+  color: var(--mid); 
+  font-weight: 300; 
+  display: block; /* Keeps the span neatly below the strong text */
+}  .cc-arrow {
+    margin-left: auto; color: var(--ocean); font-size: 1.1rem;
+    opacity: 0; transform: translateX(-4px);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .contact-card:hover .cc-arrow { opacity: 1; transform: translateX(0); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--charcoal); padding: 2.5rem 3rem;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1.5rem;
+  }
+  .footer-brand {
+    display: flex; align-items: center; gap: 0.75rem; text-decoration: none;
+  }
+  .footer-brand svg { width: 38px; height: 38px; flex-shrink: 0; }
+  .footer-brand span {
+    font-family: "Fraunces", serif; font-size: 1rem;
+    font-weight: 800; color: white;
+  }
+  footer p { font-size: 0.78rem; color: rgba(255,255,255,0.35); }
+  .footer-links { display: flex; gap: 1.5rem; }
+  .footer-links a {
+    color: rgba(255,255,255,0.4); text-decoration: none;
+    font-size: 0.8rem; transition: color 0.2s;
+  }
+  .footer-links a:hover, .footer-links a:focus { color: var(--ocean-light); outline: none; }
+
+  /* Global focus */
+  *:focus-visible { outline: 3px solid var(--ocean); outline-offset: 3px; border-radius: 4px; }
+
+/* ── WAVE helper (Updated) ── */
+.wave { 
+  display: block; 
+  width: 100%; 
+  overflow: hidden; 
+  line-height: 0; 
+  /* We removed the negative margin, it's not needed anymore! */
+}
+.wave svg { 
+  display: block; 
+  width: 100%; 
+margin-bottom: -2px;
+}
+
+/* NEW: Match the box behind the wave to the section ABOVE it */
+.wave-trust { background-color: var(--charcoal); }
+.wave-services { background-color: var(--ocean-wash); }
+.wave-stats { background: linear-gradient(90deg, var(--sunset), var(--amber), var(--dune)); }
+
+/* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    header nav { padding: 1.2rem 1.5rem; }
+    .nav-links li:not(:last-child) { display: none; }
+    
+    /* FIX 1: Allow hero to grow, and center it so it stops growing upwards */
+    .hero {
+      height: auto;
+      min-height: 100vh;
+      align-items: center; 
+    }
+    .hero-content {
+      grid-template-columns: 1fr;
+      padding: 8rem 1.8rem 3.5rem; /* The 8rem top padding protects the header */
+      gap: 1.5rem;
+    }
+    .hero-stats {
+      flex-direction: row; justify-content: space-around;
+      min-width: 0; width: 100%;
+    }
+    .hero-stat-divider { display: none; }
+    .about-inner, .contact-inner { grid-template-columns: 1fr; gap: 3rem; }
+    
+    /* FIX 2 (Tablet): Make stats a 2x2 grid instead of squashing */
+    .stats-bar { flex-wrap: wrap; padding: 3rem 1.5rem; row-gap: 2.5rem; }
+    .stat { 
+      flex: 1 1 40%; 
+      max-width: 50%; 
+      border-bottom: none; 
+      padding: 0 1rem; 
+    }
+    .stat:nth-child(even) { border-right: none; } /* Removes border from right-side items */
+    
+    .trust-bar { gap: 1.5rem; padding: 1.4rem 1.5rem; }
+    .services-section, .about-section, .contact-section { padding: 4rem 1.5rem; }
+  }
+
+  @media (max-width: 560px) {
+    .hero h1 { font-size: 2.6rem; }
+    .hero-ctas { flex-direction: column; }
+    .hero-stats { flex-direction: column; gap: 0.75rem; }
+    .hero-stat-divider { display: block; }
+    
+    /* FIX 2 (Mobile): Force stats into a perfect 1-column stack */
+    .stats-bar { row-gap: 0; padding: 2rem 1.5rem; }
+    .stat { 
+      flex: 1 1 100%; 
+      max-width: 100%; 
+      border-right: none; 
+      border-bottom: 1px solid rgba(255,255,255,0.2); 
+      padding: 1.5rem 0; 
+    }
+    .stat:last-child { border-bottom: none; padding-bottom: 0; }
+
+    footer { flex-direction: column; text-align: center; }
+    .footer-links { justify-content: center; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to main content</a>
+
+<!-- ── NAV (floats over hero) ── -->
+<header>
+<nav role="navigation" aria-label="Main navigation">
+  <a href="/" class="logo-link" aria-label="InspireU Disability Support — Home">
+    <div class="logo-svg-wrap" aria-hidden="true">
+      <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 612 792"  xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#D9782D;}
+	.st1{fill:#A6985A;}
+	.st2{fill:#EFA641;}
+</style>
+<path class="st0" d="M56.7,394.6c0-17.6,0.9-31.3,2.6-45c2.3-18.4,5.7-36.5,10.6-54.3c3-11,6.8-21.8,11.1-32.4
+	c7.8-19.3,17.4-37.7,29.6-54.5c10-13.8,20.6-27,33.9-37.9c5.6-4.6,11-4.2,16.1,0.9c33.6,33.5,67.2,66.9,100.8,100.4
+	c10.3,10.3,20.6,20.6,30.9,30.9c1.7,1.7,4,3.2,3,6.1c-1,2.7-3.7,3-6,3.3c-13.3,2-26,5.9-37.9,12c-21.8,11.2-39.9,26.5-52.8,47.7
+	c-7.3,12-13.3,24.6-17,38.3c-1.9,6.9-3,13.9-3.6,21.1c-0.6,7.6-0.6,15.2,0.2,22.7c1.2,11.2,3.8,22.1,8.1,32.6
+	c8.9,21.6,22.8,39.4,41,53.8c12,9.5,25.3,16.6,39.7,21.8c14.4,5.1,29.2,7.7,44.5,8.3c5.1,0.2,10.2-0.4,15.2-0.7
+	c2.5-0.2,5.3-0.9,6.8,1.8c1.4,2.5-0.4,4.7-1.8,6.6c-10.4,14.4-23.6,25.5-38.9,34.1c-15.4,8.7-32.1,13.6-49.6,15.6
+	c-14,1.6-27.8,0.4-41.6-2.6c-26.1-5.8-47.8-19.4-66.6-37.9C107.3,560,88,527.8,74.5,491.9c-6.4-17-10.9-34.4-13.9-52.2
+	C58,423.5,56.2,407.2,56.7,394.6z"/>
+<path class="st0" d="M499.8,608.4c1.7-4.2,3.3-8.4,4.9-12.5c4.9-13,8.5-26.4,10.6-40.1c2.3-15.1,2.6-30.4,1.1-45.6
+	c-2.7-27.5-11.7-52.9-25.4-76.8c-13.1-22.9-29.9-43-48.9-61.2c-22.5-21.5-47.9-38.5-77.1-49.5c-7.2-2.7-14.7-4.9-22.2-6.5
+	c-3.8-0.8-4.9-2.2-4.9-6.1c0-3.6-0.4-7.2,0.4-10.8c0.6-2.8,1.8-5.2,3.8-7.2c15.3-15.3,30.7-30.5,46-45.8c12.7-12.7,25.3-25.4,38-38
+	c12.3-12.3,24.7-24.6,37.1-36.8c5.8-5.7,10.7-5.6,16.7-0.2c12,10.8,22.5,22.8,32.2,35.6c13.9,18.3,24.8,38.4,33.4,59.8
+	c8.6,21.5,14.4,43.8,18.1,66.7c3.8,23.6,4.8,47.3,3.9,71.1c-0.4,11.3-1.7,22.5-3.3,33.6c-2.3,16-5.4,31.8-9.4,47.5
+	c-8.4,33.3-20.5,65.2-36.9,95.3c-5,9.1-10.2,18.2-16.7,26.3C500.8,607.7,500.6,608.3,499.8,608.4z"/>
+<path class="st1" d="M142.7,641c2.2,0.9,4.2,1.7,6.1,2.5c15.8,6.6,32.1,11.5,48.9,14.1c16.3,2.5,32.7,2.8,49.2,0.9
+	c20.3-2.3,39.5-8,57.9-16.8c16.9-8.1,32.3-18.5,46.4-30.6c17.6-15.1,32.2-32.8,44.4-52.5c10.2-16.5,18.1-33.9,23.6-52.6
+	c3.3-11.2,5.8-22.5,7.5-33.9c1.7-11.6,2.2-23.3,2.2-35c0-2-0.1-4,0.4-5.9c1.1-4.4,4.3-5.5,7.6-2.4c5.5,5,10.2,10.8,14.6,16.8
+	c15.7,21.8,26.1,45.9,31.8,72.1c3.3,15,5.1,30.2,4.6,45.6c-0.6,17.2-3.7,33.9-9.4,50.2c-8.2,23.3-21.7,43.1-39.1,60.4
+	c-13.4,13.3-28.9,23.9-46.1,32c-15.2,7.2-31.2,12.2-47.8,15c-14.6,2.4-29.2,3.1-44,1.9c-22.3-1.7-43.7-7-64.4-15.2
+	c-19-7.6-36.8-17.6-53.4-29.6c-13.8-10-26.5-21.4-38.6-33.5C144.4,643.5,143.3,642.7,142.7,641z"/>
+<path class="st2" d="M313.1,41.2c28.9,0.7,53.2,11.7,72.6,33c12.7,14,20.6,30.7,23.1,49.5c4.3,32.4-5.9,59.9-29.2,82.6
+	c-9.8,9.5-21.6,15.8-34.4,20.3c-1.6,0.6-2.9,1.4-4,2.7c-8,9-16.1,18-24.1,27c-3.2,3.6-5.4,3.6-8.6-0.1c-8.2-9.2-16.4-18.4-24.6-27.6
+	c-1-1.1-2.3-1.5-3.6-2c-14.9-5.1-28.1-13.1-38.9-24.6c-14.1-14.9-22.8-32.4-25.7-52.7c-2.1-14.5-0.7-28.7,4.1-42.5
+	c8.2-23.2,23.1-40.9,44.5-53C279.5,45.4,295.7,41.1,313.1,41.2z"/>
+<path class="st2" d="M396.5,436.5c-0.9,28-12.6,50.2-35.7,66.3c-9.8,6.9-20.8,11.2-32.5,13.1c-24.8,3.9-46.9-2.3-66.3-18.2
+	c-15.5-12.8-25-29.2-28.4-48.9c-2.9-16.3-0.3-32.1,7-46.9c12.7-25.7,33.4-41.2,61.4-46c25.9-4.4,48.7,3.7,68.2,21
+	c13.4,11.9,21.4,27,25.1,44.4C396.2,426.2,396.6,431.3,396.5,436.5z"/>
+</svg>
+    </div>
+    <div class="logo-wordmark">
+      <strong>InspireU</strong>
+      <span>Disability Support</span>
+    </div>
+  </a>
+  <ul class="nav-links" role="list">
+    <li><a href="#services">Services</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="tel:+61472815291" class="nav-cta">📞 0472 815 291</a></li>
+  </ul>
+</nav>
+</header>
+
+<main id="main">
+
+<!-- ── HERO ── -->
+<section class="hero" aria-labelledby="hero-heading">
+  <div class="hero-bg" role="img" aria-label="Aerial view of the stunning Australian east coast — golden sand beaches, turquoise ocean waves, and lush green headlands"></div>
+  <div class="hero-overlay-bottom" aria-hidden="true"></div>
+  <div class="hero-overlay-side" aria-hidden="true"></div>
+
+  <div class="hero-content">
+    <div class="hero-text">
+      <div class="ndis-pill" role="note" aria-label="NDIS Registered Provider">
+        <div class="ndis-dot" aria-hidden="true"></div>
+        NDIS Registered Provider — Sydney, NSW
+      </div>
+      <h1 id="hero-heading">
+        Support that&nbsp;lifts<br>
+        you <em>above</em> the<br>
+        <span class="warm">tide.</span>
+      </h1>
+      <p>Person-centred disability support rooted in compassion, warmth, and a genuine belief that every individual deserves to live their fullest life — right here on the beautiful east coast.</p>
+      <div class="hero-ctas">
+        <a href="#contact" class="btn-primary">Get started today →</a>
+        <a href="tel:+61472815291" class="btn-warm">📞 Call us now</a>
+      </div>
+    </div>
+
+    <aside class="hero-stats" aria-label="InspireU at a glance">
+      <div class="hero-stat-item">
+        <div class="hero-stat-num">NDIS</div>
+        <div class="hero-stat-label">Registered</div>
+      </div>
+      <div class="hero-stat-divider" aria-hidden="true"></div>
+      <div class="hero-stat-item">
+        <div class="hero-stat-num">4</div>
+        <div class="hero-stat-label">Core services</div>
+      </div>
+      <div class="hero-stat-divider" aria-hidden="true"></div>
+      <div class="hero-stat-item">
+        <div class="hero-stat-num">100%</div>
+        <div class="hero-stat-label">Client-centred</div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ── TRUST BAR ── -->
+<div class="trust-bar" role="list" aria-label="Our commitments">
+  <div class="trust-item" role="listitem">
+    <div class="trust-dot" aria-hidden="true">✓</div>
+    <span>Trauma-informed care</span>
+  </div>
+  <div class="trust-item" role="listitem">
+    <div class="trust-dot" aria-hidden="true">✓</div>
+    <span>Person-centred always</span>
+  </div>
+  <div class="trust-item" role="listitem">
+    <div class="trust-dot" aria-hidden="true">✓</div>
+    <span>NDIS registered & compliant</span>
+  </div>
+  <div class="trust-item" role="listitem">
+    <div class="trust-dot" aria-hidden="true">✓</div>
+    <span>Inclusive & culturally responsive</span>
+  </div>
+</div>
+
+<!-- wave into services -->
+<div class="wave wave-trust" aria-hidden="true">
+  <svg viewBox="0 0 1440 56" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,28 C280,56 560,0 840,28 C1050,48 1260,8 1440,28 L1440,56 L0,56 Z" fill="#E8F4F8"/>
+  </svg>
+</div>
+
+<!-- ── SERVICES ── -->
+<section class="services-section" id="services" aria-labelledby="services-heading">
+  <div class="section-header">
+    <div class="section-tag">What we offer</div>
+    <h2 id="services-heading">Support shaped <em>around you</em></h2>
+    <p>Every service we provide begins with listening — understanding what matters to you, and building genuine support that fits your life.</p>
+  </div>
+  <div class="services-grid" role="list">
+    <article class="service-card sc-ocean" role="listitem">
+      <div class="svc-icon" aria-hidden="true">🌊</div>
+      <h3>Community Access</h3>
+      <p>Get out and connect. We support you through outings, social events, local activities, and building the connections that make life rich.</p>
+      <a href="#contact" class="svc-link" aria-label="Learn more about Community Access">Learn more →</a>
+    </article>
+    <article class="service-card sc-sunset" role="listitem">
+      <div class="svc-icon" aria-hidden="true">🌅</div>
+      <h3>Personal Care</h3>
+      <p>Compassionate, dignified support with daily living tasks — on your terms, in your space, with your preferences at the centre.</p>
+      <a href="#contact" class="svc-link" aria-label="Learn more about Personal Care">Learn more →</a>
+    </article>
+    <article class="service-card sc-olive" role="listitem">
+      <div class="svc-icon" aria-hidden="true">🌿</div>
+      <h3>Life Skill Development</h3>
+      <p>Build lasting independence through practical skills — cooking, budgeting, communication and self-care — with steady, encouraging support.</p>
+      <a href="#contact" class="svc-link" aria-label="Learn more about Life Skill Development">Learn more →</a>
+    </article>
+    <article class="service-card sc-amber" role="listitem">
+      <div class="svc-icon" aria-hidden="true">🤲</div>
+      <h3>Nursing & Trauma Support</h3>
+      <p>Expert nursing delivered through a trauma-informed lens. We take time to understand your story and respond with skill and deep compassion.</p>
+      <a href="#contact" class="svc-link" aria-label="Learn more about Nursing and Trauma Support">Learn more →</a>
+    </article>
+  </div>
+</section>
+
+<!-- wave into about -->
+<div class="wave wave-services" aria-hidden="true">
+  <svg viewBox="0 0 1440 56" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,0 C360,56 720,0 1080,40 C1280,60 1400,20 1440,28 L1440,56 L0,56 Z" fill="#1E2D35"/>
+  </svg>
+</div>
+
+<!-- ── ABOUT ── -->
+<section class="about-section" id="about" aria-labelledby="about-heading">
+  <div class="about-inner">
+    <blockquote class="about-quote">
+      "We believe every person with a disability deserves to live their <strong>best life</strong> — and we walk alongside them to make it happen."
+    </blockquote>
+    <div class="about-right">
+      <div class="section-tag">Our approach</div>
+      <p>At InspireU Disability Support, we go beyond tick-box care. We build genuine, lasting relationships — taking time to understand what truly matters to each person we support.</p>
+      <p>We integrate trauma-informed practice across everything we do, because we know that understanding someone's story is the foundation of truly great support.</p>
+      <ul class="values-list" role="list" aria-label="Our core values">
+        <li role="listitem"><div class="val-dot" aria-hidden="true">✓</div>Person-centred — your goals drive our work</li>
+        <li role="listitem"><div class="val-dot" aria-hidden="true">✓</div>Trauma-informed practice, always</li>
+        <li role="listitem"><div class="val-dot" aria-hidden="true">✓</div>Inclusive and culturally responsive</li>
+        <li role="listitem"><div class="val-dot" aria-hidden="true">✓</div>NDIS registered and fully compliant</li>
+        <li role="listitem"><div class="val-dot" aria-hidden="true">✓</div>Dedicated to your growing independence</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ── STATS ── -->
+<section class="stats-bar" aria-label="Service highlights">
+  <div class="stat"><div class="stat-num">4</div><div class="stat-label">Core services</div></div>
+  <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Client-centred</div></div>
+  <div class="stat"><div class="stat-num">NDIS</div><div class="stat-label">Registered provider</div></div>
+  <div class="stat"><div class="stat-num">SYD</div><div class="stat-label">Sydney based</div></div>
+</section>
+
+<!-- wave into contact -->
+<div class="wave wave-stats" aria-hidden="true">
+  <svg viewBox="0 0 1440 56" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,10 C400,56 900,0 1200,36 C1340,54 1400,24 1440,20 L1440,56 L0,56 Z" fill="#F5ECD7"/>
+  </svg>
+</div>
+
+<!-- ── CONTACT ── -->
+<section class="contact-section" id="contact" aria-labelledby="contact-heading">
+  <div class="contact-inner">
+    <div class="contact-left">
+      <div class="section-tag" style="color:var(--ocean);">Get in touch</div>
+      <h2 id="contact-heading">Let's find the right<br>support <em>for you</em></h2>
+      <p>Our friendly team would love to hear from you. Whether you're a participant, family member, or support coordinator — we're ready to help.</p>
+      <p>No question is too small. We're here to listen, guide, and support you every step of the way.</p>
+      <div class="logo-feature" aria-label="InspireU Disability Support">
+        <svg viewBox="0 0 612 792" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path fill="#D9782D" d="M56.7,394.6c0-17.6,0.9-31.3,2.6-45c2.3-18.4,5.7-36.5,10.6-54.3c3-11,6.8-21.8,11.1-32.4c7.8-19.3,17.4-37.7,29.6-54.5c10-13.8,20.6-27,33.9-37.9c5.6-4.6,11-4.2,16.1,0.9c33.6,33.5,67.2,66.9,100.8,100.4c10.3,10.3,20.6,20.6,30.9,30.9c1.7,1.7,4,3.2,3,6.1c-1,2.7-3.7,3-6,3.3c-13.3,2-26,5.9-37.9,12c-21.8,11.2-39.9,26.5-52.8,47.7c-7.3,12-13.3,24.6-17,38.3c-1.9,6.9-3,13.9-3.6,21.1c-0.6,7.6-0.6,15.2,0.2,22.7c1.2,11.2,3.8,22.1,8.1,32.6c8.9,21.6,22.8,39.4,41,53.8c12,9.5,25.3,16.6,39.7,21.8c14.4,5.1,29.2,7.7,44.5,8.3c5.1,0.2,10.2-0.4,15.2-0.7c2.5-0.2,5.3-0.9,6.8,1.8c1.4,2.5-0.4,4.7-1.8,6.6c-10.4,14.4-23.6,25.5-38.9,34.1c-15.4,8.7-32.1,13.6-49.6,15.6c-14,1.6-27.8,0.4-41.6-2.6c-26.1-5.8-47.8-19.4-66.6-37.9C107.3,560,88,527.8,74.5,491.9c-6.4-17-10.9-34.4-13.9-52.2C58,423.5,56.2,407.2,56.7,394.6z"/>
+          <path fill="#D9782D" d="M499.8,608.4c1.7-4.2,3.3-8.4,4.9-12.5c4.9-13,8.5-26.4,10.6-40.1c2.3-15.1,2.6-30.4,1.1-45.6c-2.7-27.5-11.7-52.9-25.4-76.8c-13.1-22.9-29.9-43-48.9-61.2c-22.5-21.5-47.9-38.5-77.1-49.5c-7.2-2.7-14.7-4.9-22.2-6.5c-3.8-0.8-4.9-2.2-4.9-6.1c0-3.6-0.4-7.2,0.4-10.8c0.6-2.8,1.8-5.2,3.8-7.2c15.3-15.3,30.7-30.5,46-45.8c12.7-12.7,25.3-25.4,38-38c12.3-12.3,24.7-24.6,37.1-36.8c5.8-5.7,10.7-5.6,16.7-0.2c12,10.8,22.5,22.8,32.2,35.6c13.9,18.3,24.8,38.4,33.4,59.8c8.6,21.5,14.4,43.8,18.1,66.7c3.8,23.6,4.8,47.3,3.9,71.1c-0.4,11.3-1.7,22.5-3.3,33.6c-2.3,16-5.4,31.8-9.4,47.5c-8.4,33.3-20.5,65.2-36.9,95.3c-5,9.1-10.2,18.2-16.7,26.3C500.8,607.7,500.6,608.3,499.8,608.4z"/>
+          <path fill="#A6985A" d="M142.7,641c2.2,0.9,4.2,1.7,6.1,2.5c15.8,6.6,32.1,11.5,48.9,14.1c16.3,2.5,32.7,2.8,49.2,0.9c20.3-2.3,39.5-8,57.9-16.8c16.9-8.1,32.3-18.5,46.4-30.6c17.6-15.1,32.2-32.8,44.4-52.5c10.2-16.5,18.1-33.9,23.6-52.6c3.3-11.2,5.8-22.5,7.5-33.9c1.7-11.6,2.2-23.3,2.2-35c0-2-0.1-4,0.4-5.9c1.1-4.4,4.3-5.5,7.6-2.4c5.5,5,10.2,10.8,14.6,16.8c15.7,21.8,26.1,45.9,31.8,72.1c3.3,15,5.1,30.2,4.6,45.6c-0.6,17.2-3.7,33.9-9.4,50.2c-8.2,23.3-21.7,43.1-39.1,60.4c-13.4,13.3-28.9,23.9-46.1,32c-15.2,7.2-31.2,12.2-47.8,15c-14.6,2.4-29.2,3.1-44,1.9c-22.3-1.7-43.7-7-64.4-15.2c-19-7.6-36.8-17.6-53.4-29.6c-13.8-10-26.5-21.4-38.6-33.5C144.4,643.5,143.3,642.7,142.7,641z"/>
+          <path fill="#EFA641" d="M313.1,41.2c28.9,0.7,53.2,11.7,72.6,33c12.7,14,20.6,30.7,23.1,49.5c4.3,32.4-5.9,59.9-29.2,82.6c-9.8,9.5-21.6,15.8-34.4,20.3c-1.6,0.6-2.9,1.4-4,2.7c-8,9-16.1,18-24.1,27c-3.2,3.6-5.4,3.6-8.6-0.1c-8.2-9.2-16.4-18.4-24.6-27.6c-1-1.1-2.3-1.5-3.6-2c-14.9-5.1-28.1-13.1-38.9-24.6c-14.1-14.9-22.8-32.4-25.7-52.7c-2.1-14.5-0.7-28.7,4.1-42.5c8.2-23.2,23.1-40.9,44.5-53C279.5,45.4,295.7,41.1,313.1,41.2z"/>
+          <path fill="#EFA641" d="M396.5,436.5c-0.9,28-12.6,50.2-35.7,66.3c-9.8,6.9-20.8,11.2-32.5,13.1c-24.8,3.9-46.9-2.3-66.3-18.2c-15.5-12.8-25-29.2-28.4-48.9c-2.9-16.3-0.3-32.1,7-46.9c12.7-25.7,33.4-41.2,61.4-46c25.9-4.4,48.7,3.7,68.2,21c13.4,11.9,21.4,27,25.1,44.4C396.2,426.2,396.6,431.3,396.5,436.5z"/>
+        </svg>
+        <div class="lf-text">
+          <strong>InspireU Disability Support</strong>
+          <span>NDIS Registered Provider · Sydney, NSW</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="contact-cards" role="list" aria-label="Contact options">
+      <a href="tel:+61472815291" class="contact-card" role="listitem">
+        <div class="cc-icon ico-ocean" aria-hidden="true">📞</div>
+        <div class="cc-text"><strong>0472 815 291</strong><span>Call us — we love to chat</span></div>
+        <div class="cc-arrow" aria-hidden="true">→</div>
+      </a>
+      <a href="mailto:info@inspireudisabilitysupport.com.au" class="contact-card" role="listitem">
+        <div class="cc-icon ico-sunset" aria-hidden="true">✉️</div>
+        <div class="cc-text"><strong>info@inspireudisabilitysupport.com.au</strong><span>Email us anytime</span></div>
+        <div class="cc-arrow" aria-hidden="true">→</div>
+      </a>
+      <a href="https://www.facebook.com/profile.php?id=61564848697022" class="contact-card" role="listitem" aria-label="InspireU Facebook page">
+        <div class="cc-icon ico-olive" aria-hidden="true">📘</div>
+        <div class="cc-text"><strong>Facebook</strong><span>Follow us for updates</span></div>
+        <div class="cc-arrow" aria-hidden="true">→</div>
+      </a>
+      <a href="https://www.instagram.com/inspireu.disabilitysupport" class="contact-card" role="listitem" aria-label="InspireU Instagram page">
+        <div class="cc-icon ico-amber" aria-hidden="true">📸</div>
+        <div class="cc-text"><strong>@inspireu.disabilitysupport</strong><span>See our community on Instagram</span></div>
+        <div class="cc-arrow" aria-hidden="true">→</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer role="contentinfo">
+  <a href="/" class="footer-brand" aria-label="InspireU Disability Support">
+    <svg viewBox="0 0 612 792" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path fill="#D9782D" d="M56.7,394.6c0-17.6,0.9-31.3,2.6-45c2.3-18.4,5.7-36.5,10.6-54.3c3-11,6.8-21.8,11.1-32.4c7.8-19.3,17.4-37.7,29.6-54.5c10-13.8,20.6-27,33.9-37.9c5.6-4.6,11-4.2,16.1,0.9c33.6,33.5,67.2,66.9,100.8,100.4c10.3,10.3,20.6,20.6,30.9,30.9c1.7,1.7,4,3.2,3,6.1c-1,2.7-3.7,3-6,3.3c-13.3,2-26,5.9-37.9,12c-21.8,11.2-39.9,26.5-52.8,47.7c-7.3,12-13.3,24.6-17,38.3c-1.9,6.9-3,13.9-3.6,21.1c-0.6,7.6-0.6,15.2,0.2,22.7c1.2,11.2,3.8,22.1,8.1,32.6c8.9,21.6,22.8,39.4,41,53.8c12,9.5,25.3,16.6,39.7,21.8c14.4,5.1,29.2,7.7,44.5,8.3c5.1,0.2,10.2-0.4,15.2-0.7c2.5-0.2,5.3-0.9,6.8,1.8c1.4,2.5-0.4,4.7-1.8,6.6c-10.4,14.4-23.6,25.5-38.9,34.1c-15.4,8.7-32.1,13.6-49.6,15.6c-14,1.6-27.8,0.4-41.6-2.6c-26.1-5.8-47.8-19.4-66.6-37.9C107.3,560,88,527.8,74.5,491.9c-6.4-17-10.9-34.4-13.9-52.2C58,423.5,56.2,407.2,56.7,394.6z"/>
+      <path fill="#D9782D" d="M499.8,608.4c1.7-4.2,3.3-8.4,4.9-12.5c4.9-13,8.5-26.4,10.6-40.1c2.3-15.1,2.6-30.4,1.1-45.6c-2.7-27.5-11.7-52.9-25.4-76.8c-13.1-22.9-29.9-43-48.9-61.2c-22.5-21.5-47.9-38.5-77.1-49.5c-7.2-2.7-14.7-4.9-22.2-6.5c-3.8-0.8-4.9-2.2-4.9-6.1c0-3.6-0.4-7.2,0.4-10.8c0.6-2.8,1.8-5.2,3.8-7.2c15.3-15.3,30.7-30.5,46-45.8c12.7-12.7,25.3-25.4,38-38c12.3-12.3,24.7-24.6,37.1-36.8c5.8-5.7,10.7-5.6,16.7-0.2c12,10.8,22.5,22.8,32.2,35.6c13.9,18.3,24.8,38.4,33.4,59.8c8.6,21.5,14.4,43.8,18.1,66.7c3.8,23.6,4.8,47.3,3.9,71.1c-0.4,11.3-1.7,22.5-3.3,33.6c-2.3,16-5.4,31.8-9.4,47.5c-8.4,33.3-20.5,65.2-36.9,95.3c-5,9.1-10.2,18.2-16.7,26.3C500.8,607.7,500.6,608.3,499.8,608.4z"/>
+      <path fill="#A6985A" d="M142.7,641c2.2,0.9,4.2,1.7,6.1,2.5c15.8,6.6,32.1,11.5,48.9,14.1c16.3,2.5,32.7,2.8,49.2,0.9c20.3-2.3,39.5-8,57.9-16.8c16.9-8.1,32.3-18.5,46.4-30.6c17.6-15.1,32.2-32.8,44.4-52.5c10.2-16.5,18.1-33.9,23.6-52.6c3.3-11.2,5.8-22.5,7.5-33.9c1.7-11.6,2.2-23.3,2.2-35c0-2-0.1-4,0.4-5.9c1.1-4.4,4.3-5.5,7.6-2.4c5.5,5,10.2,10.8,14.6,16.8c15.7,21.8,26.1,45.9,31.8,72.1c3.3,15,5.1,30.2,4.6,45.6c-0.6,17.2-3.7,33.9-9.4,50.2c-8.2,23.3-21.7,43.1-39.1,60.4c-13.4,13.3-28.9,23.9-46.1,32c-15.2,7.2-31.2,12.2-47.8,15c-14.6,2.4-29.2,3.1-44,1.9c-22.3-1.7-43.7-7-64.4-15.2c-19-7.6-36.8-17.6-53.4-29.6c-13.8-10-26.5-21.4-38.6-33.5C144.4,643.5,143.3,642.7,142.7,641z"/>
+      <path fill="#EFA641" d="M313.1,41.2c28.9,0.7,53.2,11.7,72.6,33c12.7,14,20.6,30.7,23.1,49.5c4.3,32.4-5.9,59.9-29.2,82.6c-9.8,9.5-21.6,15.8-34.4,20.3c-1.6,0.6-2.9,1.4-4,2.7c-8,9-16.1,18-24.1,27c-3.2,3.6-5.4,3.6-8.6-0.1c-8.2-9.2-16.4-18.4-24.6-27.6c-1-1.1-2.3-1.5-3.6-2c-14.9-5.1-28.1-13.1-38.9-24.6c-14.1-14.9-22.8-32.4-25.7-52.7c-2.1-14.5-0.7-28.7,4.1-42.5c8.2-23.2,23.1-40.9,44.5-53C279.5,45.4,295.7,41.1,313.1,41.2z"/>
+      <path fill="#EFA641" d="M396.5,436.5c-0.9,28-12.6,50.2-35.7,66.3c-9.8,6.9-20.8,11.2-32.5,13.1c-24.8,3.9-46.9-2.3-66.3-18.2c-15.5-12.8-25-29.2-28.4-48.9c-2.9-16.3-0.3-32.1,7-46.9c12.7-25.7,33.4-41.2,61.4-46c25.9-4.4,48.7,3.7,68.2,21c13.4,11.9,21.4,27,25.1,44.4C396.2,426.2,396.6,431.3,396.5,436.5z"/>
+    </svg>
+    <span>InspireU</span>
+  </a>
+  <p>© 2025 InspireU Disability Support. NDIS Registered Provider. Sydney, NSW.</p>
+  <nav class="footer-links" aria-label="Footer navigation">
+    <a href="tel:+61472815291">0472 815 291</a>
+    <a href="mailto:info@inspireudisabilitysupport.com.au">Email</a>
+    <a href="https://www.facebook.com/profile.php?id=61564848697022" aria-label="Facebook">Facebook</a>
+  </nav>
+</footer>
+</body>
+</html>

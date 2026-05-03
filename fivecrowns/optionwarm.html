@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InspireU Disability Support — Option 1: Warm & Human (Updated)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,800;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sand: #F5EFE6;
+    --warm-white: #FDFAF6;
+    --terracotta: #C4663A;
+    --terracotta-light: #E8896A;
+    --sage: #6B8F71;
+    --sage-dark: #3A5A40;
+    --sage-light: #A8C5AD;
+    --charcoal: #2C2C2C;
+    --mid-grey: #6B6B6B;
+    --light-grey: #E8E3DC;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 18px; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--warm-white); color: var(--charcoal); line-height: 1.7; overflow-x: hidden; }
+
+  /* NAV (Shortened for brevity - same as original) */
+  nav { background: var(--warm-white); border-bottom: 1px solid var(--light-grey); padding: 1.2rem 2rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; }
+  .logo-mark { width: 48px; height: 48px; background: var(--terracotta); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-family: 'Fraunces', serif; font-size: 1.4rem; font-weight: 800; }
+  .logo-text { display: flex; flex-direction: column; line-height: 1.1; }
+  .logo-text strong { font-family: 'Fraunces', serif; font-size: 1.2rem; font-weight: 600; color: var(--charcoal); }
+  .logo-text span { font-size: 0.72rem; color: var(--mid-grey); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; }
+  .nav-links { display: flex; gap: 2rem; list-style: none; align-items: center; }
+  .nav-links a { text-decoration: none; color: var(--mid-grey); font-weight: 500; }
+  .nav-cta { background: var(--terracotta); color: white !important; padding: 0.6rem 1.4rem; border-radius: 50px; }
+
+  /* HERO */
+  .hero { min-height: 90vh; display: grid; grid-template-columns: 1fr 1fr; align-items: center; max-width: 1200px; margin: 0 auto; padding: 5rem 2rem 4rem; gap: 4rem; }
+  .hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--sage-light); color: var(--sage-dark); padding: 0.4rem 1rem; border-radius: 50px; font-size: 0.8rem; font-weight: 500; text-transform: uppercase; margin-bottom: 1.5rem; }
+  .hero h1 { font-family: 'Fraunces', serif; font-size: clamp(2.8rem, 5vw, 4.2rem); font-weight: 800; line-height: 1.1; margin-bottom: 1.5rem; }
+  .hero h1 em { font-style: italic; color: var(--terracotta); }
+  .hero p { font-size: 1.1rem; color: var(--mid-grey); max-width: 480px; margin-bottom: 2.5rem; font-weight: 300; }
+  
+  .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .btn-primary { background: var(--terracotta); color: white; padding: 0.9rem 2rem; border-radius: 50px; text-decoration: none; font-weight: 500; }
+  .btn-secondary { color: var(--charcoal); padding: 0.9rem 2rem; border-radius: 50px; text-decoration: none; font-weight: 500; border: 2px solid var(--light-grey); }
+
+  /* NEW HERO IMAGE MASK */
+  .hero-blob {
+    width: 100%;
+    max-width: 480px;
+    aspect-ratio: 1;
+    margin: 0 auto;
+    border-radius: 60% 40% 55% 45% / 50% 60% 40% 50%;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+    animation: blobMorph 8s ease-in-out infinite;
+    position: relative;
+    border: 8px solid white;
+  }
+  
+  .hero-blob img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.05); /* Prevents edge clipping during animation */
+  }
+
+  @keyframes blobMorph {
+    0%, 100% { border-radius: 60% 40% 55% 45% / 50% 60% 40% 50%; }
+    33% { border-radius: 40% 60% 45% 55% / 60% 40% 60% 40%; }
+    66% { border-radius: 55% 45% 60% 40% / 40% 55% 45% 60%; }
+  }
+
+  /* CONTACT (Updated Background) */
+  .contact { padding: 6rem 2rem; max-width: 800px; margin: 0 auto; text-align: center; }
+  .contact-card {
+    background: var(--sage-dark); /* Changed from charcoal to dark sage */
+    color: white;
+    border-radius: 28px;
+    padding: 4rem;
+    box-shadow: 0 10px 40px rgba(58, 90, 64, 0.2);
+  }
+  .contact-card h2 { font-family: 'Fraunces', serif; font-size: 2.4rem; font-weight: 600; margin-bottom: 0.75rem; }
+  .contact-card h2 em { font-style: italic; color: var(--sand); }
+  .contact-card p { color: rgba(255,255,255,0.8); font-size: 1rem; margin-bottom: 2.5rem; font-weight: 300; }
+  
+  .contact-methods { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem; }
+  .contact-item { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 14px; padding: 1rem 1.5rem; display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: white; }
+  
+  @media (max-width: 768px) {
+    .hero { grid-template-columns: 1fr; padding: 3rem 1.5rem; }
+    .hero-blob { order: -1; max-width: 350px; }
+  }
+</style>
+</head>
+<body>
+
+<nav role="navigation">
+  <a href="/" class="logo">
+    <div class="logo-mark">i</div>
+    <div class="logo-text"><strong>InspireU</strong><span>Disability Support</span></div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#about">About Us</a></li>
+    <li><a href="tel:+61472815291" class="nav-cta">📞 Call Us</a></li>
+  </ul>
+</nav>
+
+<main>
+  <section class="hero">
+    <div class="hero-text">
+      <div class="hero-badge">Sydney & surrounds</div>
+      <h1>The disability support<br>that truly <em>inspires</em></h1>
+      <p>Person-centred care built around you. We walk alongside individuals with disabilities to live full, independent lives — with compassion, dignity, and joy.</p>
+      <div class="hero-actions">
+        <a href="#contact" class="btn-primary">Get started →</a>
+        <a href="tel:+61472815291" class="btn-secondary">📞 0472 815 291</a>
+      </div>
+    </div>
+    
+    <div class="hero-visual">
+      <div class="hero-blob">
+        <img src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=1000" alt="A friendly support worker and client sharing a laugh">
+      </div>
+    </div>
+  </section>
+
+  <section class="contact" id="contact">
+    <div class="contact-card">
+      <h2>Ready to <em>get started</em>?</h2>
+      <p>Our friendly team is here to answer your questions and help you find the right support. Reach out — we'd love to hear from you.</p>
+      <a href="#contact" class="btn-primary" style="background: var(--terracotta); border: none;">Book a free consultation</a>
+    </div>
+  </section>
+</main>
+</body>
+</html>

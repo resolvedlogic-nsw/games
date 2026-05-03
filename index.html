@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Game Launcher</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            padding: 40px;
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 30px;
+        }
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        a.game-button {
+            display: block;
+            padding: 15px 20px;
+            background: #0078d4;
+            color: white;
+            text-decoration: none;
+            font-size: 20px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        a.game-button:hover {
+            background: #005fa3;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Game Launcher</h1>
+
+    <div class="button-container">
+        <a class="game-button" href="/games/cinqo/index.html">Play Cinqo</a>
+        <a class="game-button" href="/games/fivecrowns/fc.html">Play Five Crowns</a>
+        <a class="game-button" href="/games/knightstrap/game.html">Play Knightstrap</a>
+        <a class="game-button" href="/labyrinth_game/">Play Labyrinth (Django)</a>
+    </div>
+
+</body>
+</html>

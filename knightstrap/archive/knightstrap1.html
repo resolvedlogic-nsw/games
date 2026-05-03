@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Knight’s Trap</title>
+<style>
+  body { margin: 0; overflow: hidden; background: #111; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; -webkit-user-select: none; }
+  
+  /* MAIN MENU */
+  #main-menu {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9);
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      z-index: 20;
+  }
+  .menu-btn {
+      margin: 10px; padding: 20px 60px; font-size: 24px;
+      background: #444; color: white; border: 2px solid #666; border-radius: 10px;
+      cursor: pointer; transition: all 0.2s;
+  }
+  .menu-btn:hover { background: #555; border-color: #888; transform: scale(1.05); }
+
+  /* GAME UI (Hidden initially) */
+  #ui-container { display: none; }
+  #ui {
+    position: absolute; top: 20px; left: 0; right: 0;
+    text-align: center; pointer-events: none; z-index: 5;
+  }
+  #turn-badge {
+    display: inline-block; padding: 10px 40px;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+    border: 3px solid #555; border-radius: 50px;
+    color: white; font-size: 24px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 2px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  /* GAME OVER MODAL */
+  #game-over {
+    display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.3);
+    flex-direction: column; justify-content: center; align-items: center;
+    color: white; z-index: 10; pointer-events: none;
+  }
+  #game-over-card {
+      background: rgba(20, 20, 20, 0.95); padding: 40px 60px;
+      border-radius: 20px; border: 1px solid #444;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+      text-align: center; pointer-events: auto; backdrop-filter: blur(10px);
+  }
+  h1 { font-size: 50px; margin: 0 0 10px 0; text-shadow: 0 0 30px rgba(255,255,255,0.2); }
+  p { font-size: 20px; color: #aaa; margin-bottom: 30px; }
+  .restart-btn {
+    padding: 15px 50px; font-size: 20px; border: none; border-radius: 50px;
+    cursor: pointer; background: #ffaa00; color: #000; font-weight: bold;
+    box-shadow: 0 0 20px rgba(255, 170, 0, 0.4); transition: transform 0.1s;
+  }
+  .restart-btn:hover { transform: scale(1.05); background: #ffcc44; }
+
+  /* INSTRUCTIONS */
+  #hints {
+    position: absolute; bottom: 20px; width: 100%; text-align: center;
+    color: rgba(255,255,255,0.3); pointer-events: none; font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<div id="main-menu">
+    <h1 style="font-size: 80px; color: #ffaa00;">KNIGHT'S TRAP</h1>
+    <p>Select Board Size</p>
+    <button class="menu-btn" id="btn-8">8 x 8</button>
+    <button class="menu-btn" id="btn-10">10 x 10</button>
+</div>
+
+<div id="ui-container">
+    <div id="ui">
+      <div id="turn-badge">...</div>
+    </div>
+
+    <div id="game-over">
+      <div id="game-over-card">
+          <h1 id="winner-text">BLUE WINS!</h1>
+          <p id="reason-text">Red was trapped.</p>
+          <button class="restart-btn" onclick="location.reload()">Play Again</button>
+      </div>
+    </div>
+
+    <div id="hints">Drag to Rotate • Click to Move</div>
+</div>
+
+<script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* --- CONFIG --- */
+const TILE_SIZE = 1;
+const GAP = 0.1;
+let BOARD_SIZE = 8; // Default, changes on selection
+const STEP = TILE_SIZE + GAP;
+
+/* --- GAME STATE --- */
+let turn;
+let isAnimating = false;
+let gameActive = false;
+let previousHotTile = null;
+
+const state = {
+    blue: { x: 0, z: 0, mesh: null, color: 0x0044ff },
+    red:  { x: 7, z: 7, mesh: null, color: 0xff2222 }
+};
+
+/* --- SCENE SETUP (Global) --- */
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x1a3322, 10, 40);
+
+function createFeltTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512; canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#1a3322'; 
+    ctx.fillRect(0,0, 512, 512);
+    const imageData = ctx.getImageData(0,0, 512, 512);
+    const data = imageData.data;
+    for(let i = 0; i < data.length; i += 4) {
+        const grain = (Math.random() - 0.5) * 15;
+        data[i] += grain; data[i+1] += grain; data[i+2] += grain;
+    }
+    ctx.putImageData(imageData, 0, 0);
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(4, 4);
+    return tex;
+}
+scene.background = createFeltTexture();
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+// Initial camera position, adjusted later based on board size
+camera.position.set(0, 14, 10);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.05;
+controls.maxPolarAngle = Math.PI / 2.2;
+controls.minDistance = 8; controls.maxDistance = 35;
+
+/* --- LIGHTING --- */
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
+mainLight.position.set(5, 15, 5);
+mainLight.castShadow = true;
+mainLight.shadow.mapSize.width = 2048; mainLight.shadow.mapSize.height = 2048;
+scene.add(mainLight);
+const fillLight = new THREE.DirectionalLight(0xeebb99, 0.5);
+fillLight.position.set(-5, 5, -5);
+scene.add(fillLight);
+
+/* --- MATERIALS --- */
+const tileGeo = new THREE.BoxGeometry(TILE_SIZE, 0.2, TILE_SIZE);
+function createTileMaterial() {
+    return new THREE.MeshStandardMaterial({
+        color: 0x8b5a2b, roughness: 0.6, metalness: 0.1,
+        emissive: 0x000000, emissiveIntensity: 0
+    });
+}
+
+/* --- ASSETS (Knights) --- */
+const skinMat = new THREE.MeshStandardMaterial({ color: 0xffccaa, roughness: 0.5 }); 
+const metalMat = new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.3, metalness: 0.8 }); 
+const darkMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.9 }); 
+
+function createHumanKnight(teamColor) {
+    const group = new THREE.Group();
+    const clothMat = new THREE.MeshStandardMaterial({ color: teamColor, roughness: 0.8 });
+    // Legs
+    const legGeo = new THREE.BoxGeometry(0.12, 0.3, 0.12);
+    group.add(new THREE.Mesh(legGeo, darkMat)).position.set(-0.1, 0.15, 0); 
+    group.add(new THREE.Mesh(legGeo, darkMat)).position.set(0.1, 0.15, 0); 
+    // Torso
+    group.add(new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 0.2), clothMat)).position.y = 0.475;
+    // Plate
+    group.add(new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.2, 0.22), metalMat)).position.y = 0.52;
+    // Head
+    group.add(new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.25, 0.25), metalMat)).position.y = 0.775;
+    // Visor
+    group.add(new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.08, 0.15), darkMat)).position.set(0, 0.775, 0.1);
+    // Plume
+    group.add(new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.15, 0.25), clothMat)).position.y = 0.95;
+    // Arms & Gear
+    const armGeo = new THREE.BoxGeometry(0.1, 0.3, 0.1);
+    group.add(new THREE.Mesh(armGeo, clothMat)).position.set(-0.25, 0.5, 0); // Left arm
+    const shield = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.35, 0.05), clothMat); shield.position.set(-0.35, 0.45, 0.15); shield.rotation.y = 0.3; group.add(shield);
+    const shieldBorder = new THREE.Mesh(new THREE.BoxGeometry(0.27, 0.37, 0.04), metalMat); shieldBorder.position.set(-0.35, 0.45, 0.15); shieldBorder.rotation.y = 0.3; group.add(shieldBorder);
+    group.add(new THREE.Mesh(armGeo, clothMat)).position.set(0.25, 0.5, 0); // Right arm
+    group.add(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.04, 0.04), metalMat)).position.set(0.25, 0.35, 0.15); // Hilt
+    group.add(new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.4, 0.02), metalMat)).position.set(0.25, 0.55, 0.15); // Blade
+    
+    group.traverse(c => { if(c.isMesh) c.castShadow = true; });
+    return group;
+}
+
+/* --- BOARD & GAME START LOGIC --- */
+const boardGroup = new THREE.Group();
+scene.add(boardGroup);
+let tiles = [];
+
+function gridToWorld(x, z) {
+  const offset = ((BOARD_SIZE - 1) * STEP) / 2;
+  return { x: x * STEP - offset, y: 0, z: z * STEP - offset };
+}
+
+function startGame(size) {
+    BOARD_SIZE = size;
+    
+    // Adjust camera for larger board
+    if(BOARD_SIZE > 8) {
+        camera.position.set(0, 18, 15);
+    }
+
+    // Generate Tiles
+    tiles = [];
+    boardGroup.clear(); // Clear previous if any
+    for (let x = 0; x < BOARD_SIZE; x++) {
+      tiles[x] = [];
+      for (let z = 0; z < BOARD_SIZE; z++) {
+        const pos = gridToWorld(x, z);
+        const tile = new THREE.Mesh(tileGeo, createTileMaterial());
+        tile.position.set(pos.x, 0, pos.z);
+        tile.receiveShadow = true; tile.castShadow = true;
+        tile.userData = { gridX: x, gridZ: z, burned: false, isTile: true };
+        tiles[x][z] = tile;
+        boardGroup.add(tile);
+      }
+    }
+
+    // Spawn Knights
+    if(state.blue.mesh) scene.remove(state.blue.mesh);
+    state.blue.mesh = createHumanKnight(state.blue.color);
+    const bPos = gridToWorld(0, 0);
+    state.blue.mesh.position.set(bPos.x, 0.05, bPos.z);
+    state.blue.mesh.rotation.y = Math.PI / 2; 
+    scene.add(state.blue.mesh);
+
+    if(state.red.mesh) scene.remove(state.red.mesh);
+    state.red.mesh = createHumanKnight(state.red.color);
+    // Dynamic end position based on board size
+    const rEnd = BOARD_SIZE - 1;
+    state.red.x = rEnd; state.red.z = rEnd;
+    const rPos = gridToWorld(rEnd, rEnd);
+    state.red.mesh.position.set(rPos.x, 0.05, rPos.z);
+    state.red.mesh.rotation.y = -Math.PI / 2; 
+    scene.add(state.red.mesh);
+
+    // Hide Menu, Show Game
+    document.getElementById('main-menu').style.display = 'none';
+    document.getElementById('ui-container').style.display = 'block';
+    
+    // Start Game State
+    turn = Math.random() < 0.5 ? 'blue' : 'red';
+    gameActive = true;
+    updateTurnUI();
+    highlightMoves();
+}
+
+// MENU Event Listeners
+document.getElementById('btn-8').addEventListener('click', () => startGame(8));
+document.getElementById('btn-10').addEventListener('click', () => startGame(10));
+
+
+/* --- PARTICLES --- */
+const particleGeo = new THREE.BoxGeometry(0.08, 0.08, 0.08);
+const particleMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+const particles = []; 
+
+function spawnParticles(x, z) {
+    const count = 15;
+    const origin = gridToWorld(x, z);
+    for(let i=0; i<count; i++) {
+        const mesh = new THREE.Mesh(particleGeo, particleMat.clone());
+        mesh.position.set(origin.x + (Math.random()-0.5)*0.8, 0.1, origin.z + (Math.random()-0.5)*0.8);
+        const velocity = new THREE.Vector3((Math.random()-0.5)*0.1, Math.random()*0.2, (Math.random()-0.5)*0.1);
+        scene.add(mesh);
+        particles.push({ mesh, velocity, life: 1.0 });
+    }
+}
+function updateParticles() {
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life -= 0.02; 
+        p.mesh.position.add(p.velocity);
+        p.velocity.y -= 0.01; 
+        p.mesh.rotation.x += 0.1; p.mesh.rotation.z += 0.1;
+        p.mesh.scale.setScalar(p.life);
+        if(p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
+    }
+}
+
+/* --- LOGIC --- */
+function updateTurnUI() {
+    const badge = document.getElementById('turn-badge');
+    badge.innerText = turn + "'s Turn";
+    const color = turn === 'blue' ? '#4488ff' : '#ff4444';
+    badge.style.borderColor = color; badge.style.color = color; badge.style.boxShadow = `0 0 15px ${color}40`;
+}
+
+function isLegalMove(sx, sz, tx, tz) {
+    if (tx < 0 || tx >= BOARD_SIZE || tz < 0 || tz >= BOARD_SIZE) return false;
+    if (tiles[tx][tz].userData.burned) return false;
+    const dx = Math.abs(tx - sx), dz = Math.abs(tz - sz);
+    return (dx === 2 && dz === 1) || (dx === 1 && dz === 2);
+}
+
+function hasLegalMoves(player) {
+    const p = state[player];
+    const moves = [[1,2],[1,-2],[-1,2],[-1,-2],[2,1],[2,-1],[-2,1],[-2,-1]];
+    for (let m of moves) {
+        if (isLegalMove(p.x, p.z, p.x + m[0], p.z + m[1])) return true;
+    }
+    return false;
+}
+
+function highlightMoves() {
+    for(let row of tiles) { for(let t of row) { if(!t.userData.burned) t.material.emissiveIntensity = 0; } }
+    const p = state[turn];
+    const moves = [[1,2],[1,-2],[-1,2],[-1,-2],[2,1],[2,-1],[-2,1],[-2,-1]];
+    for (let m of moves) {
+        const tx = p.x + m[0], tz = p.z + m[1];
+        if (isLegalMove(p.x, p.z, tx, tz)) {
+            const tile = tiles[tx][tz];
+            tile.material.emissive.setHex(state[turn].color);
+            tile.material.emissiveIntensity = 0.5;
+        }
+    }
+}
+
+function endGame(winner, reason) {
+    gameActive = false;
+    const ui = document.getElementById('game-over');
+    ui.style.display = 'flex'; 
+    document.getElementById('winner-text').innerText = winner.toUpperCase() + " WINS!";
+    document.getElementById('winner-text').style.color = state[winner].color === 0x0044ff ? '#4488ff' : '#ff4444';
+    document.getElementById('reason-text').innerText = reason;
+    
+    for(let row of tiles) { for(let t of row) { if(!t.userData.burned) t.material.emissiveIntensity = 0; } }
+}
+
+/* --- BURN LOGIC (TONED DOWN) --- */
+function igniteTile(x, z) {
+    const tile = tiles[x][z];
+    tile.userData.burned = true;
+    
+    // TONED DOWN MAGMA - Dull deep red/orange
+    tile.material.color.setHex(0x441100); 
+    tile.material.emissive.setHex(0xcc4400); // Less bright orange
+    tile.material.emissiveIntensity = 0.4;  // Much lower intensity
+    
+    tile.position.y = -0.1;
+}
+
+function coolDownTile(tile) {
+    if(!tile) return;
+    tile.material.color.setHex(0x1a1a1a);
+    tile.material.emissive.setHex(0x331100); 
+    tile.material.emissiveIntensity = 0.2;
+    let y = -0.1;
+    function sinkFull() {
+        if(y > -0.3) {
+            y -= 0.02; tile.position.y = y; requestAnimationFrame(sinkFull);
+        }
+    }
+    sinkFull();
+}
+
+/* --- MOVEMENT CORE --- */
+function executeMove(tx, tz) {
+    isAnimating = true;
+    const pState = state[turn];
+    const movingPlayer = turn; 
+    const enemyPlayer = turn === 'blue' ? 'red' : 'blue';
+    const oldX = pState.x; const oldZ = pState.z;
+    
+    if (previousHotTile) coolDownTile(previousHotTile);
+    igniteTile(oldX, oldZ);
+    previousHotTile = tiles[oldX][oldZ]; 
+    spawnParticles(oldX, oldZ);
+    
+    const startPos = pState.mesh.position.clone();
+    const endPos = gridToWorld(tx, tz); endPos.y = 0.05; 
+    pState.mesh.lookAt(endPos.x, pState.mesh.position.y, endPos.z);
+
+    const startTime = Date.now(); const duration = 500;
+    function jump() {
+        const now = Date.now(); const progress = Math.min((now - startTime) / duration, 1);
+        pState.mesh.position.lerpVectors(startPos, endPos, progress);
+        pState.mesh.position.y = 0.05 + Math.sin(progress * Math.PI) * 1.5;
+        
+        if(progress < 1) { requestAnimationFrame(jump); } else {
+            pState.x = tx; pState.z = tz;
+            if (tx === state[enemyPlayer].x && tz === state[enemyPlayer].z) {
+                endGame(movingPlayer, "Captured the enemy!"); return;
+            }
+            if (!hasLegalMoves(movingPlayer)) {
+                endGame(enemyPlayer, movingPlayer.toUpperCase() + " trapped themselves!"); return;
+            }
+            turn = enemyPlayer;
+            updateTurnUI();
+            if (!hasLegalMoves(turn)) {
+                endGame(movingPlayer, turn.toUpperCase() + " has no moves left!"); return;
+            }
+            highlightMoves();
+            isAnimating = false;
+        }
+    }
+    jump();
+}
+
+/* --- INPUT --- */
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+let dragStart = { x: 0, y: 0 };
+
+renderer.domElement.addEventListener('pointerdown', (e) => { dragStart.x = e.clientX; dragStart.y = e.clientY; });
+renderer.domElement.addEventListener('pointerup', (e) => {
+    const dist = Math.sqrt(Math.pow(e.clientX - dragStart.x, 2) + Math.pow(e.clientY - dragStart.y, 2));
+    if (dist > 5) return;
+    if (!gameActive || isAnimating) return;
+
+    pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+    pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    const hits = raycaster.intersectObjects(boardGroup.children);
+    
+    if (hits.length > 0) {
+        const t = hits[0].object;
+        if (t.userData.isTile) {
+            const p = state[turn];
+            if (isLegalMove(p.x, p.z, t.userData.gridX, t.userData.gridZ)) {
+                executeMove(t.userData.gridX, t.userData.gridZ);
+            }
+        }
+    }
+});
+
+/* --- LOOP --- */
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    updateParticles();
+    if (!isAnimating && gameActive && state.blue.mesh && state.red.mesh) {
+        const t = Date.now() * 0.003;
+        state.blue.mesh.position.y = 0.05 + Math.sin(t) * 0.02;
+        state.red.mesh.position.y = 0.05 + Math.sin(t + 1.5) * 0.02;
+    }
+    renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+</script>
+</body>
+</html>

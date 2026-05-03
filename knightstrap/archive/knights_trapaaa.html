@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Knight's Trap</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap');
+  * { box-sizing: border-box; }
+body {
+margin: 0;
+  overflow: hidden;
+  /* Deep charcoal to black radial gradient */
+  background: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 100%);
+  font-family: 'Cinzel', serif;
+}  
+   /* body { margin: 0; overflow: hidden; background: #111; font-family: 'Cinzel', serif; user-select: none; -webkit-user-select: none; }  */
+
+  #main-menu {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(ellipse at center, #1a0a00 0%, #0a0500 60%, #000 100%);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    z-index: 20; gap: 14px;
+  }
+  .menu-title {
+    font-size: 70px; font-weight: 900; color: #ffaa00;
+    text-shadow: 0 0 40px #ff6600, 0 0 80px #ff330066;
+    letter-spacing: 6px; margin-bottom: 10px; text-align: center;
+    animation: flicker 3s infinite;
+  }
+  @keyframes flicker {
+    0%,100%{text-shadow:0 0 40px #ff6600,0 0 80px #ff330066;}
+    50%{text-shadow:0 0 60px #ffaa00,0 0 100px #ff660088,0 0 5px #fff;}
+  }
+  .menu-subtitle { color: #cc8833; font-size: 17px; letter-spacing: 4px; margin-bottom: 28px; text-transform: uppercase; }
+  .menu-btn {
+    padding: 15px 60px; font-size: 19px; font-family: 'Cinzel', serif; font-weight: 700;
+    background: linear-gradient(135deg, #3a1a00, #6a3000); color: #ffcc77;
+    border: 2px solid #aa6600; border-radius: 4px; cursor: pointer;
+    transition: all 0.2s; letter-spacing: 2px; text-transform: uppercase;
+    box-shadow: 0 0 20px #ff660033, inset 0 1px 0 #ffaa0044;
+  }
+  .menu-btn:hover { background: linear-gradient(135deg, #5a2800, #8a4400); border-color: #ffaa00; transform: scale(1.04); box-shadow: 0 0 30px #ff880055; }
+  .menu-divider { color: #553300; font-size: 13px; letter-spacing: 3px; }
+
+  #ui-container { display: none; }
+  #ui { position: absolute; top: 20px; left: 0; right: 0; text-align: center; pointer-events: none; z-index: 5; }
+  #turn-badge {
+    display: inline-block; padding: 10px 44px;
+    background: rgba(0,0,0,0.78); backdrop-filter: blur(8px);
+    border: 2px solid #555; border-radius: 4px;
+    color: white; font-size: 19px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 3px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  #game-over {
+    display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+    flex-direction: column; justify-content: center; align-items: center;
+    color: white; z-index: 10; pointer-events: none;
+  }
+  #game-over-card {
+    background: linear-gradient(160deg, #1a0800, #0d0500);
+    padding: 48px 68px; border-radius: 6px; border: 2px solid #aa6600;
+    box-shadow: 0 0 60px #ff440033, 0 20px 60px rgba(0,0,0,0.9);
+    text-align: center; pointer-events: auto;
+  }
+  #game-over h1 { font-size: 50px; margin: 0 0 10px; font-weight: 900; letter-spacing: 4px; }
+  #game-over p { font-size: 17px; color: #cc9955; margin-bottom: 32px; letter-spacing: 2px; }
+  .restart-btn {
+    padding: 14px 50px; font-size: 17px; border: 2px solid #aa6600; border-radius: 4px;
+    cursor: pointer; background: linear-gradient(135deg, #3a1a00, #6a3000);
+    color: #ffcc77; font-family: 'Cinzel', serif; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    box-shadow: 0 0 20px #ff660033; transition: transform 0.15s, background 0.2s;
+  }
+  .restart-btn:hover { transform: scale(1.05); background: linear-gradient(135deg, #5a2800, #8a4400); }
+  #hints {
+    position: absolute; bottom: 18px; width: 100%; text-align: center;
+    color: rgba(255,200,100,0.22); pointer-events: none; font-size: 12px; letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div id="main-menu">
+  <div class="menu-title">KNIGHT'S TRAP</div>
+  <div class="menu-subtitle">Choose your battlefield</div>
+  <button class="menu-btn" id="btn-8">8 × 8 Board</button>
+  <div class="menu-divider">— or —</div>
+  <button class="menu-btn" id="btn-10">10 × 10 Board</button>
+</div>
+
+<div id="ui-container">
+  <div id="ui"><div id="turn-badge">...</div></div>
+  <div id="game-over">
+    <div id="game-over-card">
+      <h1 id="winner-text">Blue Wins!</h1>
+      <p id="reason-text">Red was trapped.</p>
+      <button class="restart-btn" onclick="location.reload()">⚔ Play Again</button>
+    </div>
+  </div>
+  <div id="hints">Drag to Rotate &nbsp;•&nbsp; Click a glowing square to Move</div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* --- GLOBAL CONFIG --- */
+const TILE_SIZE = 1, GAP = 0.1, STEP = TILE_SIZE + GAP;
+let BOARD_SIZE = 8;
+let turn = 'blue', isAnimating = false, gameActive = false;
+let burningTileCoords = []; 
+
+// GLOBAL STATE - DO NOT RE-DECLARE INSIDE FUNCTIONS
+const state = {
+  blue: { x:0, z:0, mesh:null, color:0x1a55ff },
+  red:  { x:7, z:7, mesh:null, color:0xdd1111 }
+};
+
+/* --- SCENE --- */
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x080300, 0.05);
+scene.background = new THREE.Color(0x0c0500);
+
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 200);
+camera.position.set(0, 15, 13);
+camera.lookAt(0,0,0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.06;
+controls.maxPolarAngle = Math.PI / 2.15;
+controls.minDistance = 7; controls.maxDistance = 42;
+
+/* --- LIGHTS --- */
+scene.add(new THREE.AmbientLight(0xffe8cc, 0.4));
+const sun = new THREE.DirectionalLight(0xfffbf0, 1.5);
+sun.position.set(8, 20, 8); sun.castShadow = true;
+sun.shadow.mapSize.width = sun.shadow.mapSize.height = 2048;
+sun.shadow.camera.left = -22; sun.shadow.camera.right = 22;
+sun.shadow.camera.top = 22; sun.shadow.camera.bottom = -22;
+sun.shadow.camera.far = 70;
+scene.add(sun);
+const fillLight = new THREE.DirectionalLight(0x8899ff, 0.28);
+fillLight.position.set(-5, 4, -5);
+scene.add(fillLight);
+
+/* --- ASSETS --- */
+function makeWoodTex() {
+  const S = 512, cv = document.createElement('canvas');
+  cv.width = cv.height = S;
+  const cx = cv.getContext('2d');
+  const g = cx.createLinearGradient(0, 0, S * 0.2, S);
+  g.addColorStop(0, '#7a4a1e'); g.addColorStop(0.25,'#8b5a28'); g.addColorStop(0.5, '#6e3d12');
+  g.addColorStop(0.75,'#9b6a38'); g.addColorStop(1, '#7a4a1e');
+  cx.fillStyle = g; cx.fillRect(0,0,S,S);
+  cx.globalAlpha = 0.16;
+  for (let i = 0; i < 40; i++) {
+    const bx = (i/40)*S + Math.sin(i*1.4)*16;
+    cx.strokeStyle = Math.random()>0.5 ? '#3d1f00' : '#c88840';
+    cx.lineWidth = 1 + Math.random()*2.5;
+    cx.beginPath(); cx.moveTo(bx, 0);
+    for (let y = 0; y < S; y += 3) cx.lineTo(bx + Math.sin(y*0.04+i)*9, y);
+    cx.stroke();
+  }
+  const t = new THREE.CanvasTexture(cv);
+  return t;
+}
+const woodTex = makeWoodTex();
+function woodMat() { return new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.78 }); }
+const tileGeo = new THREE.BoxGeometry(TILE_SIZE, 0.22, TILE_SIZE);
+
+/* --- KNIGHT BUILDER --- */
+const mMetal = new THREE.MeshStandardMaterial({ color:0xbbbbcc, roughness:0.22, metalness:0.92 });
+const mDkMetal = new THREE.MeshStandardMaterial({ color:0x44445a, roughness:0.3, metalness:0.85 });
+const mVisor = new THREE.MeshStandardMaterial({ color:0x080814, roughness:0.08, metalness:0.98 });
+const mGold = new THREE.MeshStandardMaterial({ color:0xddaa00, roughness:0.18, metalness:1.0 });
+const silverArmourMat = new THREE.MeshStandardMaterial({ color: 0xcccccc,  metalness: 0.9,  roughness: 0.15 });
+const steelDetailMat = new THREE.MeshStandardMaterial({  color: 0x666666,  metalness: 0.8,  roughness: 0.3 
+});
+function B(w,h,d){ return new THREE.BoxGeometry(w,h,d); }
+function M(geo,mat,x=0,y=0,z=0,rx=0,ry=0){
+  const m=new THREE.Mesh(geo,mat);
+  m.position.set(x,y,z); m.rotation.set(rx,ry,0); m.castShadow=true; return m;
+}
+
+function createKnight(teamColor) {
+  const g = new THREE.Group();
+  const mCloth = new THREE.MeshStandardMaterial({ color:teamColor, roughness:0.88 });
+  g.add(M(B(0.14,0.10,0.16), mDkMetal, -0.09, 0.05, 0.01));
+  g.add(M(B(0.14,0.10,0.16), mDkMetal, 0.09, 0.05, 0.01));
+  g.add(M(B(0.13,0.22,0.13), mDkMetal, -0.09, 0.19, 0));
+  g.add(M(B(0.13,0.22,0.13), mDkMetal, 0.09, 0.19, 0));
+  g.add(M(B(0.28,0.14,0.17), mCloth, 0, 0.32, 0));
+  g.add(M(B(0.38,0.30,0.22), mMetal, 0, 0.50, 0));
+  g.add(M(B(0.30,0.27,0.30), mMetal, 0, 0.87, 0));
+  g.add(M(B(0.33,0.07,0.06), mVisor, 0, 0.88, 0.14));
+  g.add(M(B(0.06,0.20,0.20), mCloth, 0, 1.15,-0.01)); 
+  // Sword & Shield
+  const sb = M(B(0.28,0.40,0.06), mCloth, -0.42, 0.46, 0.09); sb.rotation.y= 0.25; g.add(sb);
+  g.add(M(B(0.035,0.55,0.025),mMetal, 0.26, 0.65, 0.13)); 
+  g.traverse(c => { if(c.isMesh) c.castShadow=true; });
+  return g;
+}
+
+/* --- LOGIC --- */
+const boardGroup = new THREE.Group();
+scene.add(boardGroup);
+let tiles = [];
+
+function g2w(x,z) {
+  const off = ((BOARD_SIZE-1)*STEP)/2;
+  return { x: x*STEP-off, y:0, z: z*STEP-off };
+}
+
+function isLegal(sx,sz,tx,tz){
+  if(tx<0||tx>=BOARD_SIZE||tz<0||tz>=BOARD_SIZE) return false;
+  if(tiles[tx][tz].userData.burned) return false;
+  const dx=Math.abs(tx-sx),dz=Math.abs(tz-sz);
+  return (dx===2&&dz===1)||(dx===1&&dz===2);
+}
+
+function hasMoves(player){
+  const p=state[player];
+  return [[1,2],[1,-2],[-1,2],[-1,-2],[2,1],[2,-1],[-2,1],[-2,-1]].some(([dx,dz])=>isLegal(p.x,p.z,p.x+dx,p.z+dz));
+}
+
+function highlightMoves() {
+  for(let x=0;x<BOARD_SIZE;x++) for(let z=0;z<BOARD_SIZE;z++){
+    const t=tiles[x][z];
+    if(!t.userData.burned && !t.userData.onFire){ t.material.emissive?.setHex(0); }
+  }
+  const p=state[turn];
+  [[1,2],[1,-2],[-1,2],[-1,-2],[2,1],[2,-1],[-2,1],[-2,-1]].forEach(([dx,dz])=>{
+    const tx=p.x+dx, tz=p.z+dz;
+    if(isLegal(p.x,p.z,tx,tz)){
+      tiles[tx][tz].material.emissive.setHex(state[turn].color);
+      tiles[tx][tz].material.emissiveIntensity=0.60;
+    }
+  });
+}
+
+function updateUI(){
+  const badge=document.getElementById('turn-badge');
+  badge.innerText=(turn==='blue'?'⚔ Blue Knight':'⚔ Red Knight')+"'s Turn";
+  const col=turn==='blue'?'#4488ff':'#ff4444';
+  badge.style.borderColor=col; badge.style.color=col; badge.style.boxShadow=`0 0 20px ${col}55`;
+}
+
+function endGame(winner,reason){
+  gameActive=false;
+  document.getElementById('game-over').style.display='flex';
+  document.getElementById('winner-text').innerText=(winner==='blue'?'Blue':'Red')+' Knight Wins!';
+  document.getElementById('reason-text').innerText=reason;
+}
+
+/* --- FIRE FX --- */
+const fireParticles = [];
+function spawnFire(gx, gz) {
+  const origin = g2w(gx, gz);
+  const tile = tiles[gx][gz];
+  tile.userData.burned = true;
+  tile.material.color.setHex(0x0e0e0e);
+  tile.material.emissive.setHex(0xff3300);
+  tile.material.emissiveIntensity = 0.55;
+  tile.position.y = -0.09;
+}
+
+/* --- START GAME --- */
+function startGame(size) {
+  BOARD_SIZE = size;
+  gameActive = true;
+  isAnimating = false;
+
+  // Cleanup
+  boardGroup.clear();
+  tiles = [];
+
+  // Build Board
+  for(let x=0; x<BOARD_SIZE; x++){
+    tiles[x] = [];
+    for(let z=0; z<BOARD_SIZE; z++){
+      const pos = g2w(x,z);
+      const t = new THREE.Mesh(tileGeo, woodMat());
+      t.position.set(pos.x, 0, pos.z);
+      t.userData = { gridX:x, gridZ:z, burned:false, isTile:true };
+      tiles[x][z] = t;
+      boardGroup.add(t);
+    }
+  }
+
+  // Setup Blue
+  state.blue.x = 0; state.blue.z = 0;
+  if(state.blue.mesh) scene.remove(state.blue.mesh);
+  state.blue.mesh = createKnight(state.blue.color);
+  const bp = g2w(0,0);
+  state.blue.mesh.position.set(bp.x, 0.11, bp.z);
+  scene.add(state.blue.mesh);
+
+  // Setup Red
+  const end = BOARD_SIZE - 1;
+  state.red.x = end; state.red.z = end;
+  if(state.red.mesh) scene.remove(state.red.mesh);
+  state.red.mesh = createKnight(state.red.color);
+  const rp = g2w(end, end);
+  state.red.mesh.position.set(rp.x, 0.11, rp.z);
+  scene.add(state.red.mesh);
+
+  // Transition UI
+  document.getElementById('main-menu').style.display = 'none';
+  document.getElementById('ui-container').style.display = 'block';
+  
+  turn = Math.random() < 0.5 ? 'blue' : 'red';
+  updateUI();
+  highlightMoves();
+}
+
+/* --- MOVEMENT --- */
+function executeMove(tx,tz){
+  isAnimating=true;
+  const ps=state[turn], mover=turn, enemy=turn==='blue'?'red':'blue';
+  const ox=ps.x, oz=ps.z;
+
+  spawnFire(ox, oz);
+
+  const startPos=ps.mesh.position.clone();
+  const ep=g2w(tx,tz);
+  const endPos=new THREE.Vector3(ep.x,0.11,ep.z);
+  ps.mesh.lookAt(ep.x, 0.11, ep.z);
+
+  const t0=Date.now(), dur=500;
+  function jump(){
+    const raw=Math.min((Date.now()-t0)/dur,1);
+    const ease=raw<0.5?2*raw*raw:-1+(4-2*raw)*raw;
+    ps.mesh.position.lerpVectors(startPos,endPos,ease);
+    ps.mesh.position.y=0.11+Math.sin(raw*Math.PI)*1.8;
+    if(raw<1){requestAnimationFrame(jump);return;}
+    
+    ps.x=tx; ps.z=tz;
+    if(tx===state[enemy].x && tz===state[enemy].z){ endGame(mover,'The enemy was captured!'); return; }
+    if(!hasMoves(mover)){ endGame(enemy, mover+' trapped themselves!'); return; }
+    turn=enemy; 
+    updateUI();
+    if(!hasMoves(turn)){ endGame(mover, turn+' has no moves!'); return; }
+    highlightMoves(); 
+    isAnimating=false;
+  }
+  jump();
+}
+
+/* --- INPUTS --- */
+document.getElementById('btn-8').onclick = () => startGame(8);
+document.getElementById('btn-10').onclick = () => startGame(10);
+
+const ray=new THREE.Raycaster(), ptr=new THREE.Vector2();
+renderer.domElement.onpointerup = (e) => {
+  if(!gameActive || isAnimating) return;
+  ptr.x=(e.clientX/innerWidth)*2-1; ptr.y=-(e.clientY/innerHeight)*2+1;
+  ray.setFromCamera(ptr,camera);
+  const hits=ray.intersectObjects(boardGroup.children);
+  if(hits.length>0){
+    const td=hits[0].object.userData;
+    if(td.isTile && isLegal(state[turn].x, state[turn].z, td.gridX, td.gridZ)) 
+      executeMove(td.gridX, td.gridZ);
+  }
+};
+
+/* --- LOOP --- */
+function animate(){
+  requestAnimationFrame(animate);
+  controls.update();
+  if(gameActive && !isAnimating){
+    const t=Date.now()*0.003;
+    state.blue.mesh.position.y = 0.11 + Math.sin(t)*0.02;
+    state.red.mesh.position.y = 0.11 + Math.sin(t+1.5)*0.02;
+  }
+  renderer.render(scene,camera);
+}
+animate();
+
+window.onresize = () => {
+  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+};
+</script>
+</body>
+</html>
