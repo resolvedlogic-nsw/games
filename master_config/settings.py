@@ -16,10 +16,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'gamehub',
-    'knightstrap'
-    'labyrinth'
-    'fivecrowns'
-    'cinqo'
+    'knightstrap',
+    'labyrinth',
+    'fivecrowns',
+    'cinqo',
 ]
 
 MIDDLEWARE = [
