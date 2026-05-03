@@ -1,4 +1,5 @@
 from django.urls import path, include
+from gamehub import views as hub_views
 
 urlpatterns = [
     # 1. The Hub owns the homepage
