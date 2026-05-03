@@ -8,5 +8,5 @@ urlpatterns = [
     path('cinqo/', include('cinqo.urls')),
     path('fivecrowns/', include('fivecrowns.urls')),
     path('knightstrap/', include('knightstrap.urls')),
-    path('labyrinth/', include('labyrinth.urls')),
+    path('labyrinth/', include('labyrinth.game.urls')),
 ]

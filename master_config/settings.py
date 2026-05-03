@@ -18,7 +18,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'gamehub',
     'knightstrap',
-    'labyrinth',
+    'labyrinth.game',
     'fivecrowns',
     'cinqo',
 ]
