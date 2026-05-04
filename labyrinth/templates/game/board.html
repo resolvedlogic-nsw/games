@@ -527,7 +527,7 @@ body {
      JAVASCRIPT
      ════════════════════════════════════════════════════════════════ -->
 <script>
-const GAME_ID   = {{ game.id }};
+const GAME_ID   = {{ labyrinth.id }};
 const MY_ID     = {{ player_id }};
 const IMG_BASE  = "{% static 'images/' %}";
 const MEEPLE_BASE = "{% static 'images/' %}";
@@ -643,7 +643,10 @@ function buildBoard(st) {
       if (playersHere.length) {
         gridHTML += '<div class="token-layer">';
         for (const p of playersHere) {
-          gridHTML += `<div class="token" style="background:${p.color}" title="${p.name}"></div>`;
+          // Dynamically grab the correct meeple SVG based on the player ID
+          const meepleFile = `meeple_${PLAYER_COLORS_NAME[p.id]}.svg`;
+          
+          gridHTML += `<img src="${MEEPLE_BASE}${meepleFile}" class="token" style="border:none; box-shadow:none; background:transparent;" title="${p.name}" alt="${p.name}">`;
         }
         gridHTML += '</div>';
       }
@@ -829,7 +832,8 @@ async function post(url, body) {
 
 async function rotateSpareTile() {
   if (phase !== 'push') { toast('You can only rotate during the push phase', true); return; }
-  const st = await post(`/${GAME_ID}/rotate-spare/`, {});
+   
+  const st = await post(`${GAME_URL}/rotate-spare/`, {});
   state = st;
   render(state);
 }
@@ -909,8 +913,9 @@ async function pushTile(direction, index) {
   spareContainer.style.opacity = '0.3'; 
 
   // 6. Wait for the CSS animation to finish AND the server to respond
-  const [st] = await Promise.all([
-    post(`/${GAME_ID}/push/`, { direction, index }),
+const [st] = await Promise.all([
+ 
+    post(`${GAME_URL}/push/`, { direction, index }),
     new Promise(r => setTimeout(r, 450))
   ]);
 
@@ -939,7 +944,7 @@ async function moveTo(row, col) {
   // Keep track of who they WERE hunting before the backend updates it
   const previousTarget = state.current_player.current_target; 
 
-  const st = await post(`/${GAME_ID}/move/`, { player_id: MY_ID, row, col });
+  const st = await post(`/${GAME_URL}/move/`, { player_id: MY_ID, row, col });
   if (!st.move_ok) { toast(st.error || 'Cannot move there', true); return; }
   
   state = st;
