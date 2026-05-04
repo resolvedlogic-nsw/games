@@ -25,8 +25,8 @@ def new_game(request):
     })
 
 
-def board(request, game_id):
-    game = get_object_or_404(Game, pk=game_id)
+def board(request, labyrinth_id):
+    game = get_object_or_404(Game, pk=labyrinth_id)
     player_id = request.session.get('player_id', 0)
     return render(request, 'game/board.html', {
         'game': game,
@@ -39,8 +39,8 @@ def board(request, game_id):
 
 @csrf_exempt
 @require_POST
-def api_rotate_spare(request, game_id):
-    game = get_object_or_404(Game, pk=game_id)
+def api_rotate_spare(request, labyrinth_id):
+    game = get_object_or_404(Game, pk=labyrinth_id)
     game.rotate_spare()
     player_id = request.session.get('player_id', 0)
     return JsonResponse(game.get_state_dict(player_id=player_id))
@@ -48,8 +48,8 @@ def api_rotate_spare(request, game_id):
 
 @csrf_exempt
 @require_POST
-def api_push(request, game_id):
-    game = get_object_or_404(Game, pk=game_id)
+def api_push(request, labyrinth_id):
+    game = get_object_or_404(Game, pk=labyrinth_id)
     data = json.loads(request.body)
     direction = data.get('direction')
     index     = int(data.get('index', 0))
@@ -68,8 +68,8 @@ def api_push(request, game_id):
 
 @csrf_exempt
 @require_POST
-def api_move(request, game_id):
-    game = get_object_or_404(Game, pk=game_id)
+def api_move(request, labyrinth_id):
+    game = get_object_or_404(Game, pk=labyrinth_id)
     data = json.loads(request.body)
     player_id  = int(data.get('player_id', 0))
     target_row = int(data.get('row', 0))
@@ -88,7 +88,7 @@ def api_move(request, game_id):
 
 
 @require_GET
-def api_state(request, game_id):
-    game = get_object_or_404(Game, pk=game_id)
+def api_state(request, labyrinth_id):
+    game = get_object_or_404(Game, pk=labyrinth_id)
     player_id = request.session.get('player_id', 0)
     return JsonResponse(game.get_state_dict(player_id=player_id))
