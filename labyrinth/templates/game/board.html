@@ -531,6 +531,7 @@ body {
 const GAME_ID   = {{ game.id }};
 const MY_ID     = {{ player_id }};
 const IMG_BASE  = "{% static 'images/' %}";
+const GAME_URL  = `/labyrinth/${GAME_ID}`;
 
 // Phase: 'push' or 'move'
 let phase = 'push';
@@ -539,7 +540,7 @@ let state = {{ state_json|safe }};
 // ── Tile image helpers ────────────────────────────────────────────
 
 function shapeImg(shape) {
-  const map = { 'i': 'shapei.png', 'l': 'shapel.png', 't': 'shapet.png' };
+  const map = { 'i': 'shapei.svg', 'l': 'shapel.svg', 't': 'shapet.svg' };
   return IMG_BASE + map[shape];
 }
 
@@ -778,7 +779,7 @@ async function post(url, body) {
 
 async function rotateSpareTile() {
   if (phase !== 'push') { toast('You can only rotate during the push phase', true); return; }
-  const st = await post(`/${GAME_ID}/rotate-spare/`, {});
+  const st = await post(`${GAME_URL}/rotate-spare/`, {});
   state = st;
   render(state);
 }
@@ -788,7 +789,6 @@ async function pushTile(direction, index) {
   
   // 1. Lock the UI during animation
   phase = 'animating';
-
   const grid = document.getElementById('grid');
   const tiles = Array.from(grid.querySelectorAll('.tile'));
   
@@ -859,11 +859,15 @@ async function pushTile(direction, index) {
 
   // 6. Wait for the CSS animation to finish AND the server to respond
   const [st] = await Promise.all([
-    post(`/${GAME_ID}/push/`, { direction, index }),
+    post(`${GAME_URL}/push/`, { direction, index }),
     new Promise(r => setTimeout(r, 450))
   ]);
 
   spareContainer.style.opacity = '1';
+
+  // Clean up animation clones before re-rendering
+  grid.querySelectorAll('[style*="position: absolute"]').forEach(el => el.remove());
+  movingTiles.forEach(t => { t.style.transform = ''; t.style.transition = ''; t.style.zIndex = ''; t.style.opacity = ''; });
 
   if (!st.push_ok) {
     toast(st.error || 'Cannot reverse the previous push', true);
@@ -888,7 +892,7 @@ async function moveTo(row, col) {
   // Keep track of who they WERE hunting before the backend updates it
   const previousTarget = state.current_player.current_target; 
 
-  const st = await post(`/${GAME_ID}/move/`, { player_id: MY_ID, row, col });
+  const st = await post(`${GAME_URL}/move/`, { player_id: MY_ID, row, col });
   if (!st.move_ok) { toast(st.error || 'Cannot move there', true); return; }
   
   state = st;
