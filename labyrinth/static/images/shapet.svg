@@ -7,10 +7,7 @@
   <rect x="30" y="30" width="70" height="40" fill="#c8a96e"/>
   <!-- Grass patch - blocks the left/west opening -->
   <rect x="0" y="30" width="32" height="40" fill="#5a7a3a"/>
-  <!-- Inner corner rounding - SW -->
-  <circle cx="30" cy="70" r="14" fill="#5a7a3a"/>
-  <!-- Inner corner rounding - NW -->
-  <circle cx="30" cy="30" r="14" fill="#5a7a3a"/>
+   
   <!-- Path texture - vertical -->
   <line x1="38" y1="0" x2="38" y2="100" stroke="#b89458" stroke-width="1" opacity="0.5"/>
   <line x1="50" y1="0" x2="50" y2="100" stroke="#d4b47a" stroke-width="1" opacity="0.4"/>

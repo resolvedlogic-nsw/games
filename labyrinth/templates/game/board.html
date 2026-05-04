@@ -16,11 +16,12 @@
   --gold-dim:   rgba(201,168,76,0.35);
   --dark:       #0a0806;
   --dark2:      #120e05;
-  --cell:       72px;   /* tile size on board */
+  --cell:       64px;
   --gap:        3px;
   --board-w:    calc(7 * var(--cell) + 6 * var(--gap));
-  --reachable:  rgba(100,220,100,0.25);
-  --reach-bdr:  #64dc64;
+  --reachable:  rgba(100,220,100,0.2);
+  --reach-bdr:  var(--reach-player, #64dc64);
+  --reach-player: #64dc64;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -95,20 +96,23 @@ body {
 
 /* ── Layout ───────────────────────────────────────────────── */
 .game-layout {
-  flex: 1;
+  height: 100vh;
   display: grid;
-  grid-template-columns: 200px 1fr 200px;
+  grid-template-columns: 170px 1fr 170px;
   grid-template-rows: 1fr;
   gap: 0;
-  padding: 20px;
-  align-items: start;
+  padding: 8px;
+  align-items: center;
   justify-items: center;
+  overflow: hidden;
 }
 
 /* ── Side panels ──────────────────────────────────────────── */
 .side-panel {
-  padding: 16px;
+  padding: 10px;
   width: 100%;
+  overflow-y: auto;
+  max-height: 100vh;
 }
 
 .panel-title {
@@ -467,29 +471,24 @@ body {
 </head>
 <body>
 
-<!-- ── Top bar ──────────────────────────────────────────────────── -->
-<div class="topbar">
-  <a href="{% url 'labyrinth:index' %}" class="home-link">← New Game</a>
-  <div class="topbar-title">Labyrinth</div>
-  <div class="turn-badge">
-    <span id="tb-name" class="player-name"></span>
-    <span id="tb-dot" class="player-dot"></span>
-    <span id="tb-phase" class="phase-label"></span>
-  </div>
-</div>
-
 <!-- ── Main layout ──────────────────────────────────────────────── -->
 <div class="game-layout">
 
-  <!-- Left panel: spare tile + rotate -->
+  <!-- Left panel: title + spare tile + rotate + phase -->
   <div class="side-panel">
+    <div style="margin-bottom:14px; border-bottom:1px solid var(--gold-dim); padding-bottom:10px;">
+      <div class="panel-title" style="font-size:0.85rem; opacity:1; color:var(--gold); margin-bottom:4px;">Labyrinth</div>
+      <div id="tb-name" style="font-size:0.75rem; letter-spacing:0.08em;"></div>
+      <div id="tb-phase" style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; opacity:0.6; margin-top:2px;"></div>
+      <a href="{% url 'labyrinth:index' %}" style="font-size:0.7rem; color:var(--gold-dim); text-decoration:none; display:block; margin-top:6px;">← New Game</a>
+    </div>
     <div class="panel-title">Spare Tile</div>
     <div class="spare-wrapper">
       <div class="spare-tile-container" id="spare-tile"></div>
       <button class="rotate-btn" onclick="rotateSpareTile()">↻ Rotate</button>
     </div>
 
-    <div style="margin-top: 24px;">
+    <div style="margin-top: 16px;">
       <div class="panel-title">Phase</div>
       <div class="phase-indicator">
         <div class="phase-step" id="ph-push">
@@ -528,10 +527,14 @@ body {
      JAVASCRIPT
      ════════════════════════════════════════════════════════════════ -->
 <script>
-const labyrinth_id   = {{ game.id }};
+const GAME_ID   = {{ game.id }};
 const MY_ID     = {{ player_id }};
 const IMG_BASE  = "{% static 'images/' %}";
-const GAME_URL  = `/labyrinth/${labyrinth_id}`;
+const MEEPLE_BASE = "{% static 'images/' %}";
+const GAME_URL  = `/labyrinth/${GAME_ID}`;
+const PLAYER_COLORS_NAME = ['red','blue','green','yellow'];
+const PLAYER_COLORS_HEX  = ['#e74c3c','#3498db','#2ecc71','#f39c12'];
+const CORNERS = [[0,0],[0,6],[6,6],[6,0]];
 
 // Phase: 'push' or 'move'
 let phase = 'push';
@@ -697,41 +700,88 @@ function buildSpare(st) {
 }
 
 function buildPlayers(st) {
+  const cp = st.current_player;
+  document.documentElement.style.setProperty('--reach-player', cp.color);
+
   const list = document.getElementById('player-list');
   list.innerHTML = '';
+
   for (const p of st.players) {
-    const isActive = p.id === st.current_player.id;
-    const card = document.createElement('div');
-    card.className = 'player-card' + (isActive ? ' active-player' : '');
-    
-    // Generate the HTML for the player's current target
-    let targetImgHtml = '';
-    if (p.current_target) {
-        targetImgHtml = `<img src="${charImg(p.current_target)}" style="width: 40px; height: 40px; border-radius: 4px; border: 1px solid var(--gold-dim); background: rgba(0,0,0,0.5);" title="Hunting character ${p.current_target}">`;
+    const isActive = p.id === cp.id;
+    const hasWon = p.winner === true;   // backend should set this when done
+    const baseName = `meeple_${PLAYER_COLORS_NAME[p.id]}`;
+
+    // Pick meeple variant
+    let meepleFile = `${baseName}.svg`;
+    if (hasWon) {
+      meepleFile = `meeple_winner_gold.svg`;
+    } else if (isActive) {
+      meepleFile = `${baseName}_glow.svg`;
     } else {
-        targetImgHtml = `<div style="width: 40px; height: 40px; line-height: 40px; text-align: center; font-size: 10px; color: #2ecc71; border: 1px solid #2ecc71;">WIN!</div>`;
+      meepleFile = `${baseName}_shadow.svg`;
     }
 
+    const totalTokens = p.total_tokens !== undefined
+      ? p.total_tokens
+      : (p.deck.length + (p.current_target ? 1 : 0) + p.score);
+
+    const needsHome = !p.current_target && p.deck.length === 0;
+
+    let targetHtml = '';
+    if (needsHome) {
+      targetHtml = `
+        <div style="
+          text-align:center;
+          font-size:10px;
+          color:${p.color};
+          border:1px solid ${p.color};
+          padding:3px 5px;
+          border-radius:3px;">
+          🏠 Go Home
+        </div>`;
+    } else if (p.current_target) {
+      targetHtml = `
+        <img src="${charImg(p.current_target)}"
+             style="width:44px;height:44px;border-radius:4px;border:1px solid var(--gold-dim);"
+             title="Token ${p.score+1}/${totalTokens}">
+      `;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'player-card' + (isActive ? ' active-player' : '');
+
     card.innerHTML = `
-      <div class="player-avatar" style="background:${p.color}"></div>
-      <div class="player-info">
-        <div class="player-name">${p.name} <span style="color:var(--gold); font-size:0.8rem; margin-left: 5px;">🏆 ${p.score}</span></div>
-        <div class="player-pos">Row ${p.row}, Col ${p.col}</div>
+      <img src="${MEEPLE_BASE}${meepleFile}"
+           style="width:34px;height:44px;flex-shrink:0;" alt="${p.name}">
+      <div class="player-info" style="flex:1;min-width:0;">
+        <div class="player-name" style="font-size:0.8rem;">${p.name}</div>
+        <div class="player-pos" style="font-size:0.65rem;">${p.score}/${totalTokens} tokens</div>
       </div>
-      <div class="player-target">
-        ${targetImgHtml}
-      </div>
+      <div>${targetHtml}</div>
     `;
+
     list.appendChild(card);
   }
 }
 
+
 function buildTopBar(st) {
   const cp = st.current_player;
-  document.getElementById('tb-name').textContent = cp.name;
-  document.getElementById('tb-dot').style.background = cp.color;
-  document.getElementById('tb-phase').textContent = phase === 'push' ? 'Push Phase' : 'Move Phase';
+
+  // Set name and colour
+  const nameEl = document.getElementById('tb-name');
+  if (nameEl) {
+    nameEl.textContent = cp.name;
+    nameEl.style.color = cp.color;
+  }
+
+  // Phase label
+  const phaseEl = document.getElementById('tb-phase');
+  if (phaseEl) {
+    phaseEl.textContent = phase === 'push' ? 'Push Phase' : 'Move Phase';
+  }
 }
+
 
 function buildPhaseIndicator() {
   const ph1 = document.getElementById('ph-push');
@@ -779,7 +829,7 @@ async function post(url, body) {
 
 async function rotateSpareTile() {
   if (phase !== 'push') { toast('You can only rotate during the push phase', true); return; }
-  const st = await post(`${GAME_URL}/rotate-spare/`, {});
+  const st = await post(`/${GAME_ID}/rotate-spare/`, {});
   state = st;
   render(state);
 }
@@ -789,6 +839,7 @@ async function pushTile(direction, index) {
   
   // 1. Lock the UI during animation
   phase = 'animating';
+
   const grid = document.getElementById('grid');
   const tiles = Array.from(grid.querySelectorAll('.tile'));
   
@@ -859,15 +910,11 @@ async function pushTile(direction, index) {
 
   // 6. Wait for the CSS animation to finish AND the server to respond
   const [st] = await Promise.all([
-    post(`${GAME_URL}/push/`, { direction, index }),
+    post(`/${GAME_ID}/push/`, { direction, index }),
     new Promise(r => setTimeout(r, 450))
   ]);
 
   spareContainer.style.opacity = '1';
-
-  // Clean up animation clones before re-rendering
-  grid.querySelectorAll('[style*="position: absolute"]').forEach(el => el.remove());
-  movingTiles.forEach(t => { t.style.transform = ''; t.style.transition = ''; t.style.zIndex = ''; t.style.opacity = ''; });
 
   if (!st.push_ok) {
     toast(st.error || 'Cannot reverse the previous push', true);
@@ -892,7 +939,7 @@ async function moveTo(row, col) {
   // Keep track of who they WERE hunting before the backend updates it
   const previousTarget = state.current_player.current_target; 
 
-  const st = await post(`${GAME_URL}/move/`, { player_id: MY_ID, row, col });
+  const st = await post(`/${GAME_ID}/move/`, { player_id: MY_ID, row, col });
   if (!st.move_ok) { toast(st.error || 'Cannot move there', true); return; }
   
   state = st;

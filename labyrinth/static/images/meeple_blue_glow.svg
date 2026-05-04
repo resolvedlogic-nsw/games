@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 44">
+  <defs>
+    <!-- Outer coloured glow -->
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feColorMatrix type="matrix"
+        values="0 0 0 0 1
+                0 0 0 0 0.4
+                0 0 0 0 0.3
+                0 0 0 0.9 0" result="glowColor"/>
+      <feMerge>
+        <feMergeNode in="glowColor"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Inner highlight -->
+    <linearGradient id="innerHighlight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.4)"/>
+      <stop offset="60%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" result="noise"/>
+      <feColorMatrix type="matrix"
+        values="0 0 0 0 0.6
+                0 0 0 0 0.45
+                0 0 0 0 0.35
+                0 0 0 0.35 0" result="tint"/>
+      <feBlend in="SourceGraphic" in2="tint" mode="multiply"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#glow)">
+    <path d="M20 3
+             C17 3 15 5 14 8
+             L10 14
+             L4 16
+             C2 17 2 20 4 22
+             L9 26
+             L7 34
+             C6 37 8 40 11 40
+             L29 40
+             C32 40 34 37 33 34
+             L31 26
+             L36 22
+             C38 20 38 17 36 16
+             L30 14
+             L26 8
+             C25 5 23 3 20 3Z"
+          fill="#3498db"
+          stroke="#2980b9""
+          stroke-width="2"
+          filter="url(#grain)"/>
+    <!-- Soft inner highlight overlay -->
+    <path d="M20 3
+             C17 3 15 5 14 8
+             L10 14
+             L4 16
+             C2 17 2 20 4 22
+             L9 26
+             L7 34
+             C6 37 8 40 11 40
+             L29 40
+             C32 40 34 37 33 34
+             L31 26
+             L36 22
+             C38 20 38 17 36 16
+             L30 14
+             L26 8
+             C25 5 23 3 20 3Z"
+          fill="url(#innerHighlight)"/>
+  </g>
+</svg>
