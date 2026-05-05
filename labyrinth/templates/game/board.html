@@ -845,9 +845,9 @@ function findPath(grid, startR, startC, targetR, targetC) {
   // Define openings at 0-degree rotation
   // 0=Top, 1=Right, 2=Bottom, 3=Left
   const baseExits = {
-    'i': [1, 3],       // Straight: Horizontal (Left/Right)
-    'l': [0, 1],       // Corner: Top/Right
-    't': [3, 0, 1]     // T-Junction: Left/Top/Right
+    'i': [0, 2],       // 0-degree is Vertical (Top/Bottom)
+    'l': [0, 1],       // 0-degree is Corner (Top/Right)
+    't': [0, 1, 2]     // 0-degree is T-Junction (Top/Right/Bottom)
   };
 
   // Helper to get actual openings after rotation
