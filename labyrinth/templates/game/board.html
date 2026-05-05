@@ -838,52 +838,56 @@ async function post(url, body) {
 
 // A Breadth-First Search to find the exact route through the maze
 function findPath(grid, startR, startC, targetR, targetC) {
-  // Define which directions the different tile shapes connect to.
-  // 0=North, 1=East, 2=South, 3=West
-  const exits = {
-    'i': [0, 2],       // Straight path connects Top and Bottom
-    'l': [0, 1],       // Corner path connects Top and Right
-    't': [3, 0, 1]     // T-Junction connects Left, Top, and Right
-  };
-
-  // Helper to get actual exits after applying the tile's rotation
-  function getTileExits(r, c) {
-    const tile = grid[r][c];
-    return exits[tile.shape].map(dir => (dir + tile.rotation) % 4);
-  }
-
-  const queue = [[startR, startC, [[startR, startC]]]];
-  const visited = new Set([`${startR},${startC}`]);
-
   // Movement vectors: [row_change, col_change, direction_out, direction_in]
   const dirs = [
-    [-1, 0, 0, 2], // Move North (Exiting 0, Entering 2)
-    [0, 1, 1, 3],  // Move East (Exiting 1, Entering 3)
-    [1, 0, 2, 0],  // Move South (Exiting 2, Entering 0)
-    [0, -1, 3, 1]  // Move West (Exiting 3, Entering 1)
+    [-1, 0, 0, 2], // North (Exit 0, Enter 2)
+    [0, 1, 1, 3],  // East  (Exit 1, Enter 3)
+    [1, 0, 2, 0],  // South (Exit 2, Enter 0)
+    [0, -1, 3, 1]  // West  (Exit 3, Enter 1)
   ];
 
-  while (queue.length > 0) {
-    const [r, c, path] = queue.shift();
-    if (r === targetR && c === targetC) return path;
+  // Different Python backends define 0-degree rotations differently. 
+  // We will brute-force test the 4 most common orientations!
+  const possibleConfigs = [
+    { 'i': [0, 2], 'l': [0, 1], 't': [3, 0, 1] },
+    { 'i': [1, 3], 'l': [0, 1], 't': [0, 1, 2] },
+    { 'i': [0, 2], 'l': [1, 2], 't': [1, 2, 3] },
+    { 'i': [1, 3], 'l': [3, 0], 't': [2, 3, 0] }
+  ];
 
-    const currentExits = getTileExits(r, c);
+  for (const config of possibleConfigs) {
+    const getTileExits = (r, c) => {
+      const tile = grid[r][c];
+      return config[tile.shape].map(dir => (dir + tile.rotation) % 4);
+    };
 
-    for (const [dr, dc, outDir, inDir] of dirs) {
-      const nr = r + dr, nc = c + dc;
-      // Check boundaries
-      if (nr >= 0 && nr < 7 && nc >= 0 && nc < 7) {
-        if (!visited.has(`${nr},${nc}`) && currentExits.includes(outDir)) {
-          // Check if the next tile actually has an opening facing back at us
-          if (getTileExits(nr, nc).includes(inDir)) {
-            visited.add(`${nr},${nc}`);
-            queue.push([nr, nc, [...path, [nr, nc]]]);
+    const queue = [[startR, startC, [[startR, startC]]]];
+    const visited = new Set([`${startR},${startC}`]);
+    let found = null;
+
+    while (queue.length > 0) {
+      const [r, c, path] = queue.shift();
+      if (r === targetR && c === targetC) { found = path; break; }
+
+      const currentExits = getTileExits(r, c);
+      for (const [dr, dc, outDir, inDir] of dirs) {
+        const nr = r + dr, nc = c + dc;
+        if (nr >= 0 && nr < 7 && nc >= 0 && nc < 7) {
+          if (!visited.has(`${nr},${nc}`) && currentExits.includes(outDir)) {
+            // Check if the next tile has an opening facing back at us
+            if (getTileExits(nr, nc).includes(inDir)) {
+              visited.add(`${nr},${nc}`);
+              queue.push([nr, nc, [...path, [nr, nc]]]);
+            }
           }
         }
       }
     }
+    // If this config successfully found the path, return it!
+    if (found) return found; 
   }
-  // Fallback to straight line if pathing fails for any reason
+  
+  // Extreme fallback (if it still fails for some reason)
   return [[startR, startC], [targetR, targetC]]; 
 }
 
@@ -1021,30 +1025,35 @@ async function moveTo(row, col) {
   // 4. Time to walk! Find the meeple on the screen
   const startTile = document.querySelector(`.tile[data-row="${oldRow}"][data-col="${oldCol}"]`);
   
-  if (startTile) {
+  // 4. Time to walk! Find the meeple on the screen
+  const startTile = document.querySelector(`.tile[data-row="${oldRow}"][data-col="${oldCol}"]`);
+  const targetTile = document.querySelector(`.tile[data-row="${row}"][data-col="${col}"]`);
+
+  if (startTile && targetTile) {
     const meepleImg = startTile.querySelector(`.token[title="${state.current_player.name}"]`);
     if (meepleImg) {
+      
+      // FIX: Disable CSS clipping so the meeple doesn't vanish when leaving the starting tile!
+      startTile.style.overflow = 'visible';
+      startTile.style.zIndex = '100'; 
+      
       meepleImg.style.position = 'relative';
       meepleImg.style.zIndex = '999'; 
 
-      // Read exact pixel sizes from CSS so it scales perfectly on mobile and desktop
       const rootStyles = getComputedStyle(document.documentElement);
       const cellPx = parseInt(rootStyles.getPropertyValue('--cell')) || 64;
       const gapPx = parseInt(rootStyles.getPropertyValue('--gap')) || 3;
       const step = cellPx + gapPx;
 
-      // 500ms = 2 tiles per second. Using "linear" keeps the walk continuous without stopping on each tile
-      const msPerTile = 500;
+      const msPerTile = 350; // Dropped to 350ms so it walks quickly but smoothly
       meepleImg.style.transition = `transform ${msPerTile}ms linear`;
 
-      // Loop through the GPS path and slide tile by tile
       for (let i = 1; i < path.length; i++) {
         const [pr, pc] = path[i];
         const moveX = (pc - oldCol) * step;
         const moveY = (pr - oldRow) * step;
         meepleImg.style.transform = `translate(${moveX}px, ${moveY}px)`;
         
-        // Wait for this specific step to finish before moving to the next tile
         await new Promise(r => setTimeout(r, msPerTile));
       }
     }
