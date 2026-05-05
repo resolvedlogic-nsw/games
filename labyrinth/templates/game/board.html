@@ -305,13 +305,14 @@ body {
 
 .tile.reachable {
   cursor: pointer;
-  box-shadow: inset 0 0 0 2px var(--reach-bdr), 0 0 12px rgba(100,220,100,0.3);
+  /* Use the dynamic variables for the border and the outer shadow */
+  box-shadow: inset 0 0 0 2px var(--reach-player), 0 0 12px var(--reachable-bg);
 }
 .tile.reachable::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--reachable);
+  background: var(--reachable-bg); /* Use dynamic variable for the inner pulse */
   pointer-events: none;
   animation: pulse-green 1.2s ease-in-out infinite;
 }
@@ -343,11 +344,9 @@ body {
 }
 
 .token {
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.7);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.7);
+  width: 36px; height: 36px; /* Doubled size */
   flex-shrink: 0;
+  transition: transform 0.3s ease;
 }
 
 /* ── Spare tile ───────────────────────────────────────────── */
@@ -633,6 +632,13 @@ function buildBoard(st) {
 
       gridHTML += `<div class="${cls}" data-row="${r}" data-col="${c}" ${clickAttr}>`;
       gridHTML += `  <div class="tile-inner" style="transform:rotate(${rotDeg(tile.rotation)}deg)">`;
+      
+      // Inject home base dots onto the corners
+      const homeColors = { '0,0': '#e74c3c', '0,6': '#3498db', '6,6': '#2ecc71', '6,0': '#f39c12' };
+      if (homeColors[key]) {
+        gridHTML += `    <div style="position:absolute; width:14px; height:14px; border-radius:50%; background:${homeColors[key]}; top:6px; left:6px; border:2px solid rgba(255,255,255,0.5); box-shadow:0 0 6px #000; z-index:4;"></div>`;
+      }
+      
       gridHTML += `    <img class="tile-base" src="${shapeImg(tile.shape)}" alt="">`;
       if (tile.character) {
         gridHTML += `    <img class="tile-char" src="${charImg(tile.character)}" style="transform:rotate(${cDeg}deg)" alt="">`;
@@ -705,6 +711,8 @@ function buildSpare(st) {
 function buildPlayers(st) {
   const cp = st.current_player;
   document.documentElement.style.setProperty('--reach-player', cp.color);
+  // Append '33' to the hex color to make it ~20% transparent for the soft background pulse!
+  document.documentElement.style.setProperty('--reachable-bg', cp.color + '33');
 
   const list = document.getElementById('player-list');
   list.innerHTML = '';
@@ -723,6 +731,11 @@ function buildPlayers(st) {
     } else {
       meepleFile = `${baseName}_shadow.svg`;
     }
+    card.innerHTML = `
+      <img src="${MEEPLE_BASE}${meepleFile}"
+           style="width:34px;height:44px;flex-shrink:0; transition: transform 0.3s;" alt="${p.name}">
+      <div class="player-info" style="flex:1;min-width:0;">
+
 
     const totalTokens = p.total_tokens !== undefined
       ? p.total_tokens
@@ -944,9 +957,37 @@ async function moveTo(row, col) {
   // Keep track of who they WERE hunting before the backend updates it
   const previousTarget = state.current_player.current_target; 
 
+  // Save current position before the move
+  const oldRow = state.current_player.row;
+  const oldCol = state.current_player.col;
+
   const st = await post(`${GAME_URL}/move/`, { player_id: MY_ID, row, col });
   if (!st.move_ok) { toast(st.error || 'Cannot move there', true); return; }
   
+  // 1. Find the meeple on the screen
+  const startTile = document.querySelector(`.tile[data-row="${oldRow}"][data-col="${oldCol}"]`);
+  const targetTile = document.querySelector(`.tile[data-row="${row}"][data-col="${col}"]`);
+
+  if (startTile && targetTile) {
+    const meepleImg = startTile.querySelector(`.token[title="${state.current_player.name}"]`);
+    if (meepleImg) {
+      // 2. Calculate pixel distance to the target tile
+      const startRect = startTile.getBoundingClientRect();
+      const targetRect = targetTile.getBoundingClientRect();
+      const moveX = targetRect.left - startRect.left;
+      const moveY = targetRect.top - startRect.top;
+
+      // 3. Slide the meeple across the board
+      meepleImg.style.position = 'relative';
+      meepleImg.style.zIndex = '999'; // Force it above other tiles
+      meepleImg.style.transition = 'transform 0.4s ease-in-out';
+      meepleImg.style.transform = `translate(${moveX}px, ${moveY}px)`;
+
+      // 4. Wait for sliding animation to finish
+      await new Promise(r => setTimeout(r, 450));
+    }
+  }
+
   state = st;
   phase = 'push';
   render(state);
