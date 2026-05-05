@@ -1022,9 +1022,7 @@ async function moveTo(row, col) {
     return; 
   }
   
-  // 4. Time to walk! Find the meeple on the screen
-  const startTile = document.querySelector(`.tile[data-row="${oldRow}"][data-col="${oldCol}"]`);
-  
+
   // 4. Time to walk! Find the meeple on the screen
   const startTile = document.querySelector(`.tile[data-row="${oldRow}"][data-col="${oldCol}"]`);
   const targetTile = document.querySelector(`.tile[data-row="${row}"][data-col="${col}"]`);
