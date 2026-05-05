@@ -944,7 +944,7 @@ async function moveTo(row, col) {
   // Keep track of who they WERE hunting before the backend updates it
   const previousTarget = state.current_player.current_target; 
 
-  const st = await post(`/${GAME_URL}/move/`, { player_id: MY_ID, row, col });
+  const st = await post(`${GAME_URL}/move/`, { player_id: MY_ID, row, col });
   if (!st.move_ok) { toast(st.error || 'Cannot move there', true); return; }
   
   state = st;
