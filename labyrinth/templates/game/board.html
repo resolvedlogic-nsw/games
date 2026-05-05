@@ -722,14 +722,19 @@ function buildPlayers(st) {
     const hasWon = p.winner === true;   // backend should set this when done
     const baseName = `meeple_${PLAYER_COLORS_NAME[p.id]}`;
 
-    // Pick meeple variant
+    // Always use the base meeple file so we never get a 404 broken link!
     let meepleFile = `${baseName}.svg`;
+    let meepleStyle = "width:34px;height:44px;flex-shrink:0;transition:all 0.3s ease;";
+    
+    // Apply CSS filters to create the glow/shadow effects dynamically
     if (hasWon) {
-      meepleFile = `meeple_winner_gold.svg`;
+      meepleFile = `meeple_winner_gold.svg`; 
+      meepleStyle += "filter: drop-shadow(0 0 10px gold); transform: scale(1.1);";
     } else if (isActive) {
-      meepleFile = `${baseName}_glow.svg`;
+      meepleStyle += "filter: drop-shadow(0 0 8px white) brightness(1.2); transform: scale(1.1);";
     } else {
-      meepleFile = `${baseName}_shadow.svg`;
+      // Create a "shadow" effect by dimming the base image and making it slightly transparent
+      meepleStyle += "filter: brightness(0.4) grayscale(50%); opacity: 0.6;";
     }
 
     const totalTokens = p.total_tokens !== undefined
@@ -836,58 +841,54 @@ async function post(url, body) {
   return r.json();
 }
 
-// A Breadth-First Search to find the exact route through the maze
 function findPath(grid, startR, startC, targetR, targetC) {
+  // 0=North, 1=East, 2=South, 3=West
+  const exits = {
+    'i': [1, 3],       // 0-degree 'I' is Horizontal (Left and Right)
+    'l': [0, 1],       // 0-degree 'L' connects Top and Right
+    't': [3, 0, 1]     // 0-degree 'T' connects Left, Top, and Right
+  };
+
+  const getTileExits = (r, c) => {
+    const tile = grid[r][c];
+    // Add the rotation to the base exits, wrapping around 4 using modulo
+    return exits[tile.shape].map(dir => (dir + tile.rotation) % 4);
+  };
+
+  const queue = [[startR, startC, [[startR, startC]]]];
+  const visited = new Set([`${startR},${startC}`]);
+
   // Movement vectors: [row_change, col_change, direction_out, direction_in]
   const dirs = [
-    [-1, 0, 0, 2], // North (Exit 0, Enter 2)
-    [0, 1, 1, 3],  // East  (Exit 1, Enter 3)
-    [1, 0, 2, 0],  // South (Exit 2, Enter 0)
-    [0, -1, 3, 1]  // West  (Exit 3, Enter 1)
+    [-1, 0, 0, 2], // North (Exiting 0, Entering 2)
+    [0, 1, 1, 3],  // East  (Exiting 1, Entering 3)
+    [1, 0, 2, 0],  // South (Exiting 2, Entering 0)
+    [0, -1, 3, 1]  // West  (Exiting 3, Entering 1)
   ];
 
-  // Different Python backends define 0-degree rotations differently. 
-  // We will brute-force test the 4 most common orientations!
-  const possibleConfigs = [
-    { 'i': [0, 2], 'l': [0, 1], 't': [3, 0, 1] },
-    { 'i': [1, 3], 'l': [0, 1], 't': [0, 1, 2] },
-    { 'i': [0, 2], 'l': [1, 2], 't': [1, 2, 3] },
-    { 'i': [1, 3], 'l': [3, 0], 't': [2, 3, 0] }
-  ];
+  while (queue.length > 0) {
+    const [r, c, path] = queue.shift();
+    if (r === targetR && c === targetC) return path;
 
-  for (const config of possibleConfigs) {
-    const getTileExits = (r, c) => {
-      const tile = grid[r][c];
-      return config[tile.shape].map(dir => (dir + tile.rotation) % 4);
-    };
+    const currentExits = getTileExits(r, c);
 
-    const queue = [[startR, startC, [[startR, startC]]]];
-    const visited = new Set([`${startR},${startC}`]);
-    let found = null;
-
-    while (queue.length > 0) {
-      const [r, c, path] = queue.shift();
-      if (r === targetR && c === targetC) { found = path; break; }
-
-      const currentExits = getTileExits(r, c);
-      for (const [dr, dc, outDir, inDir] of dirs) {
-        const nr = r + dr, nc = c + dc;
-        if (nr >= 0 && nr < 7 && nc >= 0 && nc < 7) {
-          if (!visited.has(`${nr},${nc}`) && currentExits.includes(outDir)) {
-            // Check if the next tile has an opening facing back at us
-            if (getTileExits(nr, nc).includes(inDir)) {
-              visited.add(`${nr},${nc}`);
-              queue.push([nr, nc, [...path, [nr, nc]]]);
-            }
+    for (const [dr, dc, outDir, inDir] of dirs) {
+      const nr = r + dr, nc = c + dc;
+      
+      // Check boundaries
+      if (nr >= 0 && nr < 7 && nc >= 0 && nc < 7) {
+        if (!visited.has(`${nr},${nc}`) && currentExits.includes(outDir)) {
+          // Check if the adjacent tile has an opening facing back at us
+          if (getTileExits(nr, nc).includes(inDir)) {
+            visited.add(`${nr},${nc}`);
+            queue.push([nr, nc, [...path, [nr, nc]]]);
           }
         }
       }
     }
-    // If this config successfully found the path, return it!
-    if (found) return found; 
   }
   
-  // Extreme fallback (if it still fails for some reason)
+  // If the strict pathfinding fails to find a connection, fallback to direct line
   return [[startR, startC], [targetR, targetC]]; 
 }
 
