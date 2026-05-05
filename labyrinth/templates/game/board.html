@@ -842,54 +842,56 @@ async function post(url, body) {
 }
 
 function findPath(grid, startR, startC, targetR, targetC) {
-  // 0=North, 1=East, 2=South, 3=West
-  const exits = {
-    'i': [1, 3],       // 0-degree 'I' is Horizontal (Left and Right)
-    'l': [0, 1],       // 0-degree 'L' connects Top and Right
-    't': [3, 0, 1]     // 0-degree 'T' connects Left, Top, and Right
+  // Define openings at 0-degree rotation
+  // 0=Top, 1=Right, 2=Bottom, 3=Left
+  const baseExits = {
+    'i': [1, 3],       // Straight: Horizontal (Left/Right)
+    'l': [0, 1],       // Corner: Top/Right
+    't': [3, 0, 1]     // T-Junction: Left/Top/Right
   };
 
-  const getTileExits = (r, c) => {
+  // Helper to get actual openings after rotation
+  function getExits(r, c) {
     const tile = grid[r][c];
-    // Add the rotation to the base exits, wrapping around 4 using modulo
-    return exits[tile.shape].map(dir => (dir + tile.rotation) % 4);
-  };
+    // Rotate the base exits by adding the rotation value (0-3) 
+    // and using modulo 4 to keep it within 0-3.
+    return baseExits[tile.shape].map(dir => (dir + tile.rotation) % 4);
+  }
 
   const queue = [[startR, startC, [[startR, startC]]]];
   const visited = new Set([`${startR},${startC}`]);
 
-  // Movement vectors: [row_change, col_change, direction_out, direction_in]
-  const dirs = [
-    [-1, 0, 0, 2], // North (Exiting 0, Entering 2)
-    [0, 1, 1, 3],  // East  (Exiting 1, Entering 3)
-    [1, 0, 2, 0],  // South (Exiting 2, Entering 0)
-    [0, -1, 3, 1]  // West  (Exiting 3, Entering 1)
+  // Directions: [row_offset, col_offset, exit_dir_needed, entry_dir_needed]
+  const moves = [
+    [-1, 0, 0, 2], // Moving North: Need exit Top (0), enter Bottom (2)
+    [0, 1, 1, 3],  // Moving East: Need exit Right (1), enter Left (3)
+    [1, 0, 2, 0],  // Moving South: Need exit Bottom (2), enter Top (0)
+    [0, -1, 3, 1]  // Moving West: Need exit Left (3), enter Right (1)
   ];
 
   while (queue.length > 0) {
     const [r, c, path] = queue.shift();
     if (r === targetR && c === targetC) return path;
 
-    const currentExits = getTileExits(r, c);
+    const currentExits = getExits(r, c);
 
-    for (const [dr, dc, outDir, inDir] of dirs) {
+    for (const [dr, dc, outDir, inDir] of moves) {
       const nr = r + dr, nc = c + dc;
       
-      // Check boundaries
-      if (nr >= 0 && nr < 7 && nc >= 0 && nc < 7) {
-        if (!visited.has(`${nr},${nc}`) && currentExits.includes(outDir)) {
-          // Check if the adjacent tile has an opening facing back at us
-          if (getTileExits(nr, nc).includes(inDir)) {
-            visited.add(`${nr},${nc}`);
-            queue.push([nr, nc, [...path, [nr, nc]]]);
-          }
+      if (nr >= 0 && nr < 7 && nc >= 0 && nc < 7 && !visited.has(`${nr},${nc}`)) {
+        const neighborExits = getExits(nr, nc);
+        
+        // THE CRITICAL CHECK:
+        // Does current tile have an exit facing the neighbor?
+        // AND does the neighbor have an exit facing the current tile?
+        if (currentExits.includes(outDir) && neighborExits.includes(inDir)) {
+          visited.add(`${nr},${nc}`);
+          queue.push([nr, nc, [...path, [nr, nc]]]);
         }
       }
     }
   }
-  
-  // If the strict pathfinding fails to find a connection, fallback to direct line
-  return [[startR, startC], [targetR, targetC]]; 
+  return [[startR, startC], [targetR, targetC]]; // Fallback
 }
 
 // ── Actions ───────────────────────────────────────────────────────
