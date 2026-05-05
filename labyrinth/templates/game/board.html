@@ -731,11 +731,6 @@ function buildPlayers(st) {
     } else {
       meepleFile = `${baseName}_shadow.svg`;
     }
-    card.innerHTML = `
-      <img src="${MEEPLE_BASE}${meepleFile}"
-           style="width:34px;height:44px;flex-shrink:0; transition: transform 0.3s;" alt="${p.name}">
-      <div class="player-info" style="flex:1;min-width:0;">
-
 
     const totalTokens = p.total_tokens !== undefined
       ? p.total_tokens
@@ -768,7 +763,7 @@ function buildPlayers(st) {
 
     card.innerHTML = `
       <img src="${MEEPLE_BASE}${meepleFile}"
-           style="width:34px;height:44px;flex-shrink:0;" alt="${p.name}">
+           style="width:34px;height:44px;flex-shrink:0; transition: transform 0.3s;" alt="${p.name}">
       <div class="player-info" style="flex:1;min-width:0;">
         <div class="player-name" style="font-size:0.8rem;">${p.name}</div>
         <div class="player-pos" style="font-size:0.65rem;">${p.score}/${totalTokens} tokens</div>
