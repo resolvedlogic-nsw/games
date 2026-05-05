@@ -19,9 +19,9 @@
   --cell:       64px;
   --gap:        3px;
   --board-w:    calc(7 * var(--cell) + 6 * var(--gap));
-  --reachable:  rgba(100,220,100,0.2);
-  --reach-bdr:  var(--reach-player, #64dc64);
-  --reach-player: #64dc64;
+  --reachable:  rgba(220, 50, 50, 0.2);
+  --reach-bdr:  var(--reach-player, #dc3232);
+  --reach-player: #dc3232;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -305,7 +305,7 @@ body {
 
 .tile.reachable {
   cursor: pointer;
-  box-shadow: inset 0 0 0 2px var(--reach-bdr), 0 0 12px rgba(220, 100, 174, 0.589);
+  box-shadow: inset 0 0 0 2px var(--reach-bdr), 0 0 12px rgba(100,220,100,0.3);
 }
 .tile.reachable::after {
   content: '';
