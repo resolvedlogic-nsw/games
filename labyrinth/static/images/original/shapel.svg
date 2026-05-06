@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" fill="#4a7a30"/>
+  <!-- Path shape: N opening + E opening, closed S and W -->
+  <!-- Use a filled path for the road shape with a proper inner curve -->
+  <path d="M28,0 L72,0 L72,28 L100,28 L100,72 L72,72 Q52,72 52,52 L52,72 L72,72 L100,72 L100,28 L72,28 L72,0 Z" fill="#4a7a30"/>
+  <!-- Road fill using two rects + curved inner corner via path -->
+  <rect x="28" y="0" width="44" height="72" fill="#c8a96e"/>
+  <rect x="28" y="28" width="72" height="44" fill="#c8a96e"/>
+  <!-- Inner corner grass patch using a proper arc -->
+  <path d="M28,28 Q28,72 72,72 L28,72 Z" fill="#4a7a30"/>
+  <!-- Texture lines - vertical -->
+  <line x1="36" y1="0" x2="36" y2="64" stroke="#b89050" stroke-width="0.8" opacity="0.5"/>
+  <line x1="50" y1="0" x2="50" y2="50" stroke="#d4b478" stroke-width="0.8" opacity="0.35"/>
+  <!-- Texture lines - horizontal -->
+  <line x1="36" y1="36" x2="100" y2="36" stroke="#b89050" stroke-width="0.8" opacity="0.5"/>
+  <line x1="36" y1="50" x2="100" y2="50" stroke="#d4b478" stroke-width="0.8" opacity="0.35"/>
+  <!-- Grass edge shading -->
+  <rect x="0" y="0" width="30" height="100" fill="#3a6020" opacity="0.4"/>
+  <rect x="0" y="70" width="100" height="30" fill="#3a6020" opacity="0.4"/>
+</svg>
