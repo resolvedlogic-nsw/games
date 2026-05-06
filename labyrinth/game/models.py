@@ -91,12 +91,11 @@ class Game(models.Model):
     # ── Board initialisation ──────────────────────────────────────────────────
 
     @classmethod
-    def new_game(cls, num_players=2):
+    def new_game(cls, num_players=2, tokens_to_win=None):
         game = cls(num_players=num_players)
-        # Capture the deck returned by the board builder
         deck = game._initialise_board()
-        # Deal the deck to the players
-        game._initialise_players(num_players, deck)
+        # Pass the tokens limit into the player setup
+        game._initialise_players(num_players, deck, tokens_to_win)
         game.save()
         return game
 
@@ -179,15 +178,22 @@ class Game(models.Model):
         # Return the exact 24 IDs so _initialise_players can deal them out
         return char_ids   
 
-    def _initialise_players(self, num_players, deck):
+    def _initialise_players(self, num_players, deck, tokens_to_win=None):
         corners = [(0, 0), (0, 6), (6, 6), (6, 0)]
         colors  = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12']
         names   = ['Red', 'Blue', 'Green', 'Yellow']
         random.shuffle(deck)
-        cards_per_player = len(deck) // num_players
+        
+        # Determine how many cards each player gets
+        max_possible = len(deck) // num_players
+        if tokens_to_win is None or tokens_to_win > max_possible:
+            cards_per_player = max_possible
+        else:
+            cards_per_player = tokens_to_win
+
         players = []
         for i in range(min(num_players, 4)):
-            
+            # Slice the deck based on the requested tokens_to_win
             player_deck = deck[i * cards_per_player : (i + 1) * cards_per_player]
             
             first_target = player_deck.pop(0) if player_deck else None
@@ -200,7 +206,9 @@ class Game(models.Model):
                 'col': corners[i][1],
                 'deck': player_deck,
                 'current_target': first_target,
-                'score': 0
+                'score': 0,
+                # We save this so the frontend UI correctly displays "1 / 5 tokens"
+                'total_tokens': cards_per_player 
             })
         self.players = players
 

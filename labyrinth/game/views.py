@@ -15,9 +15,17 @@ def index(request):
 def new_game(request):
     num_players = int(request.POST.get('num_players', 2))
     num_players = max(2, min(4, num_players))
-    game = Game.new_game(num_players=num_players)
+    
+    # Calculate default max tokens (24 total targets in the game)
+    default_tokens = 24 // num_players
+    tokens_to_win = int(request.POST.get('tokens_to_win', default_tokens))
+    
+    # Pass tokens_to_win into the model builder
+    game = Game.new_game(num_players=num_players, tokens_to_win=tokens_to_win)
+    
     # Store which player this browser "is"
     request.session['player_id'] = 0   # host is always player 0 for now
+    
     return render(request, 'game/board.html', {
         'game': game,
         'player_id': 0,

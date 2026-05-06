@@ -194,6 +194,12 @@
       <button type="button" class="player-btn" data-n="4" onclick="selectPlayers(this)">4</button>
     </div>
     <input type="hidden" name="num_players" id="num_players" value="2">
+    <div class="setup-group">
+      <label for="tokens_to_win">Tokens to Win:</label>
+      <select id="tokens_to_win" name="tokens_to_win">
+        <!-- This will be populated instantly by JavaScript -->
+      </select>
+    </div>
     <button type="submit" class="start-btn">Enter the Labyrinth</button>
   </form>
 </div>
@@ -204,6 +210,38 @@ function selectPlayers(el) {
   el.classList.add('active');
   document.getElementById('num_players').value = el.dataset.n;
 }
+
+function updateTokens() {
+  const numPlayers = parseInt(document.getElementById('num_players').value);
+  const tokenSelect = document.getElementById('tokens_to_win');
+  
+  // Clear out the old options
+  tokenSelect.innerHTML = ''; 
+
+  // Standard Labyrinth has 24 total tokens. Adjust this if your game has a different amount!
+  const totalTokensInGame = 24; 
+  const maxTokens = Math.floor(totalTokensInGame / numPlayers);
+
+  // Build the new options from 2 up to the max
+  for (let i = 2; i <= maxTokens; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    
+    // Add a nice label for the max value
+    if (i === maxTokens) {
+      opt.textContent = `${i} (Full Game)`;
+      opt.selected = true; // Default to a full game
+    } else {
+      opt.textContent = i;
+    }
+    
+    tokenSelect.appendChild(opt);
+  }
+}
+
+// Run this once when the page loads to set up the initial 2-Player list
+document.addEventListener('DOMContentLoaded', updateTokens);
+
 </script>
 </body>
 </html>
