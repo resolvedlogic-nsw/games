@@ -520,6 +520,12 @@ body {
   <div class="treasure-card">
     <div class="treasure-title">Target Found!</div>
     <img id="treasure-img" src="" alt="Treasure">
+    
+    <!-- Game Over Buttons (Hidden by default) -->
+    <div id="game-over-buttons" style="display: none; margin-top: 24px; gap: 14px; justify-content: center;">
+      <button class="rotate-btn" onclick="document.getElementById('treasure-popup').classList.remove('show')">View Board</button>
+      <a href="{% url 'labyrinth:index' %}" class="rotate-btn" style="text-decoration:none; display:inline-block; text-align:center;">New Game</a>
+    </div>
   </div>
 </div>
 <!-- ════════════════════════════════════════════════════════════════
@@ -1083,30 +1089,32 @@ async function moveTo(row, col) {
     const popup = document.getElementById('treasure-popup');
     const img = document.getElementById('treasure-img');
     const title = popup.querySelector('.treasure-title');
+    const btnGroup = document.getElementById('game-over-buttons'); // Grab the new buttons
     
-    // Repurpose the treasure popup into a victory screen!
     title.textContent = `${state.current_player.name} WINS!`;
     title.style.color = state.current_player.color;
     title.style.textShadow = `0 0 20px ${state.current_player.color}`;
     
     img.src = `${MEEPLE_BASE}meeple_winner_gold.svg`; 
+    btnGroup.style.display = 'flex'; // Show the buttons!
     popup.classList.add('show');
     
-    // We do NOT hide this automatically. The game is over!
     toast(`Game Over! ${state.current_player.name} is the winner!`);
+    phase = 'game_over'; // Lock the board so no one can push tiles anymore
 
   } else if (st.message === "TARGET_FOUND") {
     // STANDARD TREASURE POPUP
     const popup = document.getElementById('treasure-popup');
     const img = document.getElementById('treasure-img');
     const title = popup.querySelector('.treasure-title');
+    const btnGroup = document.getElementById('game-over-buttons');
     
-    // Reset styles in case they were changed by a previous win (if playing multiple games)
     title.textContent = "Target Found!";
     title.style.color = "var(--gold)";
     title.style.textShadow = "0 0 20px var(--gold)";
     
     img.src = charImg(previousTarget); 
+    if(btnGroup) btnGroup.style.display = 'none'; // Ensure buttons stay hidden for standard finds
     popup.classList.add('show');
     
     setTimeout(() => {
@@ -1115,7 +1123,6 @@ async function moveTo(row, col) {
     }, 2500);
 
   } else {
-    // JUST A NORMAL MOVE
     toast(`${state.current_player.name}'s turn`);
   }
 }

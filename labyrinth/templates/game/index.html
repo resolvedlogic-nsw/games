@@ -124,7 +124,7 @@
     display: flex;
     gap: 12px;
     justify-content: center;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
   }
 
   .player-btn {
@@ -143,6 +143,49 @@
     border-color: var(--gold);
     color: var(--gold);
     box-shadow: 0 0 20px rgba(201,168,76,0.2);
+  }
+
+  /* --- NEW TOKEN BUTTON CSS --- */
+  .setup-group {
+    margin-bottom: 40px;
+  }
+
+  #token-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+
+  .token-btn {
+    background: rgba(20,14,4,0.6);
+    border: 1px solid rgba(201,168,76,0.2);
+    color: rgba(212, 192, 154, 0.7);
+    width: 44px; height: 44px;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 4px;
+  }
+  .token-btn:hover:not(:disabled) {
+    border-color: var(--gold);
+    color: var(--gold);
+    box-shadow: 0 0 8px rgba(201,168,76,0.2);
+  }
+  .token-btn.active {
+    background: linear-gradient(135deg, #4a3410, #8b6914);
+    border-color: var(--gold);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(201,168,76,0.4);
+  }
+  .token-btn:disabled {
+    opacity: 0.15;
+    cursor: not-allowed;
+    background: rgba(0,0,0,0.5);
+    border-color: transparent;
   }
 
   .start-btn {
@@ -187,6 +230,7 @@
 
   <form method="POST" action="{% url 'labyrinth:new_game' %}">
     {% csrf_token %}
+    
     <label>Number of Adventurers</label>
     <div class="player-select">
       <button type="button" class="player-btn active" data-n="2" onclick="selectPlayers(this)">2</button>
@@ -194,54 +238,96 @@
       <button type="button" class="player-btn" data-n="4" onclick="selectPlayers(this)">4</button>
     </div>
     <input type="hidden" name="num_players" id="num_players" value="2">
+    
+    <!-- NEW TOKEN BUTTON GRID -->
     <div class="setup-group">
-      <label for="tokens_to_win">Tokens to Win:</label>
-      <select id="tokens_to_win" name="tokens_to_win">
-        <!-- This will be populated instantly by JavaScript -->
-      </select>
+      <label>Tokens to Win</label>
+      <input type="hidden" name="tokens_to_win" id="hidden_tokens" value="12">
+      
+      <div id="token-grid">
+        <button type="button" class="token-btn" data-val="2">2</button>
+        <button type="button" class="token-btn" data-val="3">3</button>
+        <button type="button" class="token-btn" data-val="4">4</button>
+        <button type="button" class="token-btn" data-val="5">5</button>
+        <button type="button" class="token-btn" data-val="6">6</button>
+        <button type="button" class="token-btn" data-val="7">7</button>
+        <button type="button" class="token-btn" data-val="8">8</button>
+        <button type="button" class="token-btn" data-val="9">9</button>
+        <button type="button" class="token-btn" data-val="10">10</button>
+        <button type="button" class="token-btn" data-val="11">11</button>
+        <button type="button" class="token-btn active" data-val="12">12</button>
+      </div>
     </div>
+
     <button type="submit" class="start-btn">Enter the Labyrinth</button>
   </form>
 </div>
 
 <script>
+// Grab our token elements
+const tokenBtns = document.querySelectorAll('.token-btn');
+const hiddenInput = document.getElementById('hidden_tokens');
+
+// Called when a user clicks the 2, 3, or 4 player buttons
 function selectPlayers(el) {
   document.querySelectorAll('.player-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('num_players').value = el.dataset.n;
+  
+  const numPlayers = parseInt(el.dataset.n);
+  document.getElementById('num_players').value = numPlayers;
+  
+  // Instantly update the token grid based on the new player count!
+  updateTokens(numPlayers);
 }
 
-function updateTokens() {
-  const numPlayers = parseInt(document.getElementById('num_players').value);
-  const tokenSelect = document.getElementById('tokens_to_win');
-  
-  // Clear out the old options
-  tokenSelect.innerHTML = ''; 
+// Logic to handle max limits and dimming out illegal buttons
+function updateTokens(numPlayers) {
+  const maxTokens = Math.floor(24 / numPlayers);
+  let currentSelected = parseInt(hiddenInput.value);
 
-  // Standard Labyrinth has 24 total tokens. Adjust this if your game has a different amount!
-  const totalTokensInGame = 24; 
-  const maxTokens = Math.floor(totalTokensInGame / numPlayers);
-
-  // Build the new options from 2 up to the max
-  for (let i = 2; i <= maxTokens; i++) {
-    const opt = document.createElement('option');
-    opt.value = i;
+  tokenBtns.forEach(btn => {
+    const val = parseInt(btn.dataset.val);
     
-    // Add a nice label for the max value
-    if (i === maxTokens) {
-      opt.textContent = `${i} (Full Game)`;
-      opt.selected = true; // Default to a full game
+    if (val > maxTokens) {
+      btn.disabled = true;
+      btn.classList.remove('active'); // Ensure a disabled button is never active
     } else {
-      opt.textContent = i;
+      btn.disabled = false;
     }
-    
-    tokenSelect.appendChild(opt);
+  });
+
+  // If the user previously selected '12', but just clicked '3 Players' (max 8),
+  // automatically snap their selection down to 8.
+  if (currentSelected > maxTokens) {
+    selectToken(maxTokens);
   }
 }
 
-// Run this once when the page loads to set up the initial 2-Player list
-document.addEventListener('DOMContentLoaded', updateTokens);
+// Called when a user clicks one of the numbered token buttons
+function selectToken(val) {
+  hiddenInput.value = val;
+  
+  tokenBtns.forEach(b => {
+    if (parseInt(b.dataset.val) === val) {
+      b.classList.add('active');
+    } else {
+      b.classList.remove('active');
+    }
+  });
+}
 
+// Attach click listeners to the token buttons
+tokenBtns.forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    selectToken(parseInt(e.target.dataset.val));
+  });
+});
+
+// Run this once when the page loads to ensure the grid starts correctly for 2 players
+document.addEventListener('DOMContentLoaded', () => {
+  updateTokens(2);
+  selectToken(12); // Default to a full game (12 tokens for 2 players)
+});
 </script>
 </body>
 </html>

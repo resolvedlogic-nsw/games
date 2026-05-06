@@ -346,7 +346,11 @@ class Game(models.Model):
         # ---------------------------
 
         self.players = players
-        self.current_turn = (self.current_turn + 1) % self.num_players
+        
+        # FIX: Only advance the turn if the game is still going!
+        if not player_won:
+            self.current_turn = (self.current_turn + 1) % self.num_players
+            
         self.last_push = None
         self.save()
         
