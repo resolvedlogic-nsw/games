@@ -747,13 +747,25 @@ function buildPlayers(st) {
     if (needsHome) {
       targetHtml = `
         <div style="
-          text-align:center;
-          font-size:10px;
-          color:${p.color};
-          border:1px solid ${p.color};
-          padding:3px 5px;
-          border-radius:3px;">
-          🏠 Go Home
+          width:44px; height:44px;
+          border-radius:4px;
+          border:1px solid var(--gold-dim);
+          background: rgba(0,0,0,0.4);
+          display:flex; align-items:center; justify-content:center;
+          box-shadow: inset 0 0 8px rgba(0,0,0,0.8);"
+          title="Return to your starting corner!">
+          
+          <div style="
+            width:24px; height:24px;
+            border-radius:50%;
+            background:${p.color};
+            border:2px solid rgba(255,255,255,0.8);
+            box-shadow: 0 0 10px ${p.color};
+            display:flex; align-items:center; justify-content:center;
+            font-size:12px;">
+            🏠
+          </div>
+          
         </div>`;
     } else if (p.current_target) {
       targetHtml = `
@@ -1065,10 +1077,34 @@ async function moveTo(row, col) {
   phase = 'push';
   render(state);
 
-  // Check if they found the treasure!
-  if (st.message === "TARGET_FOUND") {
+  // Check what happened on this move!
+  if (st.message === "PLAYER_WON") {
+    // VICTORY POPUP
     const popup = document.getElementById('treasure-popup');
     const img = document.getElementById('treasure-img');
+    const title = popup.querySelector('.treasure-title');
+    
+    // Repurpose the treasure popup into a victory screen!
+    title.textContent = `${state.current_player.name} WINS!`;
+    title.style.color = state.current_player.color;
+    title.style.textShadow = `0 0 20px ${state.current_player.color}`;
+    
+    img.src = `${MEEPLE_BASE}meeple_winner_gold.svg`; 
+    popup.classList.add('show');
+    
+    // We do NOT hide this automatically. The game is over!
+    toast(`Game Over! ${state.current_player.name} is the winner!`);
+
+  } else if (st.message === "TARGET_FOUND") {
+    // STANDARD TREASURE POPUP
+    const popup = document.getElementById('treasure-popup');
+    const img = document.getElementById('treasure-img');
+    const title = popup.querySelector('.treasure-title');
+    
+    // Reset styles in case they were changed by a previous win (if playing multiple games)
+    title.textContent = "Target Found!";
+    title.style.color = "var(--gold)";
+    title.style.textShadow = "0 0 20px var(--gold)";
     
     img.src = charImg(previousTarget); 
     popup.classList.add('show');
@@ -1077,7 +1113,9 @@ async function moveTo(row, col) {
       popup.classList.remove('show');
       toast(`${state.current_player.name}'s turn`);
     }, 2500);
+
   } else {
+    // JUST A NORMAL MOVE
     toast(`${state.current_player.name}'s turn`);
   }
 }

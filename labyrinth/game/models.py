@@ -322,7 +322,7 @@ class Game(models.Model):
         p['row'] = target_row
         p['col'] = target_col
         
-        # --- NEW HUNTING LOGIC ---
+        # --- HUNTING LOGIC ---
         target_hit = False
         landed_tile = self.tiles[target_row][target_col]
         
@@ -332,15 +332,32 @@ class Game(models.Model):
             # Flip the next card (or set to None if they found them all)
             p['current_target'] = p['deck'].pop(0) if p['deck'] else None
             target_hit = True
-        # -------------------------
+
+        # --- WIN CONDITION LOGIC ---
+        player_won = False
+        # The 4 starting corners based on player ID
+        corners = [(0, 0), (0, 6), (6, 6), (6, 0)]
+        home_row, home_col = corners[p['id']]
+        
+        # If they have no targets left AND they are standing on their home tile
+        if p['current_target'] is None and p['row'] == home_row and p['col'] == home_col:
+            p['winner'] = True
+            player_won = True
+        # ---------------------------
 
         self.players = players
         self.current_turn = (self.current_turn + 1) % self.num_players
         self.last_push = None
         self.save()
         
-        # Pass a special message if they found the treasure
-        msg = "TARGET_FOUND" if target_hit else "Moved"
+        # Pass a special message to trigger the frontend animations
+        if player_won:
+            msg = "PLAYER_WON"
+        elif target_hit:
+            msg = "TARGET_FOUND"
+        else:
+            msg = "Moved"
+            
         return True, msg
 
     def rotate_spare(self):
