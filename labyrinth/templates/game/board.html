@@ -180,7 +180,7 @@ let currentPhase = (state.last_push === null) ? 'push' : 'move';
 function getTilePath(shape) { return THEME === 'pokemon' ? `${IMG_BASE}path${shape}.jpg` : `${IMG_BASE}shape${shape}.svg`; }
 function charImg(id) { if (!id || id === '?') return `${IMG_BASE}secret.png`; return `${IMG_BASE}character${String(id).padStart(2, '0')}.png`; }
 function getMeeplePath(color) { 
-    const colors = {'#e74c3c':'red', '#3498db':'blue', '#2ecc71':'green', '#f39c12':'yellow', '#9b59b6':'purple'};
+    const colors = {'#e74c3c':'red', '#3498db':'blue', '#be90d4':'purple', '#f39c12':'yellow', '#9b59b6':'purple'};
     const name = colors[color] || 'red';
     return THEME === 'pokemon' ? `${IMG_BASE}ball${name}.png` : `${IMG_BASE}meeple_${name}.svg`;
 }
