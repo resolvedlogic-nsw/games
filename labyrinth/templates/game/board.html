@@ -180,8 +180,9 @@ body {
 
   .game-layout > .board-container {
     order: 2;
-    width: calc((var(--board-w) + 48px) * var(--board-scale));
-    height: calc((var(--board-w) + 48px) * var(--board-scale));
+    width: 100%;
+    max-width: none;
+    height: auto;
     padding: calc(24px * var(--board-scale));
   }
 
@@ -207,7 +208,11 @@ body {
   }
 
   .player-card {
-    min-width: 170px;
+    min-width: 0;
+    flex: 1 1 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     margin-bottom: 0;
   }
 }
@@ -318,8 +323,8 @@ function updateBoardScale() {
     if (isPortraitMobile) {
         const topH = leftPanel.getBoundingClientRect().height;
         const bottomH = rightPanel.getBoundingClientRect().height;
-        availableWidth = Math.max(280, window.innerWidth - paddingX - 8);
-        availableHeight = Math.max(280, window.innerHeight - paddingY - topH - bottomH - (gap * 2) - 8);
+        availableWidth = Math.max(280, window.innerWidth - paddingX);
+        availableHeight = Math.max(280, window.innerHeight - paddingY - topH - bottomH - (gap * 2));
     } else {
         const reservedWidth = leftPanel.offsetWidth + rightPanel.offsetWidth + gap * 2 + 6;
         availableWidth = Math.max(320, window.innerWidth - reservedWidth - 24);
@@ -401,6 +406,7 @@ async function animateMeepleAlongPath(playerId, path, fromRow, fromCol) {
 function render(st) {
     state = st;
     const cp = st.current_player;
+    const myPlayer = st.players.find(p => p.id === MY_ID) || cp;
     const reachableCells = Array.isArray(st.reachable) ? st.reachable : [];
     const isOnlineMode = st.mode === 'online';
     const canActThisTurn = !isOnlineMode || st.current_turn === MY_ID;
@@ -410,9 +416,12 @@ function render(st) {
     else currentPhase = 'move';
 
     const displayTurnColor = getDisplayColor(cp.color);
-    document.getElementById('turn-dot').style.background = displayTurnColor;
-    document.getElementById('turn-name').textContent = cp.name;
-    document.getElementById('phase-label').textContent = currentPhase === 'push' ? "Push a Tile" : "Move your piece";
+    const turnDot = document.getElementById('turn-dot');
+    const turnName = document.getElementById('turn-name');
+    const phaseLabel = document.getElementById('phase-label');
+    if (turnDot) turnDot.style.background = displayTurnColor;
+    if (turnName && myPlayer) turnName.textContent = myPlayer.name || cp.name;
+    if (phaseLabel) phaseLabel.textContent = currentPhase === 'push' ? "Push a Tile" : "Move your piece";
     document.getElementById('rotate-btn').disabled = (!canActThisTurn || currentPhase !== 'push' || isProcessing || st.phase === 'over');
     
     document.documentElement.style.setProperty('--reach-player', displayTurnColor);
@@ -522,6 +531,61 @@ function render(st) {
     }
     spareCont.appendChild(sBg);
 
+    // Device-player summary in the top-left card
+    const turnCard = document.querySelector('.turn-card');
+    if (turnCard && myPlayer) {
+        const totalTokensMy = myPlayer.total_tokens !== undefined
+            ? myPlayer.total_tokens
+            : (myPlayer.deck ? (myPlayer.deck.length + (myPlayer.current_target ? 1 : 0) + myPlayer.score) : myPlayer.score);
+
+        const needsHomeMy = !myPlayer.current_target && Array.isArray(myPlayer.deck) && myPlayer.deck.length === 0;
+        let myTargetHtml = '';
+        if (needsHomeMy) {
+            myTargetHtml = `
+                <div style="
+                    width:32px;height:32px;
+                    border-radius:4px;
+                    border:1px solid var(--gold-dim);
+                    background:rgba(0,0,0,0.4);
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:18px;">
+                    🏠
+                </div>
+            `;
+        } else if (myPlayer.current_target) {
+            myTargetHtml = `
+                <img src="${charImg(myPlayer.current_target)}"
+                     style="width:32px;height:32px;border-radius:4px;border:1px solid var(--gold-dim);object-fit:contain;">
+            `;
+        }
+
+        let summary = document.getElementById('my-summary');
+        if (!summary) {
+            summary = document.createElement('div');
+            summary.id = 'my-summary';
+            summary.style.marginTop = '10px';
+            turnCard.appendChild(summary);
+        }
+        summary.innerHTML = `
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <img src="${getMeeplePath(myPlayer.color)}" style="width:20px;">
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-size:0.8rem; color:${getDisplayColor(myPlayer.color)};">${getDisplayName(myPlayer) || 'You'}</span>
+                        <span style="font-size:0.7rem; color:var(--gold-dim);">You • ${currentPhase === 'push' ? 'Push' : 'Move'} phase</span>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    ${myTargetHtml || ''}
+                    <div style="font-size:0.8rem;">
+                        <div style="font-size:0.7rem; text-transform:uppercase; color:var(--gold-dim);">Tokens</div>
+                        <div>${myPlayer.score} / ${totalTokensMy}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     // Sidebar Players
     const pList = document.getElementById('players-list');
     pList.innerHTML = '';
@@ -529,10 +593,46 @@ function render(st) {
         const card = document.createElement('div');
         card.className = `player-card ${p.id === st.current_turn ? 'active' : ''}`;
         
-        // Handle hidden targets for online mode
-        let targetSrc = charImg(p.current_target);
-        if (isOnlineMode && p.id !== MY_ID && !p.winner) {
-            targetSrc = charImg('?');
+        const totalTokens = p.total_tokens !== undefined
+            ? p.total_tokens
+            : (p.deck ? (p.deck.length + (p.current_target ? 1 : 0) + p.score) : p.score);
+
+        const needsHome = !p.current_target && Array.isArray(p.deck) && p.deck.length === 0;
+
+        let targetHtml = '';
+        if (needsHome) {
+            // Home is the goal – show a house icon instead of a broken image
+            targetHtml = `
+                <div style="
+                    width:40px;height:40px;
+                    border-radius:4px;
+                    border:1px solid var(--gold-dim);
+                    background:rgba(0,0,0,0.4);
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:20px;">
+                    🏠
+                </div>
+            `;
+        } else if (p.current_target) {
+            if (isOnlineMode && p.id !== MY_ID && !p.winner) {
+                // Other player's target stays secret – show a simple question mark, never a broken image
+                targetHtml = `
+                    <div style="
+                        width:40px;height:40px;
+                        border-radius:4px;
+                        border:1px solid var(--gold-dim);
+                        background:rgba(0,0,0,0.4);
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:22px;">
+                        ?
+                    </div>
+                `;
+            } else {
+                targetHtml = `
+                    <img src="${charImg(p.current_target)}"
+                         style="width:40px;height:40px;border-radius:4px;border:1px solid var(--gold-dim);object-fit:contain;">
+                `;
+            }
         }
 
         card.innerHTML = `
@@ -541,10 +641,10 @@ function render(st) {
                 <span style="font-family:'Cinzel Decorative'; color:${getDisplayColor(p.color)}">${getDisplayName(p)} ${p.winner ? '👑' : ''}</span>
             </div>
             <div style="display:flex; align-items:center; gap:10px; background:rgba(0,0,0,0.3); padding:8px; border-radius:4px;">
-                <img src="${targetSrc}" style="width:40px; height:40px; object-fit:contain;">
+                ${targetHtml || ''}
                 <div>
                     <div style="font-size:0.7rem; color:var(--gold-dim); text-transform:uppercase;">Hunting</div>
-                    <div style="font-size:0.9rem;">Tokens: ${p.score} / ${p.total_tokens}</div>
+                    <div style="font-size:0.9rem;">Tokens: ${p.score} / ${totalTokens}</div>
                 </div>
             </div>
         `;
