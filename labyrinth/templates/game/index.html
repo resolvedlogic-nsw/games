@@ -9,10 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
-    --gold: #c9a84c;
-    --dark: #0a0806;
+    --gold: #c9a84c; --gold-light: #e8c97a;
+    --dark: #0a0806; --dark2: #1a1208;
   }
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
@@ -20,134 +19,124 @@
     background: var(--dark);
     background-image:
       radial-gradient(ellipse at 20% 20%, #2a1a05 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 80%, #1a0d02 0%, transparent 50%),
-      repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(201,168,76,0.03) 40px, rgba(201,168,76,0.03) 41px),
-      repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(201,168,76,0.03) 40px, rgba(201,168,76,0.03) 41px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Crimson Pro', Georgia, serif;
-    overflow: hidden;
+      radial-gradient(ellipse at 80% 80%, #1a0d02 0%, transparent 50%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Crimson Pro', Georgia, serif; overflow: hidden;
   }
-
-  .orb {
-    position: fixed;
-    border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.15;
-    pointer-events: none;
-    animation: drift 20s ease-in-out infinite alternate;
-  }
-  .orb-1 { width: 400px; height: 400px; background: #8b4513; top: -100px; left: -100px; animation-delay: 0s; }
-  .orb-2 { width: 300px; height: 300px; background: #c9a84c; bottom: -80px; right: -80px; animation-delay: -10s; }
-  @keyframes drift { from { transform: translate(0,0); } to { transform: translate(30px, 20px); } }
+  .orb { position:fixed; border-radius:50%; filter:blur(80px); opacity:0.15; pointer-events:none; animation:drift 20s ease-in-out infinite alternate; }
+  .orb-1 { width:400px;height:400px;background:#8b4513;top:-100px;left:-100px; }
+  .orb-2 { width:300px;height:300px;background:#c9a84c;bottom:-80px;right:-80px;animation-delay:-10s; }
+  @keyframes drift { from{transform:translate(0,0)} to{transform:translate(30px,20px)} }
 
   .card {
-    position: relative;
-    background: linear-gradient(145deg, #1e1507, #0f0b04);
-    border: 1px solid rgba(201,168,76,0.3);
-    border-radius: 4px;
-    padding: 30px 40px; /* Reduced padding to save vertical space */
-    text-align: center;
-    max-width: 480px;
-    width: 90%;
-    box-shadow: 0 40px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(201,168,76,0.15);
+    position:relative; background:linear-gradient(145deg,#1e1507,#0f0b04);
+    border:1px solid rgba(201,168,76,0.3); border-radius:4px;
+    padding:48px 60px; text-align:center; max-width:500px; width:92%;
+    box-shadow:0 0 0 1px rgba(201,168,76,0.08),0 40px 80px rgba(0,0,0,0.8),inset 0 1px 0 rgba(201,168,76,0.15);
   }
+  .card::before,.card::after { content:'';position:absolute;width:40px;height:40px;border-color:var(--gold);border-style:solid;opacity:0.5; }
+  .card::before { top:12px;left:12px;border-width:1px 0 0 1px; }
+  .card::after  { bottom:12px;right:12px;border-width:0 1px 1px 0; }
 
-  .card::before, .card::after {
-    content: ''; position: absolute; width: 30px; height: 30px;
-    border-color: var(--gold); border-style: solid; opacity: 0.5;
+  /* ── Header area ── */
+  .header-classic { display:block; }
+  .header-pokemon  { display:none; text-align:center; }
+  .header-pokemon img { max-width:280px; width:90%; margin-bottom:6px; }
+  body.pokemon .header-classic { display:none; }
+  body.pokemon .header-pokemon  { display:block; }
+
+  .title { font-family:'Cinzel Decorative',serif; font-size:clamp(1.8rem,5vw,2.8rem); font-weight:900; color:var(--gold); letter-spacing:0.05em; text-shadow:0 0 40px rgba(201,168,76,0.4),0 2px 4px rgba(0,0,0,0.8); margin-bottom:6px; }
+  .subtitle { color:rgba(201,168,76,0.5); font-style:italic; font-size:1rem; letter-spacing:0.15em; margin-bottom:32px; }
+
+  /* ── Theme toggle ── */
+  .theme-row { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:28px; }
+  .theme-label { font-size:0.8rem; letter-spacing:0.12em; text-transform:uppercase; color:rgba(201,168,76,0.6); }
+  .toggle-wrap { position:relative; width:52px; height:28px; }
+  .toggle-wrap input { opacity:0; width:0; height:0; }
+  .toggle-track {
+    position:absolute; inset:0; background:#1a1208; border:1px solid rgba(201,168,76,0.3);
+    border-radius:14px; cursor:pointer; transition:background 0.3s;
   }
-  .card::before { top: 10px; left: 10px; border-width: 1px 0 0 1px; }
-  .card::after  { bottom: 10px; right: 10px; border-width: 0 1px 1px 0; }
-
-  .title-container { min-height: 90px; display: flex; align-items: center; justify-content: center; flex-direction: column; margin-bottom: 10px; }
-  .title {
-    font-family: 'Cinzel Decorative', serif;
-    font-size: clamp(1.8rem, 4vw, 2.5rem);
-    color: var(--gold);
-    text-shadow: 0 0 30px rgba(201,168,76,0.4);
-    margin-bottom: 4px;
+  .toggle-track::before {
+    content:''; position:absolute; width:20px; height:20px; border-radius:50%;
+    background:var(--gold); top:3px; left:3px;
+    transition:transform 0.3s; box-shadow:0 0 6px rgba(201,168,76,0.6);
   }
-  .subtitle { color: rgba(201,168,76,0.5); font-style: italic; font-size: 1rem; }
-  .pokemon-logo { max-width: 90%; max-height: 100px; display: none; }
+  .toggle-wrap input:checked + .toggle-track { background:rgba(201,168,76,0.15); }
+  .toggle-wrap input:checked + .toggle-track::before { transform:translateX(24px); }
 
-  label { display: block; color: rgba(201,168,76,0.7); font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 10px; }
+  .divider { display:flex; align-items:center; gap:16px; margin-bottom:28px; }
+  .divider::before,.divider::after { content:'';flex:1;height:1px;background:linear-gradient(to right,transparent,rgba(201,168,76,0.4),transparent); }
+  .divider-gem { width:6px;height:6px;background:var(--gold);transform:rotate(45deg);opacity:0.6; }
 
-  .player-select { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
-  .player-btn {
-    width: 48px; height: 48px;
-    background: transparent; border: 1px solid rgba(201,168,76,0.3); color: rgba(201,168,76,0.6);
-    font-family: 'Cinzel Decorative', serif; font-size: 1.1rem; cursor: pointer; transition: all 0.2s;
-  }
-  .player-btn:hover, .player-btn.active { background: rgba(201,168,76,0.12); border-color: var(--gold); color: var(--gold); }
+  label.section-label { display:block; color:rgba(201,168,76,0.7); font-size:0.8rem; letter-spacing:0.2em; text-transform:uppercase; margin-bottom:12px; }
 
-  .setup-group { margin-bottom: 20px; }
-  #token-grid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 280px; margin: 0 auto; }
-  .token-btn {
-    background: rgba(20,14,4,0.6); border: 1px solid rgba(201,168,76,0.2); color: rgba(212, 192, 154, 0.7);
-    width: 38px; height: 38px; font-family: 'Cinzel Decorative', serif; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; border-radius: 4px;
-  }
-  .token-btn.active { background: linear-gradient(135deg, #4a3410, #8b6914); border-color: var(--gold); color: #fff; }
-  .token-btn:disabled { opacity: 0.15; cursor: not-allowed; border-color: transparent; }
+  /* ── Player buttons ── */
+  .player-select { display:flex; gap:12px; justify-content:center; margin-bottom:24px; }
+  .player-btn { width:52px;height:52px;background:transparent;border:1px solid rgba(201,168,76,0.3);color:rgba(201,168,76,0.6);font-family:'Cinzel Decorative',serif;font-size:1.1rem;cursor:pointer;transition:all 0.2s; }
+  .player-btn:hover,.player-btn.active { background:rgba(201,168,76,0.12);border-color:var(--gold);color:var(--gold);box-shadow:0 0 20px rgba(201,168,76,0.2); }
 
-  .start-btn, .online-btn {
-    width: 100%; padding: 14px 20px; font-family: 'Cinzel Decorative', serif; font-size: 0.9rem; font-weight: 700;
-    letter-spacing: 0.1em; cursor: pointer; transition: all 0.3s; margin-bottom: 10px; text-transform: uppercase;
-  }
-  .start-btn { background: linear-gradient(135deg, #8b6914, #c9a84c, #8b6914); border: none; color: var(--dark); }
-  .start-btn:hover { box-shadow: 0 0 20px rgba(201,168,76,0.4); transform: translateY(-1px); }
-  .online-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); text-decoration: none; display: block; }
-  .online-btn:hover { background: rgba(201,168,76,0.1); }
+  /* ── Token grid ── */
+  .setup-group { margin-bottom:28px; }
+  #token-grid { display:flex;flex-wrap:wrap;gap:7px;justify-content:center;max-width:320px;margin:0 auto; }
+  .token-btn { background:rgba(20,14,4,0.6);border:1px solid rgba(201,168,76,0.2);color:rgba(212,192,154,0.7);width:42px;height:42px;font-family:'Cinzel Decorative',serif;font-size:0.9rem;cursor:pointer;transition:all 0.2s;border-radius:4px; }
+  .token-btn:hover:not(:disabled) { border-color:var(--gold);color:var(--gold); }
+  .token-btn.active { background:linear-gradient(135deg,#4a3410,#8b6914);border-color:var(--gold);color:#fff;box-shadow:0 0 12px rgba(201,168,76,0.4); }
+  .token-btn:disabled { opacity:0.15;cursor:not-allowed; }
 
-  /* Theme Switcher */
-  .theme-toggle { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px; }
-  .switch { position: relative; display: inline-block; width: 44px; height: 20px; }
-  .switch input { opacity: 0; width: 0; height: 0; }
-  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(201,168,76,0.2); transition: .4s; border-radius: 24px; }
-  .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: var(--gold); transition: .4s; border-radius: 50%; }
-  input:checked + .slider { background-color: #e74c3c; }
-  input:checked + .slider:before { transform: translateX(24px); background-color: white; }
-  .theme-label { color: var(--gold); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; }
+  /* ── Online link ── */
+  .online-link { display:block; margin-bottom:20px; color:rgba(201,168,76,0.5); font-size:0.8rem; letter-spacing:0.1em; text-decoration:none; transition:color 0.2s; }
+  .online-link:hover { color:var(--gold); }
+
+  .start-btn { width:100%;padding:15px 32px;background:linear-gradient(135deg,#8b6914,#c9a84c,#8b6914);background-size:200% 100%;border:none;color:var(--dark);font-family:'Cinzel Decorative',serif;font-size:1rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden; }
+  .start-btn::after { content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(255,255,255,0.1),transparent); }
+  .start-btn:hover { background-position:100% 0;box-shadow:0 0 30px rgba(201,168,76,0.4),0 4px 20px rgba(0,0,0,0.4);transform:translateY(-1px); }
+  form { margin:0; }
 </style>
 </head>
 <body>
+{% load static %}
 <div class="orb orb-1"></div>
 <div class="orb orb-2"></div>
 
 <div class="card">
-  <div class="theme-toggle">
-    <span class="theme-label">Classic</span>
-    <label class="switch">
-      <input type="checkbox" id="theme-switch" onchange="toggleTheme()">
-      <span class="slider"></span>
-    </label>
-    <span class="theme-label" style="color:#e74c3c;">Pokémon</span>
+  <!-- Header — swaps based on theme -->
+  <div class="header-classic">
+    <h1 class="title">Labyrinth</h1>
+    <p class="subtitle">The Board Game</p>
+  </div>
+  <div class="header-pokemon">
+    <img src="{% static 'images/pokemon/logo.png' %}" alt="Pokémon Labyrinth">
+    <p class="subtitle">The Board Game</p>
   </div>
 
-  <div class="title-container">
-    <div id="classic-title">
-      <h1 class="title">Labyrinth</h1>
-      <p class="subtitle">The Board Game</p>
-    </div>
-    <img id="poke-logo" class="pokemon-logo" src="{% static 'images/pokemon/logo.png' %}" alt="Pokemon Logo">
+  <!-- Theme toggle -->
+  <div class="theme-row">
+    <span class="theme-label">Classic</span>
+    <label class="toggle-wrap">
+      <input type="checkbox" id="themeToggle">
+      <span class="toggle-track"></span>
+    </label>
+    <span class="theme-label">Pokémon</span>
   </div>
+
+  <div class="divider"><div class="divider-gem"></div></div>
 
   <form method="POST" action="{% url 'labyrinth:new_game' %}">
     {% csrf_token %}
     <input type="hidden" name="theme" id="hidden_theme" value="classic">
-    
-    <label>Local Pass & Play</label>
+    <input type="hidden" name="num_players" id="num_players" value="2">
+    <input type="hidden" name="tokens_to_win" id="hidden_tokens" value="12">
+
+    <label class="section-label">Number of Adventurers</label>
     <div class="player-select">
       <button type="button" class="player-btn active" data-n="2" onclick="selectPlayers(this)">2</button>
       <button type="button" class="player-btn" data-n="3" onclick="selectPlayers(this)">3</button>
       <button type="button" class="player-btn" data-n="4" onclick="selectPlayers(this)">4</button>
     </div>
-    <input type="hidden" name="num_players" id="num_players" value="2">
-    
+
     <div class="setup-group">
-      <label>Tokens to Win</label>
-      <input type="hidden" name="tokens_to_win" id="hidden_tokens" value="12">
+      <label class="section-label">Tokens to Win</label>
       <div id="token-grid">
         <button type="button" class="token-btn" data-val="2">2</button>
         <button type="button" class="token-btn" data-val="3">3</button>
@@ -163,58 +152,60 @@
       </div>
     </div>
 
-    <button type="submit" class="start-btn">Start Local Game</button>
-    <a href="{% url 'labyrinth:online' %}" class="online-btn" id="online-link">Play Online</a>
+    <a href="{% url 'labyrinth:online' %}" class="online-link">🌐 Play Online (separate devices) →</a>
+
+    <button type="submit" class="start-btn">Enter the Labyrinth</button>
   </form>
 </div>
 
 <script>
-const tokenBtns = document.querySelectorAll('.token-btn');
-const hiddenInput = document.getElementById('hidden_tokens');
+const tokenBtns  = document.querySelectorAll('.token-btn');
+const hiddenTtw  = document.getElementById('hidden_tokens');
+const hiddenTheme = document.getElementById('hidden_theme');
+const themeToggle = document.getElementById('themeToggle');
 
-function toggleTheme() {
-  const isPoke = document.getElementById('theme-switch').checked;
-  const theme = isPoke ? 'pokemon' : 'classic';
-  document.getElementById('hidden_theme').value = theme;
-  
-  document.getElementById('classic-title').style.display = isPoke ? 'none' : 'block';
-  document.getElementById('poke-logo').style.display = isPoke ? 'block' : 'none';
-  document.getElementById('online-link').href = "{% url 'labyrinth:online' %}?theme=" + theme;
+// ── Theme ──
+function applyTheme(isPokemon) {
+  document.body.classList.toggle('pokemon', isPokemon);
+  hiddenTheme.value = isPokemon ? 'pokemon' : 'classic';
+  localStorage.setItem('labyrinth_theme', isPokemon ? 'pokemon' : 'classic');
 }
+themeToggle.addEventListener('change', () => applyTheme(themeToggle.checked));
 
+// Restore saved preference
+const saved = localStorage.getItem('labyrinth_theme');
+if (saved === 'pokemon') { themeToggle.checked = true; applyTheme(true); }
+
+// ── Players ──
 function selectPlayers(el) {
   document.querySelectorAll('.player-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  const numPlayers = parseInt(el.dataset.n);
-  document.getElementById('num_players').value = numPlayers;
-  updateTokens(numPlayers);
+  const n = parseInt(el.dataset.n);
+  document.getElementById('num_players').value = n;
+  updateTokens(n);
 }
 
+// ── Tokens ──
 function updateTokens(numPlayers) {
   const maxTokens = Math.floor(24 / numPlayers);
-  let currentSelected = parseInt(hiddenInput.value);
-
+  let cur = parseInt(hiddenTtw.value);
   tokenBtns.forEach(btn => {
-    const val = parseInt(btn.dataset.val);
-    if (val > maxTokens) {
-      btn.disabled = true; btn.classList.remove('active');
-    } else {
-      btn.disabled = false;
-    }
+    const v = parseInt(btn.dataset.val);
+    btn.disabled = v > maxTokens;
+    if (v > maxTokens) btn.classList.remove('active');
   });
-
-  if (currentSelected > maxTokens) selectToken(maxTokens);
+  if (cur > maxTokens) selectToken(maxTokens);
 }
 
 function selectToken(val) {
-  hiddenInput.value = val;
-  tokenBtns.forEach(b => {
-    if (parseInt(b.dataset.val) === val) b.classList.add('active');
-    else b.classList.remove('active');
-  });
+  hiddenTtw.value = val;
+  tokenBtns.forEach(b => b.classList.toggle('active', parseInt(b.dataset.val) === val));
 }
 
-tokenBtns.forEach(btn => btn.addEventListener('click', (e) => selectToken(parseInt(e.target.dataset.val))));
+tokenBtns.forEach(btn => btn.addEventListener('click', e => {
+  if (!e.target.disabled) selectToken(parseInt(e.target.dataset.val));
+}));
+
 document.addEventListener('DOMContentLoaded', () => { updateTokens(2); selectToken(12); });
 </script>
 </body>

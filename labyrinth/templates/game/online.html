@@ -2,172 +2,452 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Online Lobby</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Labyrinth — Play Online</title>
 {% load static %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
-  :root { --gold: #c9a84c; --dark: #0a0806; }
-  body { background: var(--dark); color: var(--gold); font-family: 'Crimson Pro', serif; text-align: center; padding-top: 50px; }
-  .card { background: #120e05; border: 1px solid rgba(201,168,76,0.3); padding: 40px; max-width: 400px; margin: 0 auto; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-  input, select, button { width: 100%; padding: 12px; margin-bottom: 20px; font-family: 'Cinzel Decorative', serif; background: rgba(0,0,0,0.5); border: 1px solid var(--gold); color: #fff; }
-  button { background: var(--gold); color: #000; cursor: pointer; transition: 0.3s; }
-  button:hover { background: #e8c97a; }
-  .color-grid { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
-  .color-btn { width: 50px; height: 50px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
-  .color-btn.selected { border-color: #fff; box-shadow: 0 0 15px #fff; }
-  .color-btn:disabled { opacity: 0.2; cursor: not-allowed; }
-  #lobby-view { display: none; }
-  .code-display { font-size: 3rem; letter-spacing: 0.2em; font-family: monospace; margin: 20px 0; color: #fff; }
+  :root { --gold:#c9a84c; --gold-dim:rgba(201,168,76,0.3); --dark:#0a0806; }
+  *,*::before,*::after { box-sizing:border-box;margin:0;padding:0; }
+  body { min-height:100vh;background:var(--dark);background-image:radial-gradient(ellipse at 20% 20%,#2a1a05 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,#1a0d02 0%,transparent 50%);display:flex;align-items:center;justify-content:center;font-family:'Crimson Pro',Georgia,serif;color:#d4c09a; }
+  .orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:0.15;pointer-events:none;animation:drift 20s ease-in-out infinite alternate;}
+  .orb-1{width:400px;height:400px;background:#8b4513;top:-100px;left:-100px;}
+  .orb-2{width:300px;height:300px;background:#c9a84c;bottom:-80px;right:-80px;animation-delay:-10s;}
+  @keyframes drift{from{transform:translate(0,0)}to{transform:translate(30px,20px)}}
+
+  .card { position:relative;background:linear-gradient(145deg,#1e1507,#0f0b04);border:1px solid var(--gold-dim);border-radius:4px;padding:48px 56px;text-align:center;max-width:480px;width:92%;box-shadow:0 40px 80px rgba(0,0,0,0.8); }
+  .card::before,.card::after{content:'';position:absolute;width:36px;height:36px;border-color:var(--gold);border-style:solid;opacity:0.5;}
+  .card::before{top:12px;left:12px;border-width:1px 0 0 1px;}
+  .card::after{bottom:12px;right:12px;border-width:0 1px 1px 0;}
+
+  h1 { font-family:'Cinzel Decorative',serif;font-size:1.8rem;color:var(--gold);letter-spacing:0.06em;margin-bottom:6px;text-shadow:0 0 30px rgba(201,168,76,0.4); }
+  .sub { color:rgba(201,168,76,0.5);font-style:italic;font-size:0.95rem;letter-spacing:0.12em;margin-bottom:32px; }
+  .divider{display:flex;align-items:center;gap:14px;margin-bottom:28px;}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:linear-gradient(to right,transparent,rgba(201,168,76,0.4),transparent);}
+  .gem{width:6px;height:6px;background:var(--gold);transform:rotate(45deg);opacity:0.6;}
+
+  /* ── Panels ── */
+  .panel { display:none; }
+  .panel.active { display:block; }
+
+  /* ── Mode buttons ── */
+  .mode-row { display:flex;gap:16px;justify-content:center;margin-bottom:24px; }
+  .mode-btn { flex:1;padding:20px 10px;background:transparent;border:1px solid var(--gold-dim);color:rgba(201,168,76,0.7);font-family:'Cinzel Decorative',serif;font-size:0.75rem;letter-spacing:0.1em;cursor:pointer;transition:all 0.25s;border-radius:2px; }
+  .mode-btn:hover { background:rgba(201,168,76,0.1);border-color:var(--gold);color:var(--gold); }
+  .mode-icon { font-size:1.8rem;display:block;margin-bottom:8px; }
+
+  /* ── Inputs ── */
+  .field { margin-bottom:16px;text-align:left; }
+  .field label { display:block;font-size:0.75rem;letter-spacing:0.18em;text-transform:uppercase;color:rgba(201,168,76,0.6);margin-bottom:6px; }
+  .field input { width:100%;padding:10px 14px;background:rgba(10,8,6,0.8);border:1px solid rgba(201,168,76,0.25);color:#d4c09a;font-family:'Crimson Pro',Georgia,serif;font-size:1rem;outline:none;transition:border-color 0.2s; }
+  .field input:focus { border-color:var(--gold); }
+  .field input.code-input { font-family:monospace;font-size:1.5rem;letter-spacing:0.25em;text-align:center;text-transform:uppercase; }
+
+  /* ── Colour picker ── */
+  .colour-label { font-size:0.75rem;letter-spacing:0.18em;text-transform:uppercase;color:rgba(201,168,76,0.6);margin-bottom:10px;display:block;text-align:left; }
+  .colour-row { display:flex;gap:12px;justify-content:center;margin-bottom:20px; }
+  .colour-swatch {
+    width:56px;height:56px;border-radius:50%;cursor:pointer;
+    border:3px solid transparent;transition:all 0.2s;
+    background-size:cover;background-position:center;
+    position:relative;
+  }
+  .colour-swatch.selected { border-color:#fff;box-shadow:0 0 14px rgba(255,255,255,0.5); }
+  .colour-swatch.taken { filter:grayscale(1) brightness(0.4);cursor:not-allowed; }
+  .colour-swatch.taken::after { content:'✕';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.2rem; }
+
+  /* ── Player/token counts (host only) ── */
+  .count-row { display:flex;gap:10px;justify-content:center;margin-bottom:20px; }
+  .count-btn { width:48px;height:48px;background:transparent;border:1px solid rgba(201,168,76,0.3);color:rgba(201,168,76,0.6);font-family:'Cinzel Decorative',serif;font-size:1rem;cursor:pointer;transition:all 0.2s; }
+  .count-btn.active,.count-btn:hover { background:rgba(201,168,76,0.12);border-color:var(--gold);color:var(--gold); }
+  .token-grid-sm { display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:280px;margin:0 auto 20px; }
+  .token-sm { width:38px;height:38px;background:rgba(20,14,4,0.6);border:1px solid rgba(201,168,76,0.2);color:rgba(212,192,154,0.7);font-size:0.85rem;cursor:pointer;transition:all 0.2s;border-radius:3px; }
+  .token-sm:hover:not(:disabled) { border-color:var(--gold);color:var(--gold); }
+  .token-sm.active { background:linear-gradient(135deg,#4a3410,#8b6914);border-color:var(--gold);color:#fff; }
+  .token-sm:disabled { opacity:0.15;cursor:not-allowed; }
+
+  /* ── Theme toggle ── */
+  .theme-row { display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:20px; }
+  .theme-lbl { font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:rgba(201,168,76,0.5); }
+  .toggle-wrap{position:relative;width:48px;height:26px;}
+  .toggle-wrap input{opacity:0;width:0;height:0;}
+  .toggle-track{position:absolute;inset:0;background:#1a1208;border:1px solid rgba(201,168,76,0.3);border-radius:13px;cursor:pointer;transition:background 0.3s;}
+  .toggle-track::before{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:var(--gold);top:3px;left:3px;transition:transform 0.3s;}
+  .toggle-wrap input:checked + .toggle-track{background:rgba(201,168,76,0.15);}
+  .toggle-wrap input:checked + .toggle-track::before{transform:translateX(22px);}
+
+  /* ── Buttons ── */
+  .go-btn { width:100%;padding:14px;background:linear-gradient(135deg,#8b6914,#c9a84c,#8b6914);background-size:200% 100%;border:none;color:var(--dark);font-family:'Cinzel Decorative',serif;font-size:0.9rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;transition:all 0.3s;margin-top:8px; }
+  .go-btn:hover { background-position:100% 0;box-shadow:0 0 24px rgba(201,168,76,0.35); }
+  .go-btn:disabled { opacity:0.4;cursor:not-allowed; }
+  .back-link { display:block;margin-top:16px;font-size:0.75rem;color:rgba(201,168,76,0.4);text-decoration:none;transition:color 0.2s; }
+  .back-link:hover { color:var(--gold); }
+
+  /* ── Lobby waiting screen ── */
+  .room-code-display { font-family:monospace;font-size:3rem;letter-spacing:0.3em;color:var(--gold);text-shadow:0 0 20px rgba(201,168,76,0.5);margin:16px 0; }
+  .player-slots { display:flex;flex-direction:column;gap:8px;margin:20px 0;text-align:left; }
+  .slot { padding:10px 14px;border:1px solid rgba(201,168,76,0.15);background:rgba(20,14,4,0.5);display:flex;align-items:center;gap:12px;font-size:0.9rem; }
+  .slot.filled { border-color:rgba(201,168,76,0.4); }
+  .slot-dot { width:14px;height:14px;border-radius:50%;flex-shrink:0; }
+  .slot-empty { color:rgba(201,168,76,0.3);font-style:italic; }
+  .waiting-msg { font-size:0.8rem;color:rgba(201,168,76,0.5);letter-spacing:0.1em;margin-bottom:12px; }
+  .error-msg { color:#dc6464;font-size:0.85rem;margin-top:10px;min-height:20px; }
 </style>
 </head>
 <body>
-<div class="card" id="setup-view">
-  <h1 style="font-family: 'Cinzel Decorative'; margin-bottom: 20px;">Online Lobby</h1>
-  <div style="display:flex; gap:10px;">
-    <button onclick="showHost()">Host Game</button>
-    <button onclick="showJoin()">Join Game</button>
+{% load static %}
+<div class="orb orb-1"></div><div class="orb orb-2"></div>
+
+<div class="card">
+  <h1>Labyrinth</h1>
+  <p class="sub">Play Online</p>
+  <div class="divider"><div class="gem"></div></div>
+
+  <!-- ── Panel 0: choose host or join ── -->
+  <div class="panel active" id="panel-choose">
+    <div class="mode-row">
+      <button class="mode-btn" onclick="showPanel('panel-host')">
+        <span class="mode-icon">👑</span>Host Game
+      </button>
+      <button class="mode-btn" onclick="showPanel('panel-join')">
+        <span class="mode-icon">🚪</span>Join Game
+      </button>
+    </div>
+    <a href="{% url 'labyrinth:index' %}" class="back-link">← Back to local play</a>
   </div>
 
-  <form id="host-form" style="display:none;" method="POST" action="{% url 'labyrinth:host_game' %}">
-    {% csrf_token %}
-    <input type="hidden" name="theme" value="{{ theme }}">
-    <input type="hidden" name="color_id" id="host_color" value="0">
-    <input type="text" name="player_name" placeholder="Your Name" required>
-    
-    <p>Choose Color</p>
-    <div class="color-grid" id="host-colors">
-      <div class="color-btn selected" style="background:#e74c3c" onclick="pickColor('host', 0, this)"></div>
-      <div class="color-btn" style="background:#3498db" onclick="pickColor('host', 1, this)"></div>
-      <div class="color-btn" style="background:{% if theme == 'pokemon' %}#f39c12{% else %}#2ecc71{% endif %}" onclick="pickColor('host', 2, this)"></div>
-      <div class="color-btn" style="background:{% if theme == 'pokemon' %}#9b59b6{% else %}#f39c12{% endif %}" onclick="pickColor('host', 3, this)"></div>
+  <!-- ── Panel 1: Host setup ── -->
+  <div class="panel" id="panel-host">
+    <div class="field">
+      <label>Your Name</label>
+      <input type="text" id="host-name" placeholder="Enter your name" maxlength="20">
     </div>
 
-    <select name="num_players">
-      <option value="2">2 Players</option>
-      <option value="3">3 Players</option>
-      <option value="4">4 Players</option>
-    </select>
-    <button type="submit">Create Room</button>
-  </form>
+    <span class="colour-label">Choose Your Colour</span>
+    <div class="colour-row" id="host-colours"></div>
 
-  <div id="join-form" style="display:none;">
-    <input type="text" id="join_code" placeholder="Room Code (4 Letters)" maxlength="4" style="text-transform:uppercase;">
-    <button onclick="fetchLobby()">Find Room</button>
-    
-    <div id="join-details" style="display:none;">
-      <input type="text" id="join_name" placeholder="Your Name" required>
-      <input type="hidden" id="join_color">
-      <p>Choose Color</p>
-      <div class="color-grid" id="join-colors">
-        <div class="color-btn" id="jc_0" style="background:#e74c3c" onclick="pickColor('join', 0, this)"></div>
-        <div class="color-btn" id="jc_1" style="background:#3498db" onclick="pickColor('join', 1, this)"></div>
-        <div class="color-btn" id="jc_2" style="background:{% if theme == 'pokemon' %}#f39c12{% else %}#2ecc71{% endif %}" onclick="pickColor('join', 2, this)"></div>
-        <div class="color-btn" id="jc_3" style="background:{% if theme == 'pokemon' %}#9b59b6{% else %}#f39c12{% endif %}" onclick="pickColor('join', 3, this)"></div>
-      </div>
-      <button onclick="submitJoin()">Join</button>
+    <div class="field" style="text-align:left">
+      <label>Number of Players</label>
     </div>
+    <div class="count-row" id="host-players">
+      <button class="count-btn active" data-n="2" onclick="selectHostPlayers(this)">2</button>
+      <button class="count-btn" data-n="3" onclick="selectHostPlayers(this)">3</button>
+      <button class="count-btn" data-n="4" onclick="selectHostPlayers(this)">4</button>
+    </div>
+
+    <div class="field" style="text-align:left">
+      <label>Tokens to Win</label>
+    </div>
+    <div class="token-grid-sm" id="host-tokens"></div>
+
+    <div class="theme-row">
+      <span class="theme-lbl">Classic</span>
+      <label class="toggle-wrap">
+        <input type="checkbox" id="host-theme-toggle">
+        <span class="toggle-track"></span>
+      </label>
+      <span class="theme-lbl">Pokémon</span>
+    </div>
+
+    <div class="error-msg" id="host-error"></div>
+    <button class="go-btn" id="host-go" onclick="hostGame()">Create Room</button>
+    <a href="#" class="back-link" onclick="showPanel('panel-choose');return false">← Back</a>
   </div>
-</div>
 
-<div class="card" id="lobby-view">
-  <h2>Room Code</h2>
-  <div class="code-display" id="room_code_display"></div>
-  <div id="player_list" style="text-align:left; margin-bottom:20px; font-size: 1.2rem;"></div>
-  
-  <button id="start-btn" onclick="startGame()" style="display:none;">Start Game</button>
-  <p id="waiting-msg" style="display:none;">Waiting for host to start...</p>
+  <!-- ── Panel 2: Join ── -->
+  <div class="panel" id="panel-join">
+    <div class="field">
+      <label>Room Code</label>
+      <input type="text" id="join-code" class="code-input" placeholder="ABCD" maxlength="4">
+    </div>
+    <div class="field">
+      <label>Your Name</label>
+      <input type="text" id="join-name" placeholder="Enter your name" maxlength="20">
+    </div>
+
+    <span class="colour-label">Choose Your Colour</span>
+    <div class="colour-row" id="join-colours"></div>
+
+    <div class="error-msg" id="join-error"></div>
+    <button class="go-btn" onclick="joinGame()">Join Room</button>
+    <a href="#" class="back-link" onclick="showPanel('panel-choose');return false">← Back</a>
+  </div>
+
+  <!-- ── Panel 3: Lobby waiting ── -->
+  <div class="panel" id="panel-lobby">
+    <p style="font-size:0.8rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(201,168,76,0.6);margin-bottom:4px;">Room Code</p>
+    <div class="room-code-display" id="lobby-code">----</div>
+    <p class="waiting-msg" id="lobby-wait-msg">Waiting for players to join…</p>
+    <div class="player-slots" id="lobby-slots"></div>
+    <button class="go-btn" id="start-btn" style="display:none" onclick="startGame()">Start Game →</button>
+    <div class="error-msg" id="lobby-error"></div>
+  </div>
 </div>
 
 <script>
-let currentCode = '';
-let pollInterval;
-let isHost = false;
+// ── Colour definitions ──────────────────────────────────────────────────────
+const CLASSIC_COLORS = [
+  { id:'red',    hex:'#e74c3c', label:'Red',    img:null },
+  { id:'blue',   hex:'#3498db', label:'Blue',   img:null },
+  { id:'green',  hex:'#2ecc71', label:'Green',  img:null },
+  { id:'yellow', hex:'#f39c12', label:'Yellow', img:null },
+];
+const POKEMON_COLORS = [
+  { id:'red',    hex:'#e74c3c', label:'Red',    img:'{% static "images/pokemon/ballred.png" %}' },
+  { id:'blue',   hex:'#3498db', label:'Blue',   img:'{% static "images/pokemon/ballblue.png" %}' },
+  { id:'yellow', hex:'#f39c12', label:'Yellow', img:'{% static "images/pokemon/ballyellow.png" %}' },
+  { id:'purple', hex:'#9b59b6', label:'Purple', img:'{% static "images/pokemon/ballpurple.png" %}' },
+];
 
-function showHost() { document.getElementById('host-form').style.display='block'; document.getElementById('join-form').style.display='none'; }
-function showJoin() { document.getElementById('join-form').style.display='block'; document.getElementById('host-form').style.display='none'; }
+// ── State ───────────────────────────────────────────────────────────────────
+let hostNumPlayers = 2;
+let hostTokensVal  = 12;
+let hostColor      = null;
+let joinColor      = null;
+let currentRoomCode = null;
+let currentGameId   = null;
+let myPlayerId      = null;
+let pollTimer       = null;
+let lastSeq         = 0;
+let isHost          = false;
 
-function pickColor(type, id, el) {
-  if (el.disabled) return;
-  document.getElementById(`${type}_color`).value = id;
-  document.querySelectorAll(`#${type}-colors .color-btn`).forEach(b => b.classList.remove('selected'));
-  el.classList.add('selected');
+function isPokemon() {
+  return document.getElementById('host-theme-toggle').checked;
 }
 
-// FIX: Intercept the Host form submission to prevent page reload and get JSON back!
-document.getElementById('host-form').addEventListener('submit', function(e) {
-  e.preventDefault(); // Stop normal HTML refresh
-  fetch(this.action, {
-    method: 'POST',
-    body: new FormData(this),
-    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-  })
-  .then(r => r.json())
-  .then(data => {
-    if(data.success) {
-      isHost = true;
-      currentCode = data.room_code;
-      document.getElementById('setup-view').style.display = 'none';
-      document.getElementById('lobby-view').style.display = 'block';
-      document.getElementById('room_code_display').innerText = currentCode;
-      startLobbyPoll();
+function colors() { return isPokemon() ? POKEMON_COLORS : CLASSIC_COLORS; }
+
+// ── Panel navigation ────────────────────────────────────────────────────────
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'panel-host') buildSwatches('host-colours', 'host', []);
+  if (id === 'panel-join') buildSwatches('join-colours', 'join', []);
+}
+
+// ── Colour swatches ─────────────────────────────────────────────────────────
+function buildSwatches(containerId, prefix, takenHexes) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const cols = colors();
+  cols.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'colour-swatch';
+    div.title = c.label;
+    if (c.img) {
+      div.style.backgroundImage = `url('${c.img}')`;
+    } else {
+      div.style.background = c.hex;
     }
-  });
-});
-
-function fetchLobby() {
-  currentCode = document.getElementById('join_code').value.toUpperCase();
-  fetch(`/labyrinth/lobby/${currentCode}/`)
-    .then(r => r.json())
-    .then(data => {
-      document.getElementById('join-details').style.display = 'block';
-      data.players.forEach(p => {
-        const btn = document.getElementById(`jc_${p.id}`);
-        if(btn) { btn.disabled = true; btn.style.opacity = '0.2'; }
-      });
-    }).catch(e => alert("Room not found"));
-}
-
-function submitJoin() {
-  const name = document.getElementById('join_name').value;
-  const color = document.getElementById('join_color').value;
-  if(color === '') return alert("Pick a color");
-  
-  fetch(`/labyrinth/join/${currentCode}/`, {
-    method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
-    body: JSON.stringify({player_name:name, color_id:color})
-  }).then(r=>r.json()).then(data => {
-    if(data.success) {
-      isHost = false;
-      document.getElementById('setup-view').style.display = 'none';
-      document.getElementById('lobby-view').style.display = 'block';
-      document.getElementById('room_code_display').innerText = currentCode;
-      document.getElementById('waiting-msg').style.display = 'block';
-      startLobbyPoll();
-    } else alert(data.error);
+    const isTaken = takenHexes.includes(c.hex);
+    if (isTaken) {
+      div.classList.add('taken');
+    } else {
+      div.addEventListener('click', () => selectColor(prefix, c, cols));
+    }
+    container.appendChild(div);
   });
 }
 
+function selectColor(prefix, color, cols) {
+  if (prefix === 'host') hostColor = color;
+  else joinColor = color;
+
+  const container = document.getElementById(prefix + '-colours');
+  container.querySelectorAll('.colour-swatch').forEach((sw, i) => {
+    sw.classList.toggle('selected', cols[i].hex === color.hex);
+  });
+}
+
+// ── Host: player count ──────────────────────────────────────────────────────
+function selectHostPlayers(el) {
+  document.querySelectorAll('#host-players .count-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  hostNumPlayers = parseInt(el.dataset.n);
+  buildTokenButtons();
+}
+
+// ── Host: token grid ────────────────────────────────────────────────────────
+function buildTokenButtons() {
+  const max = Math.floor(24 / hostNumPlayers);
+  const container = document.getElementById('host-tokens');
+  container.innerHTML = '';
+  for (let i = 2; i <= 12; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'token-sm' + (i === Math.min(12, max) ? ' active' : '');
+    btn.textContent = i;
+    btn.disabled = i > max;
+    btn.addEventListener('click', () => {
+      if (!btn.disabled) {
+        hostTokensVal = i;
+        container.querySelectorAll('.token-sm').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+    });
+    container.appendChild(btn);
+  }
+  hostTokensVal = Math.min(hostTokensVal, max);
+}
+
+// ── Host: create room ───────────────────────────────────────────────────────
+async function hostGame() {
+  const name = document.getElementById('host-name').value.trim();
+  if (!name) { document.getElementById('host-error').textContent = 'Please enter your name.'; return; }
+  if (!hostColor) { document.getElementById('host-error').textContent = 'Please choose a colour.'; return; }
+  document.getElementById('host-error').textContent = '';
+  document.getElementById('host-go').disabled = true;
+
+  try {
+    const res = await fetch('{% url "labyrinth:host_game" %}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+      body: JSON.stringify({
+        name, color: hostColor.hex,
+        num_players: hostNumPlayers,
+        tokens_to_win: hostTokensVal,
+        theme: isPokemon() ? 'pokemon' : 'classic',
+      }),
+    });
+    const data = await res.json();
+    if (!data.ok) { document.getElementById('host-error').textContent = data.error; document.getElementById('host-go').disabled = false; return; }
+
+    currentRoomCode = data.room_code;
+    currentGameId   = data.game_id;
+    myPlayerId      = data.player_id;
+    isHost          = true;
+    lastSeq         = 0;
+    showLobby();
+  } catch (e) {
+    document.getElementById('host-error').textContent = 'Network error. Try again.';
+    document.getElementById('host-go').disabled = false;
+  }
+}
+
+// ── Join: find room ─────────────────────────────────────────────────────────
+async function joinGame() {
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  const name = document.getElementById('join-name').value.trim();
+  if (code.length !== 4) { document.getElementById('join-error').textContent = 'Enter a 4-letter room code.'; return; }
+  if (!name) { document.getElementById('join-error').textContent = 'Please enter your name.'; return; }
+  if (!joinColor) { document.getElementById('join-error').textContent = 'Please choose a colour.'; return; }
+  document.getElementById('join-error').textContent = '';
+
+  try {
+    const res = await fetch(`/labyrinth/join/${code}/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+      body: JSON.stringify({ name, color: joinColor.hex }),
+    });
+    const data = await res.json();
+    if (!data.ok) { document.getElementById('join-error').textContent = data.error; return; }
+
+    currentRoomCode = data.room_code;
+    currentGameId   = data.game_id;
+    myPlayerId      = data.player_id;
+    isHost          = false;
+    lastSeq         = 0;
+    showLobby();
+  } catch (e) {
+    document.getElementById('join-error').textContent = 'Network error. Try again.';
+  }
+}
+
+// ── Lobby display ────────────────────────────────────────────────────────────
+function showLobby() {
+  showPanel('panel-lobby');
+  document.getElementById('lobby-code').textContent = currentRoomCode;
+  if (isHost) {
+    document.getElementById('lobby-wait-msg').textContent = 'Share this code with your friends!';
+  } else {
+    document.getElementById('lobby-wait-msg').textContent = 'Waiting for host to start the game…';
+  }
+  startLobbyPoll();
+}
+
+function renderLobbySlots(players, numPlayers) {
+  const container = document.getElementById('lobby-slots');
+  container.innerHTML = '';
+  for (let i = 0; i < numPlayers; i++) {
+    const p = players[i];
+    const slot = document.createElement('div');
+    slot.className = 'slot' + (p ? ' filled' : '');
+    if (p) {
+      slot.innerHTML = `<div class="slot-dot" style="background:${p.color}"></div><span>${p.name}${p.id === myPlayerId ? ' (You)' : ''}</span>`;
+    } else {
+      slot.innerHTML = `<div class="slot-dot" style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2)"></div><span class="slot-empty">Waiting…</span>`;
+    }
+    container.appendChild(slot);
+  }
+
+  // Show start button to host when 2+ players have joined
+  const startBtn = document.getElementById('start-btn');
+  if (isHost && players.length >= 2) {
+    startBtn.style.display = 'block';
+  }
+}
+
+// ── Lobby poll ───────────────────────────────────────────────────────────────
 function startLobbyPoll() {
-  pollInterval = setInterval(() => {
-    fetch(`/labyrinth/lobby/${currentCode}/`).then(r=>r.json()).then(data => {
-      if(data.phase === 'playing') window.location.href = `/labyrinth/${data.game_id}/`;
-      
-      let html = '';
-      data.players.forEach(p => html += `<p style="padding: 5px;"><span style="color:${p.color}; font-size: 1.5em; vertical-align: middle;">●</span> ${p.name}</p>`);
-      document.getElementById('player_list').innerHTML = html;
-      
-      const startBtn = document.getElementById('start-btn');
-      if (isHost && data.players.length >= 2) startBtn.style.display = 'block';
-    });
-  }, 2000);
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(pollLobby, 2000);
+  pollLobby();
 }
 
-function startGame() {
-  fetch(`/labyrinth/start/${currentCode}/`, {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}})
-    .then(() => {
-      // It will naturally redirect on the next poll interval!
-    });
+async function pollLobby() {
+  try {
+    const res  = await fetch(`/labyrinth/lobby/${currentRoomCode}/?seq=${lastSeq}`);
+    const data = await res.json();
+    if (!data.ok || data.unchanged) return;
+
+    lastSeq = data.seq;
+
+    if (data.phase === 'playing') {
+      // Game started — redirect to board
+      clearInterval(pollTimer);
+      window.location.href = `/labyrinth/${currentGameId}/`;
+      return;
+    }
+    renderLobbySlots(data.players || [], data.num_players || 2);
+  } catch (e) { /* ignore network blips */ }
 }
+
+// ── Host starts game ─────────────────────────────────────────────────────────
+async function startGame() {
+  document.getElementById('start-btn').disabled = true;
+  try {
+    const res  = await fetch(`/labyrinth/start/${currentRoomCode}/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCsrf() },
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      document.getElementById('lobby-error').textContent = data.error;
+      document.getElementById('start-btn').disabled = false;
+    }
+    // Poll will catch the phase change and redirect all players
+  } catch (e) {
+    document.getElementById('lobby-error').textContent = 'Network error.';
+    document.getElementById('start-btn').disabled = false;
+  }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function getCsrf() {
+  const m = document.cookie.match(/csrftoken=([^;]+)/);
+  return m ? m[1] : '';
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  buildTokenButtons();
+  buildSwatches('host-colours', 'host', []);
+  buildSwatches('join-colours', 'join', []);
+  // Restore theme from localStorage
+  if (localStorage.getItem('labyrinth_theme') === 'pokemon') {
+    document.getElementById('host-theme-toggle').checked = true;
+  }
+});
 </script>
 </body>
 </html>
