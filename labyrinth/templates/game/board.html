@@ -90,6 +90,7 @@ body {
   cursor: pointer; transition: all 0.2s; text-decoration: none;
 }
 .action-btn:hover { background: var(--gold); color: var(--dark); box-shadow: 0 0 12px rgba(201,168,76,0.4); }
+.action-btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 
 /* --- Spare Tile --- */
 .spare-wrapper { display: flex; flex-direction: column; align-items: center; gap: 15px; }
@@ -102,9 +103,9 @@ body {
 /* --- The Board --- */
 .board-container {
   position: relative;
-  width: calc(var(--board-w) + 40px);
-  height: calc(var(--board-w) + 40px);
-  padding: 20px;
+  width: calc(var(--board-w) + 60px); /* Extra padding for the buttons */
+  height: calc(var(--board-w) + 60px);
+  padding: 30px;
   background: #1a140b;
   border: 2px solid var(--gold-dim);
   border-radius: 8px;
@@ -128,10 +129,10 @@ body {
 .tile-char { width: 60%; height: 60%; position: absolute; top: 20%; left: 20%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); z-index: 2; transition: transform 0.3s ease; }
 .tile-overlay { position: absolute; inset: 0; pointer-events: none; transition: background 0.3s; z-index: 3; }
 
-/* Subtle Reachable Pulse */
+/* Subtle Reachable Pulse - Triggers AFTER a tile is pushed */
 @keyframes pulse-reach {
   0% { background: rgba(220, 50, 50, 0.1); box-shadow: inset 0 0 0 2px var(--reach-bdr); }
-  100% { background: rgba(220, 50, 50, 0.3); box-shadow: inset 0 0 0 3px var(--reach-bdr); }
+  100% { background: rgba(220, 50, 50, 0.35); box-shadow: inset 0 0 0 4px var(--reach-bdr); }
 }
 .tile.reachable .tile-overlay {
   animation: pulse-reach 1.2s infinite alternate ease-in-out;
@@ -145,19 +146,26 @@ body {
   left: 0; top: 0; 
 }
 
-/* --- Flashing Push Buttons --- */
-@keyframes pulse-arrow {
-  0% { transform: scale(0.85); opacity: 0.7; box-shadow: 0 0 5px var(--gold); }
-  100% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 15px var(--gold); }
-}
+/* --- Refined Push Buttons (No flashing, no circles) --- */
 .push-btn {
-  position: absolute; width: 24px; height: 24px;
-  background: rgba(201,168,76,0.1); border: 1px solid var(--gold-dim); border-radius: 50%;
-  color: var(--gold); display: flex; align-items: center; justify-content: center;
-  cursor: pointer; z-index: 20; font-size: 10px;
-  animation: pulse-arrow 1.2s infinite alternate ease-in-out;
+  position: absolute; 
+  width: 32px; height: 32px;
+  background: rgba(20,14,4,0.85); 
+  border: 1px solid var(--gold-dim); 
+  border-radius: 4px;
+  color: var(--gold); 
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; z-index: 20; font-size: 14px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.5);
 }
-.push-btn:hover { background: var(--gold); color: var(--dark); animation: none; transform: scale(1.2); box-shadow: 0 0 10px var(--gold); }
+.push-btn:hover { 
+  background: var(--gold); 
+  color: var(--dark); 
+  transform: scale(1.1); 
+  box-shadow: 0 0 10px var(--gold); 
+}
+.push-btn.disabled { opacity: 0.3; pointer-events: none; }
 
 /* --- Player Cards --- */
 #players-list { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding-right: 5px; }
@@ -200,7 +208,7 @@ body {
       <div class="panel-title">Current Spare</div>
       <div class="spare-wrapper">
         <div class="spare-container" id="spare-container"></div>
-        <button class="action-btn" onclick="rotateSpare()">↻ Rotate Tile</button>
+        <button class="action-btn" id="rotate-btn" onclick="rotateSpare()">↻ Rotate Tile</button>
       </div>
     </div>
 
@@ -244,6 +252,7 @@ const IMG_BASE = THEME === 'pokemon' ? `${STATIC_URL}images/pokemon/` : `${STATI
 
 let state = null;
 let phase = 'push';
+let isProcessing = false; // The Double-Click Lock Flag
 
 function getTilePath(shape) { return THEME === 'pokemon' ? `${IMG_BASE}path${shape}.jpg` : `${IMG_BASE}shape${shape}.svg`; }
 function getMeeplePath(colorHex) {
@@ -260,6 +269,8 @@ function charImg(id) {
 fetchState();
 if (MODE === 'online') {
   setInterval(() => {
+    // Don't poll if we are currently mid-move
+    if (isProcessing) return; 
     fetch(`${BASE_URL}/poll/`).then(r => r.json()).then(newState => {
         if (!state || newState.seq > state.seq) { state = newState; render(state); }
     });
@@ -287,6 +298,9 @@ function render(st) {
     document.getElementById('phase-label').textContent = phase === 'push' ? "Push a Tile" : "Move your piece";
   }
 
+  // Visual lock state for rotate button
+  document.getElementById('rotate-btn').disabled = (phase !== 'push' || !canInteract() || isProcessing);
+
   buildGrid(st);
   buildSpare(st.spare);
   buildPlayers(st);
@@ -313,7 +327,7 @@ function buildGrid(st) {
       div.className = `tile ${isReachable ? 'reachable' : ''}`;
       div.style.transform = `translate(${c * (cell + gap)}px, ${r * (cell + gap)}px)`;
       
-      if (isReachable && canInteract()) {
+      if (isReachable && canInteract() && !isProcessing) {
         div.style.cursor = 'pointer';
         div.onclick = () => moveTo(r, c);
       }
@@ -340,14 +354,14 @@ function buildGrid(st) {
     }
   }
 
-  // Draw Push Buttons using left/top instead of transform to avoid animation conflict
+  // Draw sleek push buttons (Left/Top positioning ensures perfect alignment)
   if (phase === 'push' && canInteract() && st.phase !== 'over') {
     const indices = [1, 3, 5];
     const offsets = {
-      'top':    { x: c => c*(cell+gap)+cell/2-12, y: () => -24, sym: '▼' },
-      'bottom': { x: c => c*(cell+gap)+cell/2-12, y: () => 7*(cell+gap)-8, sym: '▲' },
-      'left':   { x: () => -24, y: r => r*(cell+gap)+cell/2-12, sym: '▶' },
-      'right':  { x: () => 7*(cell+gap)-8, y: r => r*(cell+gap)+cell/2-12, sym: '◀' }
+      'top':    { x: c => c*(cell+gap)+cell/2-16, y: () => -28, sym: '▼' },
+      'bottom': { x: c => c*(cell+gap)+cell/2-16, y: () => 7*(cell+gap)-4, sym: '▲' },
+      'left':   { x: () => -28, y: r => r*(cell+gap)+cell/2-16, sym: '▶' },
+      'right':  { x: () => 7*(cell+gap)-4, y: r => r*(cell+gap)+cell/2-16, sym: '◀' }
     };
 
     const lp = st.last_push;
@@ -357,7 +371,7 @@ function buildGrid(st) {
       indices.forEach(idx => {
         if (lp && lp.index === idx && revDir[dir] === lp.direction) return;
         const btn = document.createElement('div');
-        btn.className = 'push-btn';
+        btn.className = `push-btn ${isProcessing ? 'disabled' : ''}`;
         const fn = offsets[dir];
         btn.style.left = `${fn.x(idx)}px`;
         btn.style.top = `${fn.y(idx)}px`;
@@ -435,28 +449,38 @@ function buildPlayers(st) {
 function fetchState() { fetch(`${BASE_URL}/state/`).then(r => r.json()).then(st => { state = st; render(st); }); }
 
 function rotateSpare() {
-  if (!canInteract() || phase !== 'push') return;
-  fetch(`${BASE_URL}/rotate-spare/`, {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}}).then(r => r.json()).then(render);
+  if (!canInteract() || phase !== 'push' || isProcessing) return;
+  isProcessing = true;
+  fetch(`${BASE_URL}/rotate-spare/`, {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}})
+    .then(r => r.json())
+    .then(st => { render(st); isProcessing = false; })
+    .catch(() => isProcessing = false);
 }
 
 function pushTile(dir, idx) {
-  if (!canInteract() || phase !== 'push') return;
+  if (!canInteract() || phase !== 'push' || isProcessing) return;
+  isProcessing = true;
   fetch(`${BASE_URL}/push/`, { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}, body: JSON.stringify({direction: dir, index: idx}) })
-  .then(r => r.json()).then(st => {
+  .then(r => r.json())
+  .then(st => {
+    isProcessing = false;
     if (st.error) { toast(st.error, '#e74c3c'); return; }
     phase = 'move';
     document.documentElement.style.setProperty('--reach-player', st.current_player.color);
     render(st);
     toast("Now move your piece!");
-  });
+  }).catch(() => isProcessing = false);
 }
 
 function moveTo(r, c) {
-  if (!canInteract() || phase !== 'move') return;
+  if (!canInteract() || phase !== 'move' || isProcessing) return;
+  isProcessing = true;
   const previousTarget = state.current_player.current_target;
 
   fetch(`${BASE_URL}/move/`, { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}, body: JSON.stringify({player_id: MY_ID, row: r, col: c}) })
-  .then(res => res.json()).then(st => {
+  .then(res => res.json())
+  .then(st => {
+    isProcessing = false;
     if (st.error) { toast(st.error, '#e74c3c'); return; }
     
     phase = st.phase === 'over' ? 'game_over' : 'push';
@@ -490,7 +514,7 @@ function moveTo(r, c) {
     } else {
       if (st.phase !== 'over') toast(`${st.players[st.current_turn].name}'s turn`);
     }
-  });
+  }).catch(() => isProcessing = false);
 }
 </script>
 </body>
