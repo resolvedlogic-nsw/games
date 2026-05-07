@@ -357,7 +357,12 @@ async function handleAction(type, data) {
         });
         const st = await res.json();
         
-        if(st.error) { toast(st.error, '#e74c3c'); isProcessing = false; return; }
+        if(st.error) {
+            toast(st.error, '#e74c3c');
+            isProcessing = false;
+            render(state);
+            return;
+        }
 
         // Trigger animations/popups
         if(type === 'move') {
@@ -379,9 +384,13 @@ async function handleAction(type, data) {
             }
         }
         
+        isProcessing = false;
         render(st);
-    } catch(e) { toast("Network Error", "#e74c3c"); }
-    finally { isProcessing = false; }
+    } catch(e) {
+        toast("Network Error", "#e74c3c");
+        isProcessing = false;
+        render(state);
+    }
 }
 
 function toast(msg, color='var(--gold)') {
