@@ -97,6 +97,7 @@ body {
   height: var(--board-w);
   transform: scale(var(--board-scale));
   transform-origin: top left;
+  margin: 0 auto;
 }
 
 .tile {
@@ -141,6 +142,9 @@ body {
 #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #140e04; border: 1px solid var(--gold); padding: 12px 30px; border-radius: 30px; color: var(--gold); transition: transform 0.4s; z-index: 1000; }
 #toast.show { transform: translateX(-50%) translateY(0); }
 
+#device-summary { display: none; }
+#quit-game-mobile { display: none; }
+
 @media (max-width: 980px) and (orientation: landscape) {
   html, body { overflow: auto; }
   .game-layout { height: auto; min-height: 100vh; align-items: flex-start; gap: 10px; }
@@ -163,19 +167,21 @@ body {
     height: auto;
     min-height: 100dvh;
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto auto auto;
     gap: 10px;
     padding: 10px;
     align-items: start;
   }
 
   .game-layout > .side-panel:first-child {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
     order: 1;
     max-width: none;
     min-width: 0;
     height: auto;
     padding-top: 0;
-    gap: 10px;
   }
 
   .game-layout > .board-container {
@@ -183,7 +189,7 @@ body {
     width: 100%;
     max-width: none;
     height: auto;
-    padding: calc(24px * var(--board-scale));
+    padding: 12px;
   }
 
   .game-layout > .side-panel:last-child {
@@ -195,7 +201,47 @@ body {
     gap: 8px;
   }
 
+  .game-layout > .side-panel:first-child .game-status-title {
+    display: none;
+  }
+
+  #device-summary {
+    display: block;
+    grid-column: 1 / 2;
+  }
+
+  .game-layout > .side-panel:first-child .turn-card {
+    grid-column: 1 / 2;
+  }
+
+  .game-layout > .side-panel:first-child .current-spare-title {
+    grid-column: 2 / 3;
+  }
+
+  .game-layout > .side-panel:first-child .current-spare-wrapper {
+    grid-column: 2 / 3;
+  }
+
+  .quit-desktop-wrap {
+    display: none;
+  }
+
+  #quit-game-mobile {
+    display: block;
+    grid-column: 1 / -1;
+    width: 100%;
+    order: 4;
+    grid-row: 4;
+  }
+
   .turn-card { padding: 10px; }
+  #turn-name { display: none; }
+  #device-summary {
+    padding: 10px;
+    border: 1px solid var(--gold-dim);
+    background: rgba(0,0,0,0.35);
+    border-radius: 6px;
+  }
   .action-btn { padding: 10px; font-size: 0.78rem; }
 
   #players-list {
@@ -211,10 +257,19 @@ body {
     min-width: 0;
     flex: 1 1 0;
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 8px 10px;
     margin-bottom: 0;
   }
+
+  /* Competitor cards: name + score only */
+  #players-list .player-meeple-icon { display: none; }
+  #players-list .player-target { display: none; }
+  #players-list .hunting-label { display: none; }
+  #players-list .token-word { display: none; }
+  #players-list .player-details-row { background: transparent; padding: 0; border-radius: 0; }
 }
 </style>
 </head>
@@ -222,21 +277,23 @@ body {
 
 <div class="game-layout">
   <div class="side-panel">
-    <div class="panel-title">Game Status</div>
+    <div class="panel-title game-status-title">Game Status</div>
     <div class="turn-card">
       <div class="player-dot" id="turn-dot"></div>
       <div id="turn-name" style="font-family:'Cinzel Decorative'; font-size:1.2rem;">Player</div>
       <div id="phase-label" style="font-size:0.9rem; color:var(--gold);">Push a Tile</div>
     </div>
+
+    <div id="device-summary"></div>
     
-    <div class="panel-title">Current Spare</div>
-    <div class="spare-wrapper" style="text-align:center;">
+    <div class="panel-title current-spare-title">Current Spare</div>
+    <div class="spare-wrapper current-spare-wrapper" style="text-align:center;">
       <div class="spare-container" id="spare-container" style="margin: 0 auto 15px; width: 96px; height: 96px;"></div>
       <button class="action-btn" id="rotate-btn" onclick="handleAction('rotate')">↻ Rotate Tile</button>
     </div>
 
-    <div style="margin-top:auto;">
-      <a href="{% url 'labyrinth:index' %}" class="action-btn" style="margin-bottom:10px;">Quit Game</a>
+    <div class="quit-desktop-wrap" style="margin-top:auto;">
+      <a href="{% url 'labyrinth:index' %}" class="action-btn quit-game-link" style="margin-bottom:10px;">Quit Game</a>
     </div>
   </div>
 
@@ -252,6 +309,8 @@ body {
     <div class="panel-title">Adventurers</div>
     <div id="players-list"></div>
   </div>
+
+  <a href="{% url 'labyrinth:index' %}" id="quit-game-mobile" class="action-btn quit-game-mobile-link">Quit Game</a>
 </div>
 
 <div id="treasure-popup">
@@ -311,7 +370,8 @@ function updateBoardScale() {
     const rightPanel = document.querySelector('.game-layout .side-panel:last-child');
     if (!layout || !boardContainer || !leftPanel || !rightPanel) return;
 
-    const baseOuter = 7 * 64 + 6 * 3 + 80; // board + container padding
+    const baseBoardW = 7 * 64 + 6 * 3; // 7*64 + 6*3 = 466
+    const baseOuter = baseBoardW + 80; // board + container padding (desktop-ish)
     const isPortraitMobile = window.matchMedia('(max-width: 900px) and (orientation: portrait)').matches;
     const layoutStyles = getComputedStyle(layout);
     const gap = parseFloat(layoutStyles.gap) || 16;
@@ -321,10 +381,13 @@ function updateBoardScale() {
     let availableWidth;
     let availableHeight;
     if (isPortraitMobile) {
-        const topH = leftPanel.getBoundingClientRect().height;
-        const bottomH = rightPanel.getBoundingClientRect().height;
-        availableWidth = Math.max(280, window.innerWidth - paddingX);
-        availableHeight = Math.max(280, window.innerHeight - paddingY - topH - bottomH - (gap * 2));
+        // Portrait: fill width primarily; height can scroll.
+        const containerPadding = 12; // must match portrait CSS padding
+        const innerWidth = Math.max(280, window.innerWidth - paddingX - (containerPadding * 2));
+        const minScale = 0.75;
+        const scale = Math.max(minScale, Math.min(2.0, innerWidth / baseBoardW));
+        document.documentElement.style.setProperty('--board-scale', scale.toFixed(3));
+        return;
     } else {
         const reservedWidth = leftPanel.offsetWidth + rightPanel.offsetWidth + gap * 2 + 6;
         availableWidth = Math.max(320, window.innerWidth - reservedWidth - 24);
@@ -332,8 +395,7 @@ function updateBoardScale() {
     }
 
     const target = Math.min(availableWidth, availableHeight);
-    const minScale = isPortraitMobile ? 0.5 : 0.62;
-    const scale = Math.max(minScale, Math.min(2.0, target / baseOuter));
+    const scale = Math.max(0.62, Math.min(2.0, target / baseOuter));
 
     document.documentElement.style.setProperty('--board-scale', scale.toFixed(3));
 }
@@ -531,7 +593,7 @@ function render(st) {
     }
     spareCont.appendChild(sBg);
 
-    // Device-player summary in the top-left card
+    // Device-player summary (mobile top area)
     const turnCard = document.querySelector('.turn-card');
     if (turnCard && myPlayer) {
         const totalTokensMy = myPlayer.total_tokens !== undefined
@@ -559,37 +621,30 @@ function render(st) {
             `;
         }
 
-        let summary = document.getElementById('my-summary');
-        if (!summary) {
-            summary = document.createElement('div');
-            summary.id = 'my-summary';
-            summary.style.marginTop = '10px';
-            turnCard.appendChild(summary);
+        const summaryEl = document.getElementById('device-summary');
+        if (summaryEl) {
+            summaryEl.innerHTML = `
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                    <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+                        <img src="${getMeeplePath(myPlayer.color)}" style="width:22px; height:22px; object-fit:contain;">
+                        <span style="font-family:'Cinzel Decorative'; color:${getDisplayColor(myPlayer.color)}; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${getDisplayName(myPlayer) || 'You'}</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        ${myTargetHtml || ''}
+                        <span style="font-size:0.85rem; color:var(--gold-dim); white-space:nowrap;">${myPlayer.score} / ${totalTokensMy}</span>
+                    </div>
+                </div>
+            `;
         }
-        summary.innerHTML = `
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <img src="${getMeeplePath(myPlayer.color)}" style="width:20px;">
-                    <div style="display:flex; flex-direction:column;">
-                        <span style="font-size:0.8rem; color:${getDisplayColor(myPlayer.color)};">${getDisplayName(myPlayer) || 'You'}</span>
-                        <span style="font-size:0.7rem; color:var(--gold-dim);">You • ${currentPhase === 'push' ? 'Push' : 'Move'} phase</span>
-                    </div>
-                </div>
-                <div style="display:flex; align-items:center; gap:6px;">
-                    ${myTargetHtml || ''}
-                    <div style="font-size:0.8rem;">
-                        <div style="font-size:0.7rem; text-transform:uppercase; color:var(--gold-dim);">Tokens</div>
-                        <div>${myPlayer.score} / ${totalTokensMy}</div>
-                    </div>
-                </div>
-            </div>
-        `;
     }
 
     // Sidebar Players
     const pList = document.getElementById('players-list');
     pList.innerHTML = '';
+    const hideSelfInCompetitors = window.matchMedia('(max-width: 900px) and (orientation: portrait)').matches;
     st.players.forEach(p => {
+        if (hideSelfInCompetitors && p.id === MY_ID) return;
+
         const card = document.createElement('div');
         card.className = `player-card ${p.id === st.current_turn ? 'active' : ''}`;
         
@@ -637,14 +692,16 @@ function render(st) {
 
         card.innerHTML = `
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-                <img src="${getMeeplePath(p.color)}" style="width:20px;">
+                <img src="${getMeeplePath(p.color)}" class="player-meeple-icon" style="width:20px; height:20px; object-fit:contain;">
                 <span style="font-family:'Cinzel Decorative'; color:${getDisplayColor(p.color)}">${getDisplayName(p)} ${p.winner ? '👑' : ''}</span>
             </div>
-            <div style="display:flex; align-items:center; gap:10px; background:rgba(0,0,0,0.3); padding:8px; border-radius:4px;">
-                ${targetHtml || ''}
+            <div class="player-details-row" style="display:flex; align-items:center; gap:10px; background:rgba(0,0,0,0.3); padding:8px; border-radius:4px;">
+                <div class="player-target">${targetHtml || ''}</div>
                 <div>
-                    <div style="font-size:0.7rem; color:var(--gold-dim); text-transform:uppercase;">Hunting</div>
-                    <div style="font-size:0.9rem;">Tokens: ${p.score} / ${totalTokens}</div>
+                    <div class="hunting-label" style="font-size:0.7rem; color:var(--gold-dim); text-transform:uppercase;">Hunting</div>
+                    <div class="player-score-line" style="font-size:0.9rem;">
+                        <span class="token-word">Tokens:</span> ${p.score} / ${totalTokens}
+                    </div>
                 </div>
             </div>
         `;
