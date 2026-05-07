@@ -36,12 +36,25 @@ body {
 
 /* --- Layout Structure --- */
 .game-layout {
-  display: flex; width: 100%; max-width: none; height: 100vh;
-  padding: 10px 12px; gap: 20px; align-items: center; justify-content: space-between;
+  display: grid;
+  width: 100%;
+  max-width: none;
+  height: 100vh;
+  grid-template-columns: clamp(160px, 14vw, 240px) minmax(0, 1fr) clamp(160px, 14vw, 240px);
+  gap: 16px;
+  padding: 10px 12px;
+  align-items: center;
 }
 
 .side-panel {
-  flex: 0 0 clamp(160px, 14vw, 240px); max-width: 260px; min-width: 140px; display: flex; flex-direction: column; gap: 16px; height: 100%; padding-top: 8px;
+  width: 100%;
+  max-width: 260px;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  padding-top: 8px;
 }
 
 .panel-title {
@@ -70,8 +83,8 @@ body {
   position: relative;
   width: calc((var(--board-w) + 80px) * var(--board-scale));
   height: calc((var(--board-w) + 80px) * var(--board-scale));
-  flex: 1 1 auto;
   margin: 0 auto;
+  justify-self: center;
   padding: calc(40px * var(--board-scale));
   background: #1a140b; border: 2px solid var(--gold-dim); border-radius: 8px;
   box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 40px rgba(0,0,0,0.8);
@@ -130,8 +143,73 @@ body {
 
 @media (max-width: 980px) and (orientation: landscape) {
   html, body { overflow: auto; }
-  .game-layout { height: auto; min-height: 100vh; align-items: flex-start; }
+  .game-layout { height: auto; min-height: 100vh; align-items: flex-start; gap: 10px; }
   .side-panel { min-width: 120px; max-width: 180px; }
+}
+
+@media (max-width: 900px) and (orientation: portrait) {
+  html, body {
+    height: auto;
+    min-height: 100%;
+    overflow: auto;
+  }
+
+  body {
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  .game-layout {
+    height: auto;
+    min-height: 100dvh;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 10px;
+    padding: 10px;
+    align-items: start;
+  }
+
+  .game-layout > .side-panel:first-child {
+    order: 1;
+    max-width: none;
+    min-width: 0;
+    height: auto;
+    padding-top: 0;
+    gap: 10px;
+  }
+
+  .game-layout > .board-container {
+    order: 2;
+    width: calc((var(--board-w) + 48px) * var(--board-scale));
+    height: calc((var(--board-w) + 48px) * var(--board-scale));
+    padding: calc(24px * var(--board-scale));
+  }
+
+  .game-layout > .side-panel:last-child {
+    order: 3;
+    max-width: none;
+    min-width: 0;
+    height: auto;
+    padding-top: 0;
+    gap: 8px;
+  }
+
+  .turn-card { padding: 10px; }
+  .action-btn { padding: 10px; font-size: 0.78rem; }
+
+  #players-list {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 6px;
+    flex: none;
+  }
+
+  .player-card {
+    min-width: 170px;
+    margin-bottom: 0;
+  }
 }
 </style>
 </head>
@@ -223,19 +301,34 @@ function getCellMetrics() {
 
 function updateBoardScale() {
     const layout = document.querySelector('.game-layout');
-    const boardContainer = document.querySelector('.board-container');
+    const boardContainer = document.querySelector('.game-layout > .board-container');
     const leftPanel = document.querySelector('.game-layout .side-panel:first-child');
     const rightPanel = document.querySelector('.game-layout .side-panel:last-child');
     if (!layout || !boardContainer || !leftPanel || !rightPanel) return;
 
-    const layoutStyles = getComputedStyle(layout);
-    const gap = parseFloat(layoutStyles.gap) || 20;
     const baseOuter = 7 * 64 + 6 * 3 + 80; // board + container padding
-    const reservedWidth = leftPanel.offsetWidth + rightPanel.offsetWidth + gap * 2 + 6;
-    const availableWidth = Math.max(320, window.innerWidth - reservedWidth - 24);
-    const availableHeight = Math.max(320, window.innerHeight - 24);
+    const isPortraitMobile = window.matchMedia('(max-width: 900px) and (orientation: portrait)').matches;
+    const layoutStyles = getComputedStyle(layout);
+    const gap = parseFloat(layoutStyles.gap) || 16;
+    const paddingX = (parseFloat(layoutStyles.paddingLeft) || 0) + (parseFloat(layoutStyles.paddingRight) || 0);
+    const paddingY = (parseFloat(layoutStyles.paddingTop) || 0) + (parseFloat(layoutStyles.paddingBottom) || 0);
+
+    let availableWidth;
+    let availableHeight;
+    if (isPortraitMobile) {
+        const topH = leftPanel.getBoundingClientRect().height;
+        const bottomH = rightPanel.getBoundingClientRect().height;
+        availableWidth = Math.max(280, window.innerWidth - paddingX - 8);
+        availableHeight = Math.max(280, window.innerHeight - paddingY - topH - bottomH - (gap * 2) - 8);
+    } else {
+        const reservedWidth = leftPanel.offsetWidth + rightPanel.offsetWidth + gap * 2 + 6;
+        availableWidth = Math.max(320, window.innerWidth - reservedWidth - 24);
+        availableHeight = Math.max(320, window.innerHeight - 24);
+    }
+
     const target = Math.min(availableWidth, availableHeight);
-    const scale = Math.max(0.62, Math.min(2.0, target / baseOuter));
+    const minScale = isPortraitMobile ? 0.5 : 0.62;
+    const scale = Math.max(minScale, Math.min(2.0, target / baseOuter));
 
     document.documentElement.style.setProperty('--board-scale', scale.toFixed(3));
 }
