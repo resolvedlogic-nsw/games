@@ -189,6 +189,8 @@ function render(st) {
     state = st;
     const cp = st.current_player;
     const reachableCells = Array.isArray(st.reachable) ? st.reachable : [];
+    const isOnlineMode = st.mode === 'online';
+    const canActThisTurn = !isOnlineMode || st.current_turn === MY_ID;
     
     // Sync phase from server state
     if (st.last_push === null) currentPhase = 'push';
@@ -197,7 +199,7 @@ function render(st) {
     document.getElementById('turn-dot').style.background = cp.color;
     document.getElementById('turn-name').textContent = cp.name;
     document.getElementById('phase-label').textContent = currentPhase === 'push' ? "Push a Tile" : "Move your piece";
-    document.getElementById('rotate-btn').disabled = (st.current_turn !== MY_ID || currentPhase !== 'push' || isProcessing || st.phase === 'over');
+    document.getElementById('rotate-btn').disabled = (!canActThisTurn || currentPhase !== 'push' || isProcessing || st.phase === 'over');
     
     document.documentElement.style.setProperty('--reach-player', cp.color);
 
@@ -215,7 +217,7 @@ function render(st) {
     for(let r=0; r<7; r++) {
         for(let c=0; c<7; c++) {
             const t = st.tiles[r][c];
-            const isReachable = (currentPhase === 'move' && st.current_turn === MY_ID && reachableCells.some(pos => pos[0] === r && pos[1] === c));
+            const isReachable = (currentPhase === 'move' && canActThisTurn && reachableCells.some(pos => pos[0] === r && pos[1] === c));
             
             const div = document.createElement('div');
             div.className = `tile ${isReachable ? 'reachable' : ''}`;
@@ -253,7 +255,7 @@ function render(st) {
     }
 
     // Push Buttons
-    if(currentPhase === 'push' && st.current_turn === MY_ID && st.phase !== 'over') {
+    if(currentPhase === 'push' && canActThisTurn && st.phase !== 'over') {
         const offsets = {
             'top': { x: c => c*(cell+gap)+16, y: -34, sym: '▼' },
             'bottom': { x: c => c*(cell+gap)+16, y: 7*(cell+gap)+2, sym: '▲' },
@@ -314,7 +316,7 @@ function render(st) {
         
         // Handle hidden targets for online mode
         let targetSrc = charImg(p.current_target);
-        if (st.mode === 'online' && p.id !== MY_ID && !p.winner) {
+        if (isOnlineMode && p.id !== MY_ID && !p.winner) {
             targetSrc = charImg('?');
         }
 
