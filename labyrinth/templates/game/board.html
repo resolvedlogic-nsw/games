@@ -118,6 +118,13 @@ body {
   height: var(--board-w);
 }
 
+/* Layer specific structural classes for older browser support */
+.board-layer {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
 /* --- Tiles --- */
 .tile {
   position: absolute; width: var(--cell); height: var(--cell);
@@ -128,7 +135,7 @@ body {
 }
 .tile-bg { width: 100%; height: 100%; position: absolute; top: 0; left: 0; background-size: cover; transition: transform 0.3s ease; }
 .tile-char { width: 60%; height: 60%; position: absolute; top: 20%; left: 20%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); z-index: 2; transition: transform 0.3s ease; }
-.tile-overlay { position: absolute; inset: 0; pointer-events: none; transition: background 0.3s; z-index: 3; }
+.tile-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; transition: background 0.3s; z-index: 3; }
 
 @keyframes pulse-reach {
   0% { background: rgba(220, 50, 50, 0.1); box-shadow: inset 0 0 0 2px var(--reach-bdr); }
@@ -217,9 +224,9 @@ body {
 
   <div class="board-container" id="board-container">
     <div class="board-grid">
-      <div id="tiles-layer" style="position: absolute; inset: 0; z-index: 1;"></div>
-      <div id="buttons-layer" style="position: absolute; inset: 0; pointer-events: none; z-index: 2;"></div>
-      <div id="meeples-layer" style="position: absolute; inset: 0; pointer-events: none; z-index: 3;"></div>
+      <div id="tiles-layer" class="board-layer" style="z-index: 1;"></div>
+      <div id="buttons-layer" class="board-layer" style="pointer-events: none; z-index: 2;"></div>
+      <div id="meeples-layer" class="board-layer" style="pointer-events: none; z-index: 3;"></div>
     </div>
   </div>
 
@@ -248,7 +255,7 @@ const BASE_URL = `/labyrinth/${GAME_ID}`;
 const STATIC_URL = "{% static '' %}";
 const THEME = "{{ theme }}";
 const MODE = "{{ game.mode }}";
-const MY_ID = parseInt("{{ player_id }}");
+const MY_ID = parseInt("{{ player_id }}") || 0;
 const IMG_BASE = THEME === 'pokemon' ? `${STATIC_URL}images/pokemon/` : `${STATIC_URL}images/`;
 
 let state = null;
@@ -267,12 +274,17 @@ function charImg(id) {
   return `${IMG_BASE}character${n}.png`;
 }
 
-function fetchState() { 
-  fetch(`${BASE_URL}/state/`)
-    .then(r => r.json())
-    .then(st => { state = st; render(st); })
-    .catch(e => console.error(e));
-}
+// BOOTSTRAP INITIAL DATA - Bypasses initial network fetch to guarantee instant rendering!
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        const rawState = '{{ state_json|escapejs }}';
+        state = JSON.parse(rawState);
+        render(state);
+    } catch (e) {
+        console.error("Critical error bootstrapping game state:", e);
+        toast("Critical error loading game. Please refresh.", "#e74c3c");
+    }
+});
 
 if (MODE === 'online') {
   setInterval(() => {
@@ -328,16 +340,21 @@ function buildGrid(st) {
   const buttonsEl = document.getElementById('buttons-layer');
   const meeplesEl = document.getElementById('meeples-layer');
   
+  if(!tilesEl || !buttonsEl || !meeplesEl) return;
+
   tilesEl.innerHTML = '';
   buttonsEl.innerHTML = '';
 
   const cell = 64; const gap = 3;
   const corners = [[0,0], [0,6], [6,6], [6,0]];
   
+  // Safe array fallback
+  const reachableArr = st.reachable || [];
+  
   for (let r = 0; r < 7; r++) {
     for (let c = 0; c < 7; c++) {
       const t = st.tiles[r][c];
-      const isReachable = (phase === 'move') && st.reachable.some(([rr, cc]) => rr === r && cc === c);
+      const isReachable = (phase === 'move') && reachableArr.some(([rr, cc]) => rr === r && cc === c);
       
       const div = document.createElement('div');
       div.className = `tile ${isReachable ? 'reachable' : ''}`;
@@ -362,14 +379,17 @@ function buildGrid(st) {
         bg.appendChild(img);
       }
       
+      // Robust home corner rendering
       const cornerIndex = corners.findIndex(pos => pos[0] === r && pos[1] === c);
-      if (cornerIndex !== -1 && st.players[cornerIndex]) {
+      const homePlayer = st.players.find(p => p.id === cornerIndex);
+      
+      if (homePlayer) {
         const homeDot = document.createElement('div');
         homeDot.style.position = 'absolute';
         homeDot.style.width = '18px';
         homeDot.style.height = '18px';
         homeDot.style.borderRadius = '50%';
-        homeDot.style.backgroundColor = st.players[cornerIndex].color;
+        homeDot.style.backgroundColor = homePlayer.color;
         homeDot.style.top = '6px';
         homeDot.style.left = '6px';
         homeDot.style.border = '2px solid rgba(255,255,255,0.8)';
@@ -428,6 +448,7 @@ function buildGrid(st) {
 
 function buildSpare(sp) {
   const container = document.getElementById('spare-container');
+  if(!container) return;
   container.innerHTML = '';
   const bg = document.createElement('div');
   bg.className = 'tile-bg';
@@ -446,6 +467,7 @@ function buildSpare(sp) {
 
 function buildPlayers(st) {
   const list = document.getElementById('players-list');
+  if(!list) return;
   list.innerHTML = '';
   
   st.players.forEach(p => {
@@ -481,7 +503,6 @@ function buildPlayers(st) {
   });
 }
 
-// FIX: Added robust error handling so the UI never freezes on a server crash
 function rotateSpare() {
   if (!canInteract() || phase !== 'push' || isProcessing) return;
   isProcessing = true;
