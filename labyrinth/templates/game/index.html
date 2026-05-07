@@ -72,15 +72,14 @@
   .card::before { top: 12px; left: 12px; border-width: 1px 0 0 1px; }
   .card::after  { bottom: 12px; right: 12px; border-width: 0 1px 1px 0; }
 
+  .title-container { min-height: 120px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
   .title {
     font-family: 'Cinzel Decorative', serif;
     font-size: clamp(2rem, 5vw, 3rem);
     font-weight: 900;
     color: var(--gold);
     letter-spacing: 0.05em;
-    text-shadow:
-      0 0 40px rgba(201,168,76,0.4),
-      0 2px 4px rgba(0,0,0,0.8);
+    text-shadow: 0 0 40px rgba(201,168,76,0.4), 0 2px 4px rgba(0,0,0,0.8);
     margin-bottom: 8px;
   }
 
@@ -89,14 +88,16 @@
     font-style: italic;
     font-size: 1.1rem;
     letter-spacing: 0.15em;
-    margin-bottom: 50px;
+    margin-bottom: 30px;
   }
+  
+  .pokemon-logo { max-width: 100%; max-height: 147px; display: none; margin-bottom: 30px; }
 
   .divider {
     display: flex;
     align-items: center;
     gap: 16px;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
   }
   .divider::before, .divider::after {
     content: '';
@@ -145,10 +146,7 @@
     box-shadow: 0 0 20px rgba(201,168,76,0.2);
   }
 
-  /* --- NEW TOKEN BUTTON CSS --- */
-  .setup-group {
-    margin-bottom: 40px;
-  }
+  .setup-group { margin-bottom: 30px; }
 
   #token-grid {
     display: flex;
@@ -188,13 +186,9 @@
     border-color: transparent;
   }
 
-  .start-btn {
+  .start-btn, .online-btn {
     width: 100%;
     padding: 16px 32px;
-    background: linear-gradient(135deg, #8b6914, #c9a84c, #8b6914);
-    background-size: 200% 100%;
-    border: none;
-    color: var(--dark);
     font-family: 'Cinzel Decorative', serif;
     font-size: 1rem;
     font-weight: 700;
@@ -203,6 +197,14 @@
     transition: all 0.3s;
     position: relative;
     overflow: hidden;
+    margin-bottom: 12px;
+  }
+  
+  .start-btn {
+    background: linear-gradient(135deg, #8b6914, #c9a84c, #8b6914);
+    background-size: 200% 100%;
+    border: none;
+    color: var(--dark);
   }
   .start-btn::after {
     content: '';
@@ -216,7 +218,24 @@
     transform: translateY(-1px);
   }
 
-  form { margin: 0; }
+  .online-btn {
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    text-decoration: none;
+    display: block;
+  }
+  .online-btn:hover { background: rgba(201,168,76,0.1); }
+
+  /* Theme Switcher */
+  .theme-toggle { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(201,168,76,0.2); transition: .4s; border-radius: 24px; }
+  .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: var(--gold); transition: .4s; border-radius: 50%; }
+  input:checked + .slider { background-color: #e74c3c; }
+  input:checked + .slider:before { transform: translateX(26px); background-color: white; }
+  .theme-label { color: var(--gold); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; }
 </style>
 </head>
 <body>
@@ -224,14 +243,30 @@
 <div class="orb orb-2"></div>
 
 <div class="card">
-  <h1 class="title">Labyrinth</h1>
-  <p class="subtitle">The Board Game</p>
+  <div class="theme-toggle">
+    <span class="theme-label">Classic</span>
+    <label class="switch">
+      <input type="checkbox" id="theme-switch" onchange="toggleTheme()">
+      <span class="slider"></span>
+    </label>
+    <span class="theme-label" style="color:#e74c3c;">Pokémon</span>
+  </div>
+
+  <div class="title-container">
+    <div id="classic-title">
+      <h1 class="title">Labyrinth</h1>
+      <p class="subtitle">The Board Game</p>
+    </div>
+    <img id="poke-logo" class="pokemon-logo" src="{% static 'images/pokemon/logo.png' %}" alt="Pokemon Logo">
+  </div>
+  
   <div class="divider"><div class="divider-gem"></div></div>
 
   <form method="POST" action="{% url 'labyrinth:new_game' %}">
     {% csrf_token %}
+    <input type="hidden" name="theme" id="hidden_theme" value="classic">
     
-    <label>Number of Adventurers</label>
+    <label>Local Pass & Play</label>
     <div class="player-select">
       <button type="button" class="player-btn active" data-n="2" onclick="selectPlayers(this)">2</button>
       <button type="button" class="player-btn" data-n="3" onclick="selectPlayers(this)">3</button>
@@ -239,11 +274,9 @@
     </div>
     <input type="hidden" name="num_players" id="num_players" value="2">
     
-    <!-- NEW TOKEN BUTTON GRID -->
     <div class="setup-group">
       <label>Tokens to Win</label>
       <input type="hidden" name="tokens_to_win" id="hidden_tokens" value="12">
-      
       <div id="token-grid">
         <button type="button" class="token-btn" data-val="2">2</button>
         <button type="button" class="token-btn" data-val="3">3</button>
@@ -259,74 +292,67 @@
       </div>
     </div>
 
-    <button type="submit" class="start-btn">Enter the Labyrinth</button>
+    <button type="submit" class="start-btn">Start Local Game</button>
+    <a href="{% url 'labyrinth:online' %}" class="online-btn" id="online-link">Play Online</a>
   </form>
 </div>
 
 <script>
-// Grab our token elements
 const tokenBtns = document.querySelectorAll('.token-btn');
 const hiddenInput = document.getElementById('hidden_tokens');
 
-// Called when a user clicks the 2, 3, or 4 player buttons
+function toggleTheme() {
+  const isPoke = document.getElementById('theme-switch').checked;
+  const theme = isPoke ? 'pokemon' : 'classic';
+  document.getElementById('hidden_theme').value = theme;
+  
+  document.getElementById('classic-title').style.display = isPoke ? 'none' : 'block';
+  document.getElementById('poke-logo').style.display = isPoke ? 'block' : 'none';
+  
+  const onlineLink = document.getElementById('online-link');
+  onlineLink.href = "{% url 'labyrinth:online' %}?theme=" + theme;
+}
+
 function selectPlayers(el) {
   document.querySelectorAll('.player-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  
   const numPlayers = parseInt(el.dataset.n);
   document.getElementById('num_players').value = numPlayers;
-  
-  // Instantly update the token grid based on the new player count!
   updateTokens(numPlayers);
 }
 
-// Logic to handle max limits and dimming out illegal buttons
 function updateTokens(numPlayers) {
   const maxTokens = Math.floor(24 / numPlayers);
   let currentSelected = parseInt(hiddenInput.value);
 
   tokenBtns.forEach(btn => {
     const val = parseInt(btn.dataset.val);
-    
     if (val > maxTokens) {
       btn.disabled = true;
-      btn.classList.remove('active'); // Ensure a disabled button is never active
+      btn.classList.remove('active');
     } else {
       btn.disabled = false;
     }
   });
 
-  // If the user previously selected '12', but just clicked '3 Players' (max 8),
-  // automatically snap their selection down to 8.
-  if (currentSelected > maxTokens) {
-    selectToken(maxTokens);
-  }
+  if (currentSelected > maxTokens) { selectToken(maxTokens); }
 }
 
-// Called when a user clicks one of the numbered token buttons
 function selectToken(val) {
   hiddenInput.value = val;
-  
   tokenBtns.forEach(b => {
-    if (parseInt(b.dataset.val) === val) {
-      b.classList.add('active');
-    } else {
-      b.classList.remove('active');
-    }
+    if (parseInt(b.dataset.val) === val) { b.classList.add('active'); }
+    else { b.classList.remove('active'); }
   });
 }
 
-// Attach click listeners to the token buttons
 tokenBtns.forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    selectToken(parseInt(e.target.dataset.val));
-  });
+  btn.addEventListener('click', (e) => { selectToken(parseInt(e.target.dataset.val)); });
 });
 
-// Run this once when the page loads to ensure the grid starts correctly for 2 players
 document.addEventListener('DOMContentLoaded', () => {
   updateTokens(2);
-  selectToken(12); // Default to a full game (12 tokens for 2 players)
+  selectToken(12);
 });
 </script>
 </body>

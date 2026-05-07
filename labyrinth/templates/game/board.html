@@ -21,7 +21,6 @@
   --board-w:    calc(7 * var(--cell) + 6 * var(--gap));
   --reachable:  rgba(220, 50, 50, 0.2);
   --reach-bdr:  var(--reach-player, #dc3232);
-  --reach-player: #dc3232;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -35,7 +34,7 @@ html, body {
 }
 
 body {
-  background-image:
+  background-image: 
     radial-gradient(ellipse at 15% 15%, #241505 0%, transparent 45%),
     radial-gradient(ellipse at 85% 85%, #160e02 0%, transparent 45%);
   min-height: 100vh;
@@ -43,7 +42,7 @@ body {
   flex-direction: column;
 }
 
-/* ── Top bar ──────────────────────────────────────────────── */
+/* --- Top Navigation Bar --- */
 .topbar {
   display: flex;
   align-items: center;
@@ -52,16 +51,16 @@ body {
   border-bottom: 1px solid var(--gold-dim);
   background: linear-gradient(to bottom, rgba(20,14,3,0.95), rgba(10,8,6,0.95));
   backdrop-filter: blur(4px);
-  position: sticky; top: 0; z-index: 100;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
-
 .topbar-title {
   font-family: 'Cinzel Decorative', serif;
   font-size: 1.1rem;
   color: var(--gold);
   letter-spacing: 0.1em;
 }
-
 .turn-badge {
   display: flex;
   align-items: center;
@@ -69,52 +68,31 @@ body {
   font-size: 0.9rem;
   letter-spacing: 0.08em;
 }
-
 .player-dot {
-  width: 12px; height: 12px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   border: 2px solid rgba(255,255,255,0.3);
   display: inline-block;
+  transition: background 0.3s;
 }
 
-.phase-label {
-  font-size: 0.75rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--gold);
-  opacity: 0.7;
-}
-
-.home-link {
-  font-size: 0.8rem;
-  color: var(--gold-dim);
-  text-decoration: none;
-  letter-spacing: 0.1em;
-  transition: color 0.2s;
-}
-.home-link:hover { color: var(--gold); }
-
-/* ── Layout ───────────────────────────────────────────────── */
+/* --- Main Layout --- */
 .game-layout {
   height: 100vh;
   display: grid;
-  grid-template-columns: 170px 1fr 170px;
-  grid-template-rows: 1fr;
+  grid-template-columns: 200px 1fr 200px;
   gap: 0;
   padding: 8px;
   align-items: center;
   justify-items: center;
-  overflow: hidden;
 }
-
-/* ── Side panels ──────────────────────────────────────────── */
 .side-panel {
   padding: 10px;
   width: 100%;
   overflow-y: auto;
   max-height: 100vh;
 }
-
 .panel-title {
   font-family: 'Cinzel Decorative', serif;
   font-size: 0.65rem;
@@ -127,1008 +105,645 @@ body {
   padding-bottom: 6px;
 }
 
-/* ── Spare tile panel ─────────────────────────────────────── */
+/* --- The Board --- */
+.board-container {
+  position: relative;
+  width: var(--board-w);
+  height: var(--board-w);
+  padding: 30px;
+  background: #1a140b;
+  border: 2px solid var(--gold-dim);
+  border-radius: 8px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 40px rgba(0,0,0,0.8);
+}
+.board-grid {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* --- Tiles --- */
+.tile {
+  position: absolute;
+  width: var(--cell);
+  height: var(--cell);
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+  overflow: hidden;
+  background: #2a2012;
+  border: 1px solid rgba(201,168,76,0.2);
+}
+.tile-bg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.3s ease;
+}
+.tile-char {
+  width: 60%;
+  height: 60%;
+  position: absolute;
+  top: 20%;
+  left: 20%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+  z-index: 2;
+  transition: transform 0.3s ease;
+}
+.tile-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: background 0.3s;
+  z-index: 3;
+}
+.tile.reachable .tile-overlay {
+  background: var(--reachable);
+  box-shadow: inset 0 0 0 2px var(--reach-bdr);
+}
+
+/* --- Meeples --- */
+.meeple {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 10;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
+  pointer-events: none;
+}
+
+/* --- Push Buttons --- */
+.push-btn {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: rgba(201,168,76,0.1);
+  border: 1px solid var(--gold-dim);
+  border-radius: 50%;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 20;
+  font-size: 10px;
+}
+.push-btn:hover {
+  background: var(--gold);
+  color: var(--dark);
+  transform: scale(1.2);
+  box-shadow: 0 0 10px var(--gold);
+}
+.push-btn.disabled {
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+/* --- Spare Tile UI --- */
 .spare-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 15px;
 }
-
-.spare-tile-container {
+.spare-container {
+  width: calc(var(--cell) * 1.5);
+  height: calc(var(--cell) * 1.5);
   position: relative;
-  width: 80px; height: 80px;
+  border-radius: 6px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.6);
+  overflow: hidden;
+  border: 1px solid rgba(201,168,76,0.4);
 }
-
 .rotate-btn {
-  background: linear-gradient(135deg, #4a3410, #8b6914);
+  background: rgba(20,14,4,0.6);
   border: 1px solid var(--gold-dim);
   color: var(--gold);
-  padding: 8px 20px;
+  padding: 8px 16px;
+  border-radius: 4px;
   font-family: 'Cinzel Decorative', serif;
-  font-size: 0.6rem;
-  letter-spacing: 0.12em;
+  font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s;
-  width: 100%;
 }
 .rotate-btn:hover {
-  background: linear-gradient(135deg, #8b6914, #c9a84c);
+  background: var(--gold);
   color: var(--dark);
-  box-shadow: 0 0 16px rgba(201,168,76,0.3);
+  box-shadow: 0 0 12px rgba(201,168,76,0.4);
 }
 
-/* ── Players list ─────────────────────────────────────────── */
-.player-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
+/* --- Player Cards --- */
 .player-card {
-  padding: 10px 12px;
-  border: 1px solid rgba(201,168,76,0.15);
-  background: rgba(20,14,4,0.6);
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--gold-dim);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+  transition: transform 0.2s, border-color 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.player-card.active {
+  border-color: var(--gold);
+  background: rgba(201,168,76,0.05);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 0 10px rgba(201,168,76,0.1);
+}
+.player-card.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--gold);
+  box-shadow: 0 0 8px var(--gold);
+}
+.pcard-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  transition: all 0.3s;
+  margin-bottom: 12px;
 }
-.player-card.active-player {
-  border-color: var(--gold);
-  background: rgba(201,168,76,0.08);
-  box-shadow: 0 0 16px rgba(201,168,76,0.15);
+.pcard-meeple {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
-
-.player-avatar {
-  width: 32px; height: 32px;
-  border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.2);
-  flex-shrink: 0;
+.pcard-name {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #fff;
 }
-
-.player-info { flex: 1; min-width: 0; }
-.player-name {
-  font-size: 0.85rem;
-  font-weight: 400;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.player-pos {
-  font-size: 0.7rem;
-  opacity: 0.5;
-  letter-spacing: 0.05em;
-}
-
-/* ── Board area ───────────────────────────────────────────── */
-.board-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
-}
-
-/* ── Push arrows ──────────────────────────────────────────── */
-.push-row {
-  display: grid;
-  grid-template-columns: var(--cell) repeat(7, var(--cell) var(--gap)) var(--cell);
-  /* simplify: just use flex for arrow rows */
-  display: flex;
-  gap: var(--gap);
-  width: calc(var(--board-w) + 2 * var(--cell) + 2 * var(--gap));
-}
-
-.push-arrow {
-  width: var(--cell);
-  height: var(--cell);
+.pcard-target {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--gold);
-  opacity: 0.4;
-  transition: all 0.2s;
-  font-size: 1.4rem;
-  flex-shrink: 0;
-}
-.push-arrow:hover:not(:disabled) {
-  opacity: 1;
-  text-shadow: 0 0 12px var(--gold);
-  transform: scale(1.1);
-}
-.push-arrow:disabled { opacity: 0.1; cursor: default; }
-.push-arrow.spacer { pointer-events: none; opacity: 0; }
-
-/* ── Board with side arrows ───────────────────────────────── */
-.board-with-sides {
-  display: flex;
-  gap: var(--gap);
-  align-items: flex-start;
+  gap: 12px;
+  background: rgba(0,0,0,0.6);
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.05);
 }
 
-.side-arrows {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap);
-}
-
-/* ── Grid ─────────────────────────────────────────────────── */
-.board-grid {
-  display: grid;
-  grid-template-columns: repeat(7, var(--cell));
-  grid-template-rows: repeat(7, var(--cell));
-  gap: var(--gap);
-  background: #050302;
-  border: 1px solid rgba(201,168,76,0.2);
-  box-shadow:
-    0 0 0 1px rgba(0,0,0,0.8),
-    0 20px 60px rgba(0,0,0,0.9),
-    inset 0 0 40px rgba(0,0,0,0.5);
-  position: relative;
-}
-
-/* ── Tile ─────────────────────────────────────────────────── */
-.tile {
-  width: var(--cell);
-  height: var(--cell);
-  position: relative;
-  overflow: hidden;
-  cursor: default;
-  transition: box-shadow 0.15s, transform 0.15s;
-  background: #1a1206;
-}
-
-.tile img.tile-base {
-  position: absolute;
-  inset: 0;
-  width: 100%; height: 100%;
-  object-fit: cover;
-  /* rotation applied via transform on wrapper */
-}
-
-.tile img.tile-char {
-  position: absolute;
-  inset: 0;
-  width: 100%; height: 100%;
-  object-fit: cover;
-  /* counter-rotate the character so it stays upright */
-}
-
-.tile-inner {
-  position: absolute;
-  inset: 0;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.tile.reachable {
-  cursor: pointer;
-  /* Use the dynamic variables for the border and the outer shadow */
-  box-shadow: inset 0 0 0 2px var(--reach-player), 0 0 12px var(--reachable-bg);
-}
-.tile.reachable::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--reachable-bg); /* Use dynamic variable for the inner pulse */
-  pointer-events: none;
-  animation: pulse-green 1.2s ease-in-out infinite;
-}
-@keyframes pulse-green {
-  0%, 100% { opacity: 0.4; }
-  50%       { opacity: 0.9; }
-}
-
-.tile.player-here::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(255,255,255,0.04);
-  z-index: 5;
-}
-
-/* ── Player tokens on tiles ───────────────────────────────── */
-.token-layer {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 10;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 4px;
-}
-
-.token {
-  width: 36px; height: 36px; /* Doubled size */
-  flex-shrink: 0;
-  transition: transform 0.3s ease;
-}
-
-/* ── Spare tile ───────────────────────────────────────────── */
-.spare-tile {
-  width: 80px; height: 80px;
-}
-
-/* ── Phase indicator ──────────────────────────────────────── */
-.phase-indicator {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 16px;
-}
-
-.phase-step {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.75rem;
-  opacity: 0.4;
-  transition: opacity 0.3s;
-  letter-spacing: 0.05em;
-}
-.phase-step.active { opacity: 1; color: var(--gold); }
-.phase-step.done   { opacity: 0.6; text-decoration: line-through; }
-
-.phase-num {
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  border: 1px solid currentColor;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.65rem;
-  flex-shrink: 0;
-}
-
-/* ── Toast notifications ──────────────────────────────────── */
-#toast {
-  position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%) translateY(80px);
-  background: rgba(20,14,4,0.95);
-  border: 1px solid var(--gold-dim);
-  color: var(--gold);
-  padding: 10px 24px;
-  font-size: 0.85rem;
-  letter-spacing: 0.1em;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  z-index: 999;
-  pointer-events: none;
-  white-space: nowrap;
-}
-#toast.show { transform: translateX(-50%) translateY(0); }
-#toast.error { border-color: #dc6464; color: #dc6464; }
-
-/* ── Responsive ───────────────────────────────────────────── */
-@media (max-width: 900px) {
-  :root { --cell: 52px; }
-  .game-layout {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
-    padding: 10px;
-  }
-  .side-panel { padding: 8px; }
-}
-
-/* ── Target Found Pop-up ── */
+/* --- Treasure/Winner Popup --- */
 #treasure-popup {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0,0,0,0.85);
   backdrop-filter: blur(8px);
-  z-index: 2000;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
+  z-index: 1000;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.4s;
 }
-
 #treasure-popup.show {
   opacity: 1;
   pointer-events: auto;
 }
-
 .treasure-card {
-  background: linear-gradient(145deg, #1e1507, #0a0806);
-  border: 2px solid var(--gold);
-  padding: 40px 60px;
+  background: linear-gradient(145deg, #1e1507, #0f0b04);
+  border: 1px solid var(--gold);
+  padding: 50px;
   border-radius: 8px;
   text-align: center;
-  transform: scale(0.8) translateY(50px);
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 0 50px rgba(201,168,76,0.3);
+  box-shadow: 0 0 50px rgba(201,168,76,0.2);
+  transform: scale(0.9);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-
 #treasure-popup.show .treasure-card {
-  transform: scale(1) translateY(0);
+  transform: scale(1);
 }
-
 .treasure-title {
   font-family: 'Cinzel Decorative', serif;
-  color: var(--gold);
   font-size: 2.5rem;
+  color: var(--gold);
   margin-bottom: 20px;
-  text-shadow: 0 0 20px var(--gold);
+  text-shadow: 0 0 20px rgba(201,168,76,0.6);
+}
+#treasure-img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.8));
+  margin-bottom: 30px;
 }
 
-#treasure-img {
-  width: 150px;
-  height: 150px;
-  border-radius: 8px;
-  box-shadow: inset 0 0 20px #000;
+/* --- Toasts --- */
+#toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: rgba(20,14,4,0.95);
+  border: 1px solid var(--gold);
+  padding: 12px 30px;
+  border-radius: 30px;
+  color: var(--gold);
+  font-family: 'Cinzel Decorative', serif;
+  letter-spacing: 0.1em;
+  font-size: 0.9rem;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 1000;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+#toast.show {
+  transform: translateX(-50%) translateY(0);
 }
 </style>
 </head>
 <body>
 
-<!-- ── Main layout ──────────────────────────────────────────────── -->
-<div class="game-layout">
-
-  <!-- Left panel: title + spare tile + rotate + phase -->
-  <div class="side-panel">
-    <div style="margin-bottom:14px; border-bottom:1px solid var(--gold-dim); padding-bottom:10px;">
-      <div class="panel-title" style="font-size:0.85rem; opacity:1; color:var(--gold); margin-bottom:4px;">Labyrinth</div>
-      <div id="tb-name" style="font-size:0.75rem; letter-spacing:0.08em;"></div>
-      <div id="tb-phase" style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; opacity:0.6; margin-top:2px;"></div>
-      <a href="{% url 'labyrinth:index' %}" style="font-size:0.7rem; color:var(--gold-dim); text-decoration:none; display:block; margin-top:6px;">← New Game</a>
-    </div>
-    <div class="panel-title">Spare Tile</div>
-    <div class="spare-wrapper">
-      <div class="spare-tile-container" id="spare-tile"></div>
-      <button class="rotate-btn" onclick="rotateSpareTile()">↻ Rotate</button>
-    </div>
-
-    <div style="margin-top: 16px;">
-      <div class="panel-title">Phase</div>
-      <div class="phase-indicator">
-        <div class="phase-step" id="ph-push">
-          <div class="phase-num">1</div>
-          <span>Push a tile</span>
-        </div>
-        <div class="phase-step" id="ph-move">
-          <div class="phase-num">2</div>
-          <span>Move token</span>
-        </div>
-      </div>
-    </div>
+<div class="topbar">
+  <div class="topbar-title">Labyrinth</div>
+  <div class="turn-badge" id="turn-indicator">
+    <div class="player-dot" id="turn-dot"></div>
+    <span class="phase-label" id="phase-label">Push a Tile</span>
   </div>
-
-  <!-- Centre: board -->
-  <div class="board-area" id="board-area">
-    <!-- Rendered by JS -->
+  <div style="font-size: 0.8rem; color: var(--gold-dim);">
+    {% if game.mode == 'online' %}Room Code: <span style="color:#fff; letter-spacing: 0.2em;">{{ game.room_code }}</span>{% endif %}
   </div>
-
-  <!-- Right panel: players -->
-  <div class="side-panel">
-    <div class="panel-title">Adventurers</div>
-    <div class="player-list" id="player-list"></div>
-  </div>
-
 </div>
 
-<div id="toast"></div>
+<div class="game-layout">
+  <div class="side-panel left-panel">
+    <div class="panel-title">Current Spare</div>
+    <div class="spare-wrapper">
+      <div class="spare-container" id="spare-container"></div>
+      <button class="rotate-btn" onclick="rotateSpare()">↻ Rotate Tile</button>
+    </div>
+  </div>
+
+  <div class="board-container" id="board-container">
+    <div class="board-grid" id="grid"></div>
+  </div>
+
+  <div class="side-panel right-panel">
+    <div class="panel-title">Adventurers</div>
+    <div id="players-list"></div>
+  </div>
+</div>
+
 <div id="treasure-popup">
   <div class="treasure-card">
-    <div class="treasure-title">Target Found!</div>
-    <img id="treasure-img" src="" alt="Treasure">
-    
-    <!-- Game Over Buttons (Hidden by default) -->
+    <div class="treasure-title" id="popup-title">Target Found!</div>
+    <img id="treasure-img" src="" alt="Popup Image">
     <div id="game-over-buttons" style="display: none; margin-top: 24px; gap: 14px; justify-content: center;">
       <button class="rotate-btn" onclick="document.getElementById('treasure-popup').classList.remove('show')">View Board</button>
       <a href="{% url 'labyrinth:index' %}" class="rotate-btn" style="text-decoration:none; display:inline-block; text-align:center;">New Game</a>
     </div>
   </div>
 </div>
-<!-- ════════════════════════════════════════════════════════════════
-     JAVASCRIPT
-     ════════════════════════════════════════════════════════════════ -->
+
+<div id="toast">Your Turn</div>
+
 <script>
-const GAME_ID   = {{ game.id }};
-const MY_ID     = {{ player_id }};
-const IMG_BASE  = "{% static 'images/' %}";
-const MEEPLE_BASE = "{% static 'images/' %}";
-const GAME_URL  = `/labyrinth/${GAME_ID}`;
-const PLAYER_COLORS_NAME = ['red','blue','green','yellow'];
-const PLAYER_COLORS_HEX  = ['#e74c3c','#3498db','#2ecc71','#f39c12'];
-const CORNERS = [[0,0],[0,6],[6,6],[6,0]];
+// --- Constants & Config ---
+const GAME_ID = {{ game.id }};
+const BASE_URL = `/labyrinth/${GAME_ID}`;
+const STATIC_URL = "{% static '' %}";
+const THEME = "{{ theme }}";
+const MODE = "{{ game.mode }}";
+const MY_ID = parseInt("{{ player_id }}");
 
-// Phase: 'push' or 'move'
-let phase = 'push';
-let state = {{ state_json|safe }};
+// Base image folder based on theme
+const IMG_BASE = THEME === 'pokemon' ? `${STATIC_URL}images/pokemon/` : `${STATIC_URL}images/`;
 
-// ── Tile image helpers ────────────────────────────────────────────
+let state = null;
+let phase = 'push'; // local phase flag
 
-function shapeImg(shape) {
-  const map = { 'i': 'shapei.svg', 'l': 'shapel.svg', 't': 'shapet.svg' };
-  return IMG_BASE + map[shape];
+// --- Helper Functions ---
+
+// 1. Get correct tile image (SVG for classic, JPG for pokemon)
+function getTilePath(shape) {
+  if (THEME === 'pokemon') return `${IMG_BASE}path${shape}.jpg`;
+  return `${IMG_BASE}shape${shape}.svg`;
 }
 
+// 2. Get correct meeple/ball
+function getMeeplePath(colorHex) {
+  const cMap = { '#e74c3c':'red', '#3498db':'blue', '#2ecc71':'green', '#f39c12':'yellow', '#9b59b6':'purple' };
+  const colorName = cMap[colorHex] || 'red';
+  if (THEME === 'pokemon') return `${IMG_BASE}ball${colorName}.png`;
+  return `${IMG_BASE}meeple_${colorName}.svg`; 
+}
+
+// 3. Get character image (handles secret tokens for online mode)
 function charImg(id) {
+  if (id === '?') return `${IMG_BASE}secret.png`; // Fallback if you create a secret.png
   const n = String(id).padStart(2, '0');
-  return IMG_BASE + `character${n}.png`;
+  return `${IMG_BASE}character${n}.png`;
 }
 
-function rotDeg(r) { return r * 90; }
+// --- Polling & Setup ---
+fetchState();
 
-// ── Build the board HTML ──────────────────────────────────────────
+if (MODE === 'online') {
+  setInterval(() => {
+    fetch(`${BASE_URL}/poll/`)
+      .then(r => r.json())
+      .then(newState => {
+        // Only re-render if the sequence number advanced (someone made a move)
+        if (!state || newState.seq > state.seq) {
+          state = newState;
+          render(state);
+        }
+      });
+  }, 2500);
+}
 
-function buildBoard(st) {
-  const area = document.getElementById('board-area');
+function toast(msg, color = 'var(--gold)') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.borderColor = color;
+  el.style.color = color;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
 
-  const reachSet = new Set((st.reachable || []).map(([r,c]) => `${r},${c}`));
-  const playerMap = {};  // "row,col" → [players]
-  for (const p of st.players) {
-    const key = `${p.row},${p.col}`;
-    if (!playerMap[key]) playerMap[key] = [];
-    playerMap[key].push(p);
+function canInteract() {
+  return MODE === 'pass_and_play' || state.current_turn === MY_ID;
+}
+
+// --- Main Render Engine ---
+function render(st) {
+  state = st;
+  
+  // Topbar UI
+  document.getElementById('turn-dot').style.background = st.current_player.color;
+  if (MODE === 'online' && st.current_turn !== MY_ID) {
+    document.getElementById('phase-label').textContent = `Waiting for ${st.current_player.name}...`;
+  } else {
+    document.getElementById('phase-label').textContent = phase === 'push' ? "Push a Tile" : "Move your piece";
   }
 
-  const lp = st.last_push;
-
-  // Build push-arrow disabling logic
-  function arrowDisabled(dir, idx) {
-    if (phase !== 'push') return true;
-    // Disabled if it would reverse last push
-    const rev = { left:'right', right:'left', top:'bottom', bottom:'top' };
-    if (lp && rev[dir] === lp.direction && idx === lp.index) return true;
-    return false;
-  }
-
-  // Movable row/col indices (1,3,5)
-  const movable = [1, 3, 5];
-
-  // ── Top push row ──────────────────────────────────────────────
-  let topRowHTML = '<div class="push-row">';
-  topRowHTML += '<button class="push-arrow spacer" disabled></button>';
-  for (let c = 0; c < 7; c++) {
-    if (movable.includes(c)) {
-      const dis = arrowDisabled('top', c) ? 'disabled' : '';
-      topRowHTML += `<button class="push-arrow" ${dis} title="Push column ${c} down" onclick="pushTile('top',${c})">▼</button>`;
-    } else {
-      topRowHTML += '<button class="push-arrow spacer" disabled></button>';
+  buildGrid(st);
+  buildSpare(st.spare);
+  buildPlayers(st);
+  
+  // Check win state specifically for spectators/other devices
+  if (st.phase === 'over') {
+    const winner = st.players.find(p => p.winner);
+    if (winner && winner.id !== MY_ID && MODE === 'online') {
+       toast(`Game Over! ${winner.name} wins!`, winner.color);
     }
   }
-  topRowHTML += '<button class="push-arrow spacer" disabled></button>';
-  topRowHTML += '</div>';
+}
 
-  // ── Grid with side arrows ─────────────────────────────────────
-  let gridHTML = '<div class="board-with-sides">';
-
-  // Left arrows
-  gridHTML += '<div class="side-arrows">';
-  for (let r = 0; r < 7; r++) {
-    if (movable.includes(r)) {
-      const dis = arrowDisabled('left', r) ? 'disabled' : '';
-      gridHTML += `<button class="push-arrow" style="height:var(--cell)" ${dis} title="Push row ${r} right" onclick="pushTile('left',${r})">▶</button>`;
-    } else {
-      gridHTML += `<button class="push-arrow spacer" style="height:var(--cell)" disabled></button>`;
-    }
-  }
-  gridHTML += '</div>';
-
-  // Grid cells
-  gridHTML += '<div class="board-grid" id="grid">';
+// --- Build the Board ---
+function buildGrid(st) {
+  const gridEl = document.getElementById('grid');
+  gridEl.innerHTML = '';
+  
+  // These must match your CSS --cell and --gap
+  const cell = 64; 
+  const gap = 3;
+  
+  // 1. Draw Tiles
   for (let r = 0; r < 7; r++) {
     for (let c = 0; c < 7; c++) {
-      const tile = st.tiles[r][c];
-      const key  = `${r},${c}`;
-      const isReachable = reachSet.has(key);
-      const playersHere = playerMap[key] || [];
-
-      let cls = 'tile';
-      if (isReachable) cls += ' reachable';
-      if (playersHere.length) cls += ' player-here';
-
-      let clickAttr = '';
-      if (isReachable && phase === 'move') {
-        clickAttr = `onclick="moveTo(${r},${c})"`;
-      }
-
-      // Character counter-rotation: base rotates, char must counter-rotate to stay upright
-      const cDeg = -rotDeg(tile.rotation);
-
-      gridHTML += `<div class="${cls}" data-row="${r}" data-col="${c}" ${clickAttr}>`;
-      gridHTML += `  <div class="tile-inner" style="transform:rotate(${rotDeg(tile.rotation)}deg)">`;
+      const t = st.tiles[r][c];
+      const isReachable = (phase === 'move') && st.reachable.some(([rr, cc]) => rr === r && cc === c);
       
-      // Inject home base dots onto the corners
-      const homeColors = { '0,0': '#e74c3c', '0,6': '#3498db', '6,6': '#2ecc71', '6,0': '#f39c12' };
-      if (homeColors[key]) {
-        gridHTML += `    <div style="position:absolute; width:14px; height:14px; border-radius:50%; background:${homeColors[key]}; top:6px; left:6px; border:2px solid rgba(255,255,255,0.5); box-shadow:0 0 6px #000; z-index:4;"></div>`;
+      const div = document.createElement('div');
+      div.className = `tile ${isReachable ? 'reachable' : ''}`;
+      div.style.left = `${c * (cell + gap)}px`;
+      div.style.top = `${r * (cell + gap)}px`;
+      
+      if (isReachable && canInteract()) {
+        div.style.cursor = 'pointer';
+        div.onclick = () => moveTo(r, c);
+      }
+
+      // Background path
+      const bg = document.createElement('div');
+      bg.className = 'tile-bg';
+      bg.style.backgroundImage = `url('${getTilePath(t.shape)}')`;
+      bg.style.transform = `rotate(${t.rotation * 90}deg)`;
+      div.appendChild(bg);
+
+      // Character Target
+      if (t.character) {
+        const img = document.createElement('img');
+        img.className = 'tile-char';
+        img.src = charImg(t.character);
+        img.style.transform = `rotate(-${t.rotation * 90}deg)`; // keep character upright
+        bg.appendChild(img);
       }
       
-      gridHTML += `    <img class="tile-base" src="${shapeImg(tile.shape)}" alt="">`;
-      if (tile.character) {
-        gridHTML += `    <img class="tile-char" src="${charImg(tile.character)}" style="transform:rotate(${cDeg}deg)" alt="">`;
-      }
-      gridHTML += `  </div>`;
+      const overlay = document.createElement('div');
+      overlay.className = 'tile-overlay';
+      div.appendChild(overlay);
 
-      // Player tokens
-      if (playersHere.length) {
-        gridHTML += '<div class="token-layer">';
-        for (const p of playersHere) {
-          // Dynamically grab the correct meeple SVG based on the player ID
-          const meepleFile = `meeple_${PLAYER_COLORS_NAME[p.id]}.svg`;
-          
-          gridHTML += `<img src="${MEEPLE_BASE}${meepleFile}" class="token" style="border:none; box-shadow:none; background:transparent;" title="${p.name}" alt="${p.name}">`;
-        }
-        gridHTML += '</div>';
-      }
-
-      gridHTML += '</div>';
+      gridEl.appendChild(div);
     }
   }
-  gridHTML += '</div>';
 
-  // Right arrows
-  gridHTML += '<div class="side-arrows">';
-  for (let r = 0; r < 7; r++) {
-    if (movable.includes(r)) {
-      const dis = arrowDisabled('right', r) ? 'disabled' : '';
-      gridHTML += `<button class="push-arrow" style="height:var(--cell)" ${dis} title="Push row ${r} left" onclick="pushTile('right',${r})">◀</button>`;
-    } else {
-      gridHTML += `<button class="push-arrow spacer" style="height:var(--cell)" disabled></button>`;
-    }
+  // 2. Draw Push Buttons
+  if (phase === 'push' && canInteract() && st.phase !== 'over') {
+    const indices = [1, 3, 5];
+    const offsets = {
+      'top':    { x: c => c*(cell+gap)+cell/2-12, y: () => -20, sym: '▼' },
+      'bottom': { x: c => c*(cell+gap)+cell/2-12, y: () => 7*(cell+gap)-10, sym: '▲' },
+      'left':   { x: () => -20, y: r => r*(cell+gap)+cell/2-12, sym: '▶' },
+      'right':  { x: () => 7*(cell+gap)-10, y: r => r*(cell+gap)+cell/2-12, sym: '◀' }
+    };
+
+    const lp = st.last_push;
+    const revDir = {'left':'right','right':'left','top':'bottom','bottom':'top'};
+    
+    ['top','bottom','left','right'].forEach(dir => {
+      indices.forEach(idx => {
+        // Hide the button that would reverse the last move
+        if (lp && lp.index === idx && revDir[dir] === lp.direction) return;
+        
+        const btn = document.createElement('div');
+        btn.className = 'push-btn';
+        const fn = offsets[dir];
+        btn.style.left = `${fn.x(idx)}px`;
+        btn.style.top = `${fn.y(idx)}px`;
+        btn.textContent = fn.sym;
+        btn.onclick = () => pushTile(dir, idx);
+        gridEl.appendChild(btn);
+      });
+    });
   }
-  gridHTML += '</div>';
 
-  gridHTML += '</div>';  // board-with-sides
-
-  // ── Bottom push row ───────────────────────────────────────────
-  let botRowHTML = '<div class="push-row">';
-  botRowHTML += '<button class="push-arrow spacer" disabled></button>';
-  for (let c = 0; c < 7; c++) {
-    if (movable.includes(c)) {
-      const dis = arrowDisabled('bottom', c) ? 'disabled' : '';
-      botRowHTML += `<button class="push-arrow" ${dis} title="Push column ${c} up" onclick="pushTile('bottom',${c})">▲</button>`;
-    } else {
-      botRowHTML += '<button class="push-arrow spacer" disabled></button>';
-    }
-  }
-  botRowHTML += '<button class="push-arrow spacer" disabled></button>';
-  botRowHTML += '</div>';
-
-  area.innerHTML = topRowHTML + gridHTML + botRowHTML;
+  // 3. Draw Meeples (Simplified logic - base color only)
+  st.players.forEach(p => {
+    const m = document.createElement('img');
+    m.className = 'meeple';
+    m.src = getMeeplePath(p.color);
+    
+    // Center meeple on tile
+    m.style.left = `${p.col * (cell + gap) + cell/2 - 18}px`;
+    m.style.top = `${p.row * (cell + gap) + cell/2 - 18}px`;
+    gridEl.appendChild(m);
+  });
 }
 
-function buildSpare(st) {
-  const container = document.getElementById('spare-tile');
-  const tile = st.spare;
-  const cDeg = -rotDeg(tile.rotation);
-  let html = `<div class="tile spare-tile">`;
-  html += `  <div class="tile-inner" style="transform:rotate(${rotDeg(tile.rotation)}deg)">`;
-  html += `    <img class="tile-base" src="${shapeImg(tile.shape)}" alt="" style="width:100%;height:100%;object-fit:cover">`;
-  if (tile.character) {
-    html += `    <img class="tile-char" src="${charImg(tile.character)}" style="transform:rotate(${cDeg}deg);width:100%;height:100%;object-fit:cover" alt="">`;
+function buildSpare(sp) {
+  const container = document.getElementById('spare-container');
+  container.innerHTML = '';
+  
+  const bg = document.createElement('div');
+  bg.className = 'tile-bg';
+  bg.style.backgroundImage = `url('${getTilePath(sp.shape)}')`;
+  bg.style.transform = `rotate(${sp.rotation * 90}deg)`;
+  
+  if (sp.character) {
+    const img = document.createElement('img');
+    img.className = 'tile-char';
+    img.src = charImg(sp.character);
+    img.style.transform = `rotate(-${sp.rotation * 90}deg)`;
+    bg.appendChild(img);
   }
-  html += `  </div>`;
-  html += `</div>`;
-  container.innerHTML = html;
+  container.appendChild(bg);
 }
 
 function buildPlayers(st) {
-  const cp = st.current_player;
-  document.documentElement.style.setProperty('--reach-player', cp.color);
-  // Append '33' to the hex color to make it ~20% transparent for the soft background pulse!
-  document.documentElement.style.setProperty('--reachable-bg', cp.color + '33');
-
-  const list = document.getElementById('player-list');
+  const list = document.getElementById('players-list');
   list.innerHTML = '';
-
-  for (const p of st.players) {
-    const isActive = p.id === cp.id;
-    const hasWon = p.winner === true;   // backend should set this when done
-    const baseName = `meeple_${PLAYER_COLORS_NAME[p.id]}`;
-
-    // Always use the base meeple file so we never get a 404 broken link!
-    let meepleFile = `${baseName}.svg`;
-    let meepleStyle = "width:34px;height:44px;flex-shrink:0;transition:all 0.3s ease;";
-    
-    // Apply CSS filters to create the glow/shadow effects dynamically
-    if (hasWon) {
-      meepleFile = `meeple_winner_gold.svg`; 
-      meepleStyle += "filter: drop-shadow(0 0 10px gold); transform: scale(1.1);";
-    } else if (isActive) {
-      meepleStyle += "filter: drop-shadow(0 0 8px white) brightness(1.2); transform: scale(1.1);";
-    } else {
-      // Create a "shadow" effect by dimming the base image and making it slightly transparent
-      meepleStyle += "filter: brightness(0.4) grayscale(50%); opacity: 0.6;";
-    }
-
-    const totalTokens = p.total_tokens !== undefined
-      ? p.total_tokens
-      : (p.deck.length + (p.current_target ? 1 : 0) + p.score);
-
-    const needsHome = !p.current_target && p.deck.length === 0;
-
-    let targetHtml = '';
-    if (needsHome) {
-      targetHtml = `
-        <div style="
-          width:44px; height:44px;
-          border-radius:4px;
-          border:1px solid var(--gold-dim);
-          background: rgba(0,0,0,0.4);
-          display:flex; align-items:center; justify-content:center;
-          box-shadow: inset 0 0 8px rgba(0,0,0,0.8);"
-          title="Return to your starting corner!">
-          
-          <div style="
-            width:24px; height:24px;
-            border-radius:50%;
-            background:${p.color};
-            border:2px solid rgba(255,255,255,0.8);
-            box-shadow: 0 0 10px ${p.color};
-            display:flex; align-items:center; justify-content:center;
-            font-size:12px;">
-            🏠
-          </div>
-          
-        </div>`;
-    } else if (p.current_target) {
-      targetHtml = `
-        <img src="${charImg(p.current_target)}"
-             style="width:44px;height:44px;border-radius:4px;border:1px solid var(--gold-dim);"
-             title="Token ${p.score+1}/${totalTokens}">
-      `;
-    }
-
+  
+  st.players.forEach(p => {
+    const isTurn = (p.id === st.current_turn);
     const card = document.createElement('div');
-    card.className = 'player-card' + (isActive ? ' active-player' : '');
+    card.className = `player-card ${isTurn ? 'active' : ''}`;
+    
+    const needsHome = p.current_target === null;
+    let targetHtml = '';
+    
+    if (needsHome) {
+      // Go Home Square UI
+      targetHtml = `
+        <div style="width:44px; height:44px; border-radius:4px; border:1px solid var(--gold-dim); background: rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; box-shadow: inset 0 0 8px rgba(0,0,0,0.8);">
+          <div style="width:24px; height:24px; border-radius:50%; background:${p.color}; border:2px solid rgba(255,255,255,0.8); box-shadow: 0 0 10px ${p.color}; display:flex; align-items:center; justify-content:center; font-size:12px;">🏠</div>
+        </div>`;
+    } else if (p.current_target === '?') {
+      // Secret Target for Online mode
+      targetHtml = `<div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:1px solid var(--gold-dim);color:var(--gold); font-size: 24px;">?</div>`;
+    } else {
+      // Normal Target
+      targetHtml = `<img src="${charImg(p.current_target)}" style="width:44px; height:44px; object-fit:contain;">`;
+    }
 
     card.innerHTML = `
-      <img src="${MEEPLE_BASE}${meepleFile}"
-           style="width:34px;height:44px;flex-shrink:0; transition: transform 0.3s;" alt="${p.name}">
-      <div class="player-info" style="flex:1;min-width:0;">
-        <div class="player-name" style="font-size:0.8rem;">${p.name}</div>
-        <div class="player-pos" style="font-size:0.65rem;">${p.score}/${totalTokens} tokens</div>
+      <div class="pcard-header">
+        <img src="${getMeeplePath(p.color)}" class="pcard-meeple">
+        <span class="pcard-name" style="color: ${p.color}">${p.name} ${p.winner ? '👑' : ''}</span>
       </div>
-      <div>${targetHtml}</div>
+      <div class="pcard-target">
+        ${targetHtml}
+        <div style="flex:1;">
+          <div style="font-size:0.7rem; color:var(--gold-dim); text-transform:uppercase; margin-bottom:4px;">${needsHome ? 'Return Home!' : 'Hunting'}</div>
+          <div style="font-size:0.8rem;">Tokens: <span style="color:#fff">${p.score} / ${p.total_tokens}</span></div>
+        </div>
+      </div>
     `;
-
     list.appendChild(card);
-  }
-}
-
-
-function buildTopBar(st) {
-  const cp = st.current_player;
-
-  // Set name and colour
-  const nameEl = document.getElementById('tb-name');
-  if (nameEl) {
-    nameEl.textContent = cp.name;
-    nameEl.style.color = cp.color;
-  }
-
-  // Phase label
-  const phaseEl = document.getElementById('tb-phase');
-  if (phaseEl) {
-    phaseEl.textContent = phase === 'push' ? 'Push Phase' : 'Move Phase';
-  }
-}
-
-
-function buildPhaseIndicator() {
-  const ph1 = document.getElementById('ph-push');
-  const ph2 = document.getElementById('ph-move');
-  if (phase === 'push') {
-    ph1.className = 'phase-step active';
-    ph2.className = 'phase-step';
-  } else {
-    ph1.className = 'phase-step done';
-    ph2.className = 'phase-step active';
-  }
-}
-
-function render(st) {
-  buildBoard(st);
-  buildSpare(st);
-  buildPlayers(st);
-  buildTopBar(st);
-  buildPhaseIndicator();
-}
-
-// ── Toast ─────────────────────────────────────────────────────────
-
-let toastTimer = null;
-function toast(msg, isError=false) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'show' + (isError ? ' error' : '');
-  if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.className = ''; }, 2500);
-}
-
-// ── API helpers ───────────────────────────────────────────────────
-
-async function post(url, body) {
-  const r = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
   });
-  return r.json();
 }
 
-function findPath(grid, startR, startC, targetR, targetC) {
-  // Define openings at 0-degree rotation
-  // 0=Top, 1=Right, 2=Bottom, 3=Left
-  const baseExits = {
-    'i': [0, 2],       // 0-degree is Vertical (Top/Bottom)
-    'l': [0, 1],       // 0-degree is Corner (Top/Right)
-    't': [0, 1, 2]     // 0-degree is T-Junction (Top/Right/Bottom)
-  };
-
-  // Helper to get actual openings after rotation
-  function getExits(r, c) {
-    const tile = grid[r][c];
-    // Rotate the base exits by adding the rotation value (0-3) 
-    // and using modulo 4 to keep it within 0-3.
-    return baseExits[tile.shape].map(dir => (dir + tile.rotation) % 4);
-  }
-
-  const queue = [[startR, startC, [[startR, startC]]]];
-  const visited = new Set([`${startR},${startC}`]);
-
-  // Directions: [row_offset, col_offset, exit_dir_needed, entry_dir_needed]
-  const moves = [
-    [-1, 0, 0, 2], // Moving North: Need exit Top (0), enter Bottom (2)
-    [0, 1, 1, 3],  // Moving East: Need exit Right (1), enter Left (3)
-    [1, 0, 2, 0],  // Moving South: Need exit Bottom (2), enter Top (0)
-    [0, -1, 3, 1]  // Moving West: Need exit Left (3), enter Right (1)
-  ];
-
-  while (queue.length > 0) {
-    const [r, c, path] = queue.shift();
-    if (r === targetR && c === targetC) return path;
-
-    const currentExits = getExits(r, c);
-
-    for (const [dr, dc, outDir, inDir] of moves) {
-      const nr = r + dr, nc = c + dc;
-      
-      if (nr >= 0 && nr < 7 && nc >= 0 && nc < 7 && !visited.has(`${nr},${nc}`)) {
-        const neighborExits = getExits(nr, nc);
-        
-        // THE CRITICAL CHECK:
-        // Does current tile have an exit facing the neighbor?
-        // AND does the neighbor have an exit facing the current tile?
-        if (currentExits.includes(outDir) && neighborExits.includes(inDir)) {
-          visited.add(`${nr},${nc}`);
-          queue.push([nr, nc, [...path, [nr, nc]]]);
-        }
-      }
-    }
-  }
-  return [[startR, startC], [targetR, targetC]]; // Fallback
+// --- API Calls ---
+function fetchState() {
+  fetch(`${BASE_URL}/state/`)
+    .then(r => r.json())
+    .then(st => { state = st; render(st); });
 }
 
-// ── Actions ───────────────────────────────────────────────────────
-
-async function rotateSpareTile() {
-  if (phase !== 'push') { toast('You can only rotate during the push phase', true); return; }
-   
-  const st = await post(`${GAME_URL}/rotate-spare/`, {});
-  state = st;
-  render(state);
+function rotateSpare() {
+  if (!canInteract() || phase !== 'push') return;
+  fetch(`${BASE_URL}/rotate-spare/`, {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}})
+    .then(r => r.json())
+    .then(render);
 }
 
-async function pushTile(direction, index) {
-  if (phase !== 'push') { toast('Push phase only!', true); return; }
+function pushTile(dir, idx) {
+  if (!canInteract() || phase !== 'push') return;
+  fetch(`${BASE_URL}/push/`, {
+    method: 'POST', 
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+    body: JSON.stringify({direction: dir, index: idx})
+  })
+  .then(r => r.json())
+  .then(st => {
+    if (st.error) { toast(st.error, '#e74c3c'); return; }
+    
+    phase = 'move';
+    document.documentElement.style.setProperty('--reach-player', st.current_player.color);
+    render(st);
+    toast("Now move your piece!");
+  });
+}
+
+function moveTo(r, c) {
+  if (!canInteract() || phase !== 'move') return;
   
-  // 1. Lock the UI during animation
-  phase = 'animating';
+  const previousTarget = state.current_player.current_target;
 
-  const grid = document.getElementById('grid');
-  const tiles = Array.from(grid.querySelectorAll('.tile'));
-  
-  // Find all tiles in the row/col being pushed
-  const movingTiles = tiles.filter(t => parseInt(t.dataset[direction === 'left' || direction === 'right' ? 'row' : 'col']) === index);
-
-  // Sort them so index 0 is top/left and 6 is bottom/right
-  movingTiles.sort((a, b) => {
-    const key = direction === 'left' || direction === 'right' ? 'col' : 'row';
-    return parseInt(a.dataset[key]) - parseInt(b.dataset[key]);
-  });
-
-  // Calculate dynamic pixel sizes (handles responsive mobile resizing)
-  const rootStyles = getComputedStyle(document.documentElement);
-  const cellPx = parseInt(rootStyles.getPropertyValue('--cell')) || 72;
-  const gapPx = parseInt(rootStyles.getPropertyValue('--gap')) || 3;
-  const step = cellPx + gapPx;
-
-  let moveX = 0, moveY = 0;
-  let startLeft = 0, startTop = 0;
-  let ejectedTile;
-
-  // Setup animation vectors based on direction
-  if (direction === 'left') { moveX = step; startLeft = -step; startTop = index * step; ejectedTile = movingTiles[6]; }
-  if (direction === 'right') { moveX = -step; startLeft = 7 * step; startTop = index * step; ejectedTile = movingTiles[0]; }
-  if (direction === 'top') { moveY = step; startTop = -step; startLeft = index * step; ejectedTile = movingTiles[6]; }
-  if (direction === 'bottom') { moveY = -step; startTop = 7 * step; startLeft = index * step; ejectedTile = movingTiles[0]; }
-
-  // 2. Clone the spare tile and position it just outside the grid
-  const spareContainer = document.getElementById('spare-tile');
-  const incoming = spareContainer.querySelector('.tile').cloneNode(true);
-  incoming.style.position = 'absolute';
-  incoming.style.left = startLeft + 'px';
-  incoming.style.top = startTop + 'px';
-  incoming.style.transition = 'transform 0.4s ease-in-out';
-  incoming.style.zIndex = '100';
-  grid.appendChild(incoming);
-
-  // 3. Prep the moving tiles
-  movingTiles.forEach(t => {
-    t.style.transition = 'transform 0.4s ease-in-out';
-  });
-
-  // 4. Calculate coordinates to make the ejected tile "fly" to the spare box
-  const spareRect = spareContainer.getBoundingClientRect();
-  const ejectRect = ejectedTile.getBoundingClientRect();
-  const targetX = spareRect.left - ejectRect.left;
-  const targetY = spareRect.top - ejectRect.top;
-  ejectedTile.style.zIndex = '101';
-
-  // Force DOM to acknowledge new elements before animating
-  void incoming.offsetWidth;
-
-  // 5. Fire the sliding animations!
-  const transformStr = `translate(${moveX}px, ${moveY}px)`;
-  incoming.style.transform = transformStr;
-  
-  movingTiles.forEach(t => {
-    if (t !== ejectedTile) {
-      t.style.transform = transformStr; // Slide row/col
-    }
-  });
-
-  // Shrink, spin, and fly the ejected tile to the box
-  ejectedTile.style.transform = `translate(${targetX}px, ${targetY}px) scale(0.6) rotate(180deg)`;
-  ejectedTile.style.opacity = '0.2';
-  spareContainer.style.opacity = '0.3'; 
-
-  // 6. Wait for the CSS animation to finish AND the server to respond
-const [st] = await Promise.all([
- 
-    post(`${GAME_URL}/push/`, { direction, index }),
-    new Promise(r => setTimeout(r, 450))
-  ]);
-
-  spareContainer.style.opacity = '1';
-
-  if (!st.push_ok) {
-    toast(st.error || 'Cannot reverse the previous push', true);
+  fetch(`${BASE_URL}/move/`, {
+    method: 'POST', 
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+    body: JSON.stringify({player_id: MY_ID, row: r, col: c})
+  })
+  .then(res => res.json())
+  .then(st => {
+    if (st.error) { toast(st.error, '#e74c3c'); return; }
+    
     phase = 'push';
-    render(state);
-    return;
-  }
+    render(st);
 
-  // 7. Update to the new state and snap the grid back into standard HTML
-  state = st;
-  phase = 'move';
+    // Popup Logic
+    const popup = document.getElementById('treasure-popup');
+    const img = document.getElementById('treasure-img');
+    const title = document.getElementById('popup-title');
+    const btnGroup = document.getElementById('game-over-buttons');
 
- 
-
-  render(state);
-  toast('Now move your token — click a green tile');
-}
-
-async function moveTo(row, col) {
-  if (phase !== 'move') { toast('Move phase only!', true); return; }
-  
-  // 1. Lock the UI so players can't click wildly while the animation runs
-  phase = 'animating';
-
-  const previousTarget = state.current_player.current_target; 
-  const oldRow = state.current_player.row;
-  const oldCol = state.current_player.col;
-
-  // 2. Map the route BEFORE sending the move to the server
-  const path = findPath(state.tiles, oldRow, oldCol, row, col);
-
-  // 3. Confirm with the server
-  const st = await post(`${GAME_URL}/move/`, { player_id: MY_ID, row, col });
-  if (!st.move_ok) { 
-    toast(st.error || 'Cannot move there', true); 
-    phase = 'move'; // Unlock UI on failure
-    return; 
-  }
-  
-
-  // 4. Time to walk! Find the meeple on the screen
-  const startTile = document.querySelector(`.tile[data-row="${oldRow}"][data-col="${oldCol}"]`);
-  const targetTile = document.querySelector(`.tile[data-row="${row}"][data-col="${col}"]`);
-
-  if (startTile && targetTile) {
-    const meepleImg = startTile.querySelector(`.token[title="${state.current_player.name}"]`);
-    if (meepleImg) {
+    if (st.message === "PLAYER_WON") {
+      title.textContent = `${st.current_player.name} WINS!`;
+      title.style.color = st.current_player.color;
+      title.style.textShadow = `0 0 20px ${st.current_player.color}`;
       
-      // FIX: Disable CSS clipping so the meeple doesn't vanish when leaving the starting tile!
-      startTile.style.overflow = 'visible';
-      startTile.style.zIndex = '100'; 
+      // Winner shows their OWN meeple/ball
+      img.src = getMeeplePath(st.current_player.color); 
       
-      meepleImg.style.position = 'relative';
-      meepleImg.style.zIndex = '999'; 
+      btnGroup.style.display = 'flex';
+      popup.classList.add('show');
+      toast(`Game Over! ${st.current_player.name} is the winner!`, st.current_player.color);
 
-      const rootStyles = getComputedStyle(document.documentElement);
-      const cellPx = parseInt(rootStyles.getPropertyValue('--cell')) || 64;
-      const gapPx = parseInt(rootStyles.getPropertyValue('--gap')) || 3;
-      const step = cellPx + gapPx;
+    } else if (st.message === "TARGET_FOUND") {
+      title.textContent = "Target Found!";
+      title.style.color = "var(--gold)";
+      title.style.textShadow = "0 0 20px var(--gold)";
+      
+      img.src = charImg(previousTarget); 
+      
+      btnGroup.style.display = 'none';
+      popup.classList.add('show');
+      
+      setTimeout(() => {
+        popup.classList.remove('show');
+        if (st.phase !== 'over') {
+          toast(`${st.players[st.current_turn].name}'s turn`);
+        }
+      }, 2500);
 
-      const msPerTile = 350; // Dropped to 350ms so it walks quickly but smoothly
-      meepleImg.style.transition = `transform ${msPerTile}ms linear`;
-
-      for (let i = 1; i < path.length; i++) {
-        const [pr, pc] = path[i];
-        const moveX = (pc - oldCol) * step;
-        const moveY = (pr - oldRow) * step;
-        meepleImg.style.transform = `translate(${moveX}px, ${moveY}px)`;
-        
-        await new Promise(r => setTimeout(r, msPerTile));
+    } else {
+      if (st.phase !== 'over') {
+        toast(`${st.players[st.current_turn].name}'s turn`);
       }
     }
-  }
-
-  // 5. Update the board to the new state and pass the turn
-  state = st;
-  phase = 'push';
-  render(state);
-
-  // Check what happened on this move!
-  if (st.message === "PLAYER_WON") {
-    // VICTORY POPUP
-    const popup = document.getElementById('treasure-popup');
-    const img = document.getElementById('treasure-img');
-    const title = popup.querySelector('.treasure-title');
-    const btnGroup = document.getElementById('game-over-buttons'); // Grab the new buttons
-    
-    title.textContent = `${state.current_player.name} WINS!`;
-    title.style.color = state.current_player.color;
-    title.style.textShadow = `0 0 20px ${state.current_player.color}`;
-    
-    img.src = `${MEEPLE_BASE}meeple_winner_gold.svg`; 
-    btnGroup.style.display = 'flex'; // Show the buttons!
-    popup.classList.add('show');
-    
-    toast(`Game Over! ${state.current_player.name} is the winner!`);
-    phase = 'game_over'; // Lock the board so no one can push tiles anymore
-
-  } else if (st.message === "TARGET_FOUND") {
-    // STANDARD TREASURE POPUP
-    const popup = document.getElementById('treasure-popup');
-    const img = document.getElementById('treasure-img');
-    const title = popup.querySelector('.treasure-title');
-    const btnGroup = document.getElementById('game-over-buttons');
-    
-    title.textContent = "Target Found!";
-    title.style.color = "var(--gold)";
-    title.style.textShadow = "0 0 20px var(--gold)";
-    
-    img.src = charImg(previousTarget); 
-    if(btnGroup) btnGroup.style.display = 'none'; // Ensure buttons stay hidden for standard finds
-    popup.classList.add('show');
-    
-    setTimeout(() => {
-      popup.classList.remove('show');
-      toast(`${state.current_player.name}'s turn`);
-    }, 2500);
-
-  } else {
-    toast(`${state.current_player.name}'s turn`);
-  }
+  });
 }
-
-// ── Init ──────────────────────────────────────────────────────────
-render(state);
 </script>
 </body>
 </html>

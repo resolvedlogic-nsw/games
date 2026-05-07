@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Online Lobby</title>
+{% load static %}
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root { --gold: #c9a84c; --dark: #0a0806; }
+  body { background: var(--dark); color: var(--gold); font-family: 'Crimson Pro', serif; text-align: center; padding-top: 50px; }
+  .card { background: #120e05; border: 1px solid rgba(201,168,76,0.3); padding: 40px; max-width: 400px; margin: 0 auto; border-radius: 4px; }
+  input, select, button { width: 100%; padding: 12px; margin-bottom: 20px; font-family: 'Cinzel Decorative', serif; background: rgba(0,0,0,0.5); border: 1px solid var(--gold); color: #fff; }
+  button { background: var(--gold); color: #000; cursor: pointer; }
+  .color-grid { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+  .color-btn { width: 50px; height: 50px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
+  .color-btn.selected { border-color: #fff; box-shadow: 0 0 15px #fff; }
+  .color-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+  #lobby-view { display: none; }
+  .code-display { font-size: 3rem; letter-spacing: 0.2em; font-family: monospace; margin: 20px 0; }
+</style>
+</head>
+<body>
+<div class="card" id="setup-view">
+  <h1>Online Lobby</h1>
+  <div style="display:flex; gap:10px;">
+    <button onclick="showHost()">Host Game</button>
+    <button onclick="showJoin()">Join Game</button>
+  </div>
+
+  <form id="host-form" style="display:none;" method="POST" action="{% url 'labyrinth:host_game' %}">
+    {% csrf_token %}
+    <input type="hidden" name="theme" value="{{ theme }}">
+    <input type="hidden" name="color_id" id="host_color" value="0">
+    <input type="text" name="player_name" placeholder="Your Name" required>
+    
+    <p>Choose Color</p>
+    <div class="color-grid" id="host-colors">
+      <div class="color-btn selected" style="background:#e74c3c" onclick="pickColor('host', 0, this)"></div>
+      <div class="color-btn" style="background:#3498db" onclick="pickColor('host', 1, this)"></div>
+      <div class="color-btn" style="background:{% if theme == 'pokemon' %}#f39c12{% else %}#2ecc71{% endif %}" onclick="pickColor('host', 2, this)"></div>
+      <div class="color-btn" style="background:{% if theme == 'pokemon' %}#9b59b6{% else %}#f39c12{% endif %}" onclick="pickColor('host', 3, this)"></div>
+    </div>
+
+    <select name="num_players">
+      <option value="2">2 Players</option>
+      <option value="3">3 Players</option>
+      <option value="4">4 Players</option>
+    </select>
+    <button type="submit">Create Room</button>
+  </form>
+
+  <div id="join-form" style="display:none;">
+    <input type="text" id="join_code" placeholder="Room Code (4 Letters)" maxlength="4" style="text-transform:uppercase;">
+    <button onclick="fetchLobby()">Find Room</button>
+    
+    <div id="join-details" style="display:none;">
+      <input type="text" id="join_name" placeholder="Your Name" required>
+      <input type="hidden" id="join_color">
+      <p>Choose Color</p>
+      <div class="color-grid" id="join-colors">
+        <div class="color-btn" id="jc_0" style="background:#e74c3c" onclick="pickColor('join', 0, this)"></div>
+        <div class="color-btn" id="jc_1" style="background:#3498db" onclick="pickColor('join', 1, this)"></div>
+        <div class="color-btn" id="jc_2" style="background:{% if theme == 'pokemon' %}#f39c12{% else %}#2ecc71{% endif %}" onclick="pickColor('join', 2, this)"></div>
+        <div class="color-btn" id="jc_3" style="background:{% if theme == 'pokemon' %}#9b59b6{% else %}#f39c12{% endif %}" onclick="pickColor('join', 3, this)"></div>
+      </div>
+      <button onclick="submitJoin()">Join</button>
+    </div>
+  </div>
+</div>
+
+<div class="card" id="lobby-view">
+  <h2>Room Code</h2>
+  <div class="code-display" id="room_code_display"></div>
+  <div id="player_list" style="text-align:left; margin-bottom:20px;"></div>
+  
+  {% if request.session.is_host %}
+    <button id="start-btn" onclick="startGame()" style="display:none;">Start Game</button>
+  {% else %}
+    <p>Waiting for host to start...</p>
+  {% endif %}
+</div>
+
+<script>
+let currentCode = '';
+let pollInterval;
+
+function showHost() { document.getElementById('host-form').style.display='block'; document.getElementById('join-form').style.display='none'; }
+function showJoin() { document.getElementById('join-form').style.display='block'; document.getElementById('host-form').style.display='none'; }
+
+function pickColor(type, id, el) {
+  if (el.disabled) return;
+  document.getElementById(`${type}_color`).value = id;
+  document.querySelectorAll(`#${type}-colors .color-btn`).forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function fetchLobby() {
+  currentCode = document.getElementById('join_code').value.toUpperCase();
+  fetch(`/labyrinth/lobby/${currentCode}/`)
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('join-details').style.display = 'block';
+      // Disable taken colors
+      data.players.forEach(p => {
+        const btn = document.getElementById(`jc_${p.id}`);
+        if(btn) { btn.disabled = true; btn.style.opacity = '0.2'; }
+      });
+    }).catch(e => alert("Room not found"));
+}
+
+function submitJoin() {
+  const name = document.getElementById('join_name').value;
+  const color = document.getElementById('join_color').value;
+  if(color === '') return alert("Pick a color");
+  
+  fetch(`/labyrinth/join/${currentCode}/`, {
+    method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
+    body: JSON.stringify({player_name:name, color_id:color})
+  }).then(r=>r.json()).then(data => {
+    if(data.success) {
+      document.getElementById('setup-view').style.display = 'none';
+      document.getElementById('lobby-view').style.display = 'block';
+      document.getElementById('room_code_display').innerText = currentCode;
+      startLobbyPoll();
+    } else alert(data.error);
+  });
+}
+
+function startLobbyPoll() {
+  pollInterval = setInterval(() => {
+    fetch(`/labyrinth/lobby/${currentCode}/`).then(r=>r.json()).then(data => {
+      if(data.phase === 'playing') window.location.href = `/labyrinth/${data.game_id}/`;
+      
+      let html = '';
+      data.players.forEach(p => html += `<p><span style="color:${p.color}">●</span> ${p.name}</p>`);
+      document.getElementById('player_list').innerHTML = html;
+      
+      const startBtn = document.getElementById('start-btn');
+      if (startBtn && data.players.length >= 2) startBtn.style.display = 'block';
+    });
+  }, 2000);
+}
+
+function startGame() {
+  fetch(`/labyrinth/start/${currentCode}/`, {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}})
+    .then(() => window.location.href = `/labyrinth/${document.getElementById('room_code_display').game_id}/`); // Will redirect on next poll anyway
+}
+
+// If host just created room, check if session says host
+{% if request.session.is_host %}
+  // Quick hack: getting the code from the last created game would be better handled via redirect params, 
+  // but we'll let the user see their game directly from the redirect normally. 
+  // If you hit online page as host, you are normally setting up.
+{% endif %}
+</script>
+</body>
+</html>
