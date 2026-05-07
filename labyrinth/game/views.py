@@ -44,7 +44,8 @@ def host_game(request):
     request.session[f'player_id_{game.id}'] = color_id
     request.session['is_host'] = True
 
-    return redirect('labyrinth:online')
+    # FIX: Return JSON so the front-end can smoothly transition to the lobby!
+    return JsonResponse({'success': True, 'room_code': game.room_code, 'game_id': game.id})
 
 @require_POST
 def join_game(request, code):

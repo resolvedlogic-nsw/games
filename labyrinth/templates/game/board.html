@@ -124,6 +124,7 @@ body {
   transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); 
   left: 0; top: 0; border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);
   overflow: hidden; background: #2a2012; border: 1px solid rgba(201,168,76,0.2);
+  pointer-events: auto; /* FIX: Explicity make clickable */
 }
 .tile-bg { width: 100%; height: 100%; position: absolute; top: 0; left: 0; background-size: cover; transition: transform 0.3s ease; }
 .tile-char { width: 60%; height: 60%; position: absolute; top: 20%; left: 20%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); z-index: 2; transition: transform 0.3s ease; }
@@ -158,6 +159,7 @@ body {
   cursor: pointer; z-index: 20; font-size: 14px;
   transition: all 0.2s;
   box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+  pointer-events: auto; /* FIX: Guarantee they are clickable */
 }
 .push-btn:hover { 
   background: var(--gold); 
@@ -220,9 +222,9 @@ body {
 
   <div class="board-container" id="board-container">
     <div class="board-grid">
-      <div id="tiles-layer"></div>
-      <div id="buttons-layer"></div>
-      <div id="meeples-layer" style="position: absolute; inset: 0; pointer-events: none; z-index: 10;"></div>
+      <div id="tiles-layer" style="position: absolute; inset: 0; z-index: 1;"></div>
+      <div id="buttons-layer" style="position: absolute; inset: 0; pointer-events: none; z-index: 2;"></div>
+      <div id="meeples-layer" style="position: absolute; inset: 0; pointer-events: none; z-index: 3;"></div>
     </div>
   </div>
 
@@ -256,7 +258,7 @@ const IMG_BASE = THEME === 'pokemon' ? `${STATIC_URL}images/pokemon/` : `${STATI
 
 let state = null;
 let phase = 'push';
-let isProcessing = false; // Locks the UI immediately upon click
+let isProcessing = false; 
 
 function getTilePath(shape) { return THEME === 'pokemon' ? `${IMG_BASE}path${shape}.jpg` : `${IMG_BASE}shape${shape}.svg`; }
 function getMeeplePath(colorHex) {
@@ -292,7 +294,6 @@ function canInteract() { return MODE === 'pass_and_play' || state.current_turn =
 function render(st) {
   state = st;
   
-  // Safe extraction to prevent the "null" crash on Game Over
   const currPlayer = st.current_player || st.players[st.current_turn];
   
   document.getElementById('turn-dot').style.background = currPlayer.color;
@@ -325,7 +326,6 @@ function buildGrid(st) {
   
   tilesEl.innerHTML = '';
   buttonsEl.innerHTML = '';
-  // Notice we DO NOT clear meeplesEl, allowing them to animate!
 
   const cell = 64; const gap = 3;
   const corners = [[0,0], [0,6], [6,6], [6,0]];
@@ -358,7 +358,6 @@ function buildGrid(st) {
         bg.appendChild(img);
       }
       
-      // Draw Home Corner Colored Dots
       const cornerIndex = corners.findIndex(pos => pos[0] === r && pos[1] === c);
       if (cornerIndex !== -1 && st.players[cornerIndex]) {
         const homeDot = document.createElement('div');
@@ -383,7 +382,6 @@ function buildGrid(st) {
     }
   }
 
-  // Draw Static Push Buttons
   if (phase === 'push' && canInteract() && st.phase !== 'over') {
     const indices = [1, 3, 5];
     const offsets = {
@@ -411,7 +409,6 @@ function buildGrid(st) {
     });
   }
 
-  // Draw Meeples (Updating existing ones to trigger CSS transition)
   st.players.forEach(p => {
     let m = document.getElementById(`meeple-${p.id}`);
     if (!m) {
