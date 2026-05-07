@@ -156,17 +156,10 @@ body {
 } -- */
 
 @media (max-width: 900px) and (orientation: portrait) {
-  html, body {
-    height: auto;
-    min-height: 100%;
-    overflow: auto;
-  }
-
-  body {
-    align-items: flex-start;
-    justify-content: flex-start;
-  }
-
+  /* --- 1. BASE RE-LAYOUT (KEEP) --- */
+  html, body { height: auto; min-height: 100%; overflow: auto; }
+  body { align-items: flex-start; justify-content: flex-start; }
+  
   .game-layout {
     height: auto;
     min-height: 100dvh;
@@ -177,16 +170,46 @@ body {
     align-items: start;
   }
 
-  #phase-label { display: none; }
-
-  .game-layout > .side-panel:first-child {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;  
-    gap: 10px;
-    align-items: center;  
+  /* --- 2. NUKE THE REDUNDANT TITLES & BOXES (CHANGE) --- */
+  .turn-card, 
+  .game-status-title, 
+  .current-spare-title, 
+  #phase-label, 
+  #turn-name {
+    display: none !important;
   }
 
+  /* --- 3. ALIGN STATS & SPARE TILE SIDE-BY-SIDE (CHANGE) --- */
+  .game-layout > .side-panel:first-child {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center; /* Vertically centers them to the same height */
+    order: 1;
+    max-width: none;
+    height: auto;
+    padding: 0;
+    margin-bottom: 5px;
+  }
+
+  /* Your Stats Box */
+  #device-summary {
+    flex: 1;
+    display: block;
+    padding: 12px;
+    border: 1px solid var(--gold-dim);
+    background: rgba(0,0,0,0.35);
+    border-radius: 6px;
+    margin-right: 15px;
+  }
+
+  /* The Spare Tile */
+  .current-spare-wrapper {
+    flex: 1;
+    margin: 0;
+  }
+
+  /* --- 4. BOARD & RIGHT PANEL RE-ORDERING (KEEP) --- */
   .game-layout > .board-container {
     order: 2;
     width: 100%;
@@ -204,25 +227,9 @@ body {
     gap: 8px;
   }
 
-  .game-layout > .side-panel:first-child .game-status-title {
-    display: none;
-  }
-
-  #device-summary {
-    display: block;
-    grid-column: 1 / 2;
-  }
-
-  .game-layout > .side-panel:first-child .turn-card { grid-column: 1; grid-row: 1; margin: 0; }
-
-  .game-layout > .side-panel:first-child .current-spare-title { grid-column: 2; grid-row: 1; margin: 0; align-self: end; }
-
-  .game-layout > .side-panel:first-child .current-spare-wrapper { grid-column: 2; grid-row: 2; margin: 0; }
-
-  .quit-desktop-wrap {
-    display: none;
-  }
-
+  /* --- 5. QUIT BUTTONS (KEEP) --- */
+  .quit-desktop-wrap { display: none; }
+  
   #quit-game-mobile {
     display: block;
     grid-column: 1 / -1;
@@ -231,11 +238,9 @@ body {
     grid-row: 4;
   }
 
-  .turn-card { padding: 10px; }
-  #turn-name { display: none; }
-  #device-summary { grid-column: 1; grid-row: 2; align-self: start; }
   .action-btn { padding: 10px; font-size: 0.78rem; }
 
+  /* --- 6. YOUR COMPETITOR LIST STYLING (KEEP) --- */
   #players-list {
     display: flex;
     gap: 8px;
@@ -256,7 +261,6 @@ body {
     margin-bottom: 0;
   }
 
-  /* Competitor cards: name + score only */
   #players-list .player-meeple-icon { display: none; }
   #players-list .player-target { display: none; }
   #players-list .hunting-label { display: none; }
@@ -356,49 +360,28 @@ function getCellMetrics() {
 }
 
 function updateBoardScale() {
-    const layout = document.querySelector('.game-layout');
-    const boardContainer = document.querySelector('.game-layout > .board-container');
-    const leftPanel = document.querySelector('.game-layout .side-panel:first-child');
-    const rightPanel = document.querySelector('.game-layout .side-panel:last-child');
-    if (!layout || !boardContainer || !leftPanel || !rightPanel) return;
-
-    const baseBoardW = 7 * 64 + 6 * 3; // 7*64 + 6*3 = 466
-    const baseOuter = baseBoardW + 80; // board + container padding (desktop-ish)
-    const isPortraitMobile = window.matchMedia('(max-width: 900px) and (orientation: portrait)').matches;
-    const layoutStyles = getComputedStyle(layout);
-    const gap = parseFloat(layoutStyles.gap) || 16;
-    const paddingX = (parseFloat(layoutStyles.paddingLeft) || 0) + (parseFloat(layoutStyles.paddingRight) || 0);
-    const paddingY = (parseFloat(layoutStyles.paddingTop) || 0) + (parseFloat(layoutStyles.paddingBottom) || 0);
-
-    let availableWidth;
-    let availableHeight;
-    if (isPortraitMobile) {
-        // Portrait: fill width primarily; height can scroll.
-        const containerPadding = 12; // must match portrait CSS padding
-        const innerWidth = Math.max(280, window.innerWidth - paddingX - (containerPadding * 2));
-        const minScale = 0.75;
-        const scale = Math.max(minScale, Math.min(2.0, innerWidth / baseBoardW));
+    const isPortrait = window.matchMedia('(max-width: 900px) and (orientation: portrait)').matches;
+    
+    // The tiles are 466px wide. The container adds 40px padding on each side (80px total).
+    const baseOuter = 466 + 80; 
+    
+    if (isPortrait) {
+        // MOBILE FIX: Divide by the FULL width (tiles + padding) so it never overflows
+        const availableW = window.innerWidth - 24; 
+        const scale = availableW / baseOuter; 
         document.documentElement.style.setProperty('--board-scale', scale.toFixed(3));
-        return;
     } else {
-        const reservedWidth = leftPanel.offsetWidth + rightPanel.offsetWidth + gap * 2 + 6;
-        availableWidth = Math.max(320, window.innerWidth - reservedWidth - 24);
-        availableHeight = Math.max(320, window.innerHeight - 24);
+        // DESKTOP FIX: Calculate the exact center space available
+        const availableH = window.innerHeight - 60; // Leave breathing room top and bottom
+        const availableW = window.innerWidth - 560; // Safely subtract the max width of both sidebars
+        
+        // Find the maximum square size that fits without causing scrollbars
+        const target = Math.min(availableW, availableH); 
+        
+        // Remove the arbitrary maximum cap so it scales infinitely to fill your monitor
+        const scale = target / baseOuter;
+        document.documentElement.style.setProperty('--board-scale', scale.toFixed(3));
     }
-
-  if (isPortrait) {
-    const availableW = window.innerWidth - 24; 
-    const scale = Math.min(1.0, availableW / baseW); // Locks to 100% screen width
-    document.documentElement.style.setProperty('--board-scale', scale.toFixed(3));
-  } else {
-    const availableH = window.innerHeight - 100;
-    const availableW = window.innerWidth - 500; // Account for wider side panels
-    const target = Math.min(availableW, availableH, 900); // Higher desktop ceiling
-    const scale = target / (baseW + 80);
-    document.documentElement.style.setProperty('--board-scale', scale.toFixed(3));
-  }
-
-    document.documentElement.style.setProperty('--board-scale', scale.toFixed(3));
 }
 
 function sleep(ms) {
