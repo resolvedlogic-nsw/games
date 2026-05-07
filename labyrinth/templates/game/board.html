@@ -16,7 +16,7 @@
   --gold-dim:   rgba(201,168,76,0.35);
   --dark:       #0a0806;
   --dark2:      #120e05;
-  --cell:       64px;
+  --cell:       clamp(56px, 9.2vmin, 96px);
   --gap:        3px;
   --board-w:    calc(7 * var(--cell) + 6 * var(--gap));
   --reachable:  rgba(220, 50, 50, 0.2);
@@ -40,7 +40,7 @@ body {
 }
 
 .side-panel {
-  flex: 1; max-width: 280px; display: flex; flex-direction: column; gap: 24px; height: 100%; padding-top: 20px;
+  flex: 0 1 260px; max-width: 280px; min-width: 180px; display: flex; flex-direction: column; gap: 24px; height: 100%; padding-top: 20px;
 }
 
 .panel-title {
@@ -66,7 +66,7 @@ body {
 
 /* --- Board & Tiles --- */
 .board-container {
-  position: relative; width: calc(var(--board-w) + 80px); height: calc(var(--board-w) + 80px);
+  position: relative; width: calc(var(--board-w) + 80px); height: calc(var(--board-w) + 80px); flex: 0 0 auto;
   padding: 40px; background: #1a140b; border: 2px solid var(--gold-dim); border-radius: 8px;
   box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 40px rgba(0,0,0,0.8);
 }
@@ -114,6 +114,21 @@ body {
 
 #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #140e04; border: 1px solid var(--gold); padding: 12px 30px; border-radius: 30px; color: var(--gold); transition: transform 0.4s; z-index: 1000; }
 #toast.show { transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 1200px) {
+  :root { --cell: clamp(48px, 8.4vmin, 84px); }
+  .game-layout { gap: 16px; padding: 12px; }
+  .side-panel { min-width: 160px; gap: 14px; }
+  .board-container { padding: 24px; }
+}
+
+@media (max-width: 980px) and (orientation: landscape) {
+  :root { --cell: clamp(40px, 7.4vmin, 72px); }
+  html, body { overflow: auto; }
+  .game-layout { height: auto; min-height: 100vh; align-items: flex-start; }
+  .side-panel { min-width: 140px; padding-top: 8px; }
+  .board-container { padding: 14px; }
+}
 </style>
 </head>
 <body>
@@ -179,10 +194,87 @@ let currentPhase = (state.last_push === null) ? 'push' : 'move';
 
 function getTilePath(shape) { return THEME === 'pokemon' ? `${IMG_BASE}path${shape}.jpg` : `${IMG_BASE}shape${shape}.svg`; }
 function charImg(id) { if (!id || id === '?') return `${IMG_BASE}secret.png`; return `${IMG_BASE}character${String(id).padStart(2, '0')}.png`; }
+function getDisplayColor(color) {
+    if (THEME === 'pokemon' && color === '#2ecc71') return '#9b59b6';
+    return color;
+}
 function getMeeplePath(color) { 
-    const colors = {'#e74c3c':'red', '#3498db':'blue', '#be90d4':'purple', '#f39c12':'yellow', '#9b59b6':'purple'};
-    const name = colors[color] || 'red';
+    const displayColor = getDisplayColor(color);
+    const colors = {'#e74c3c':'red', '#3498db':'blue', '#2ecc71':'green', '#f39c12':'yellow', '#9b59b6':'purple'};
+    const name = colors[displayColor] || 'red';
     return THEME === 'pokemon' ? `${IMG_BASE}ball${name}.png` : `${IMG_BASE}meeple_${name}.svg`;
+}
+
+function getCellMetrics() {
+    const rootStyles = getComputedStyle(document.documentElement);
+    const cell = parseInt(rootStyles.getPropertyValue('--cell'), 10) || 64;
+    const gap = parseInt(rootStyles.getPropertyValue('--gap'), 10) || 3;
+    return { cell, gap, step: cell + gap };
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function findPath(grid, startRow, startCol, targetRow, targetCol) {
+    const baseExits = {
+        i: [0, 2],
+        l: [0, 1],
+        t: [0, 1, 2]
+    };
+    const moves = [
+        [-1, 0, 0, 2],
+        [0, 1, 1, 3],
+        [1, 0, 2, 0],
+        [0, -1, 3, 1]
+    ];
+
+    function exitsAt(r, c) {
+        const tile = grid[r][c];
+        return (baseExits[tile.shape] || []).map(dir => (dir + tile.rotation) % 4);
+    }
+
+    const q = [[startRow, startCol, [[startRow, startCol]]]];
+    const visited = new Set([`${startRow},${startCol}`]);
+
+    while (q.length) {
+        const [r, c, path] = q.shift();
+        if (r === targetRow && c === targetCol) return path;
+
+        const curExits = exitsAt(r, c);
+        for (const [dr, dc, outDir, inDir] of moves) {
+            const nr = r + dr;
+            const nc = c + dc;
+            if (nr < 0 || nr > 6 || nc < 0 || nc > 6) continue;
+            const key = `${nr},${nc}`;
+            if (visited.has(key)) continue;
+
+            const nextExits = exitsAt(nr, nc);
+            if (curExits.includes(outDir) && nextExits.includes(inDir)) {
+                visited.add(key);
+                q.push([nr, nc, [...path, [nr, nc]]]);
+            }
+        }
+    }
+
+    return [[startRow, startCol], [targetRow, targetCol]];
+}
+
+async function animateMeepleAlongPath(playerId, path, fromRow, fromCol) {
+    const meeple = document.getElementById(`meeple-${playerId}`);
+    if (!meeple || !Array.isArray(path) || path.length < 2) return;
+
+    const { step } = getCellMetrics();
+    const msPerTile = 500; // 2 tiles per second
+    meeple.style.transition = `transform ${msPerTile}ms linear`;
+
+    for (let i = 1; i < path.length; i++) {
+        const [r, c] = path[i];
+        const x = c * step + 14;
+        const y = r * step + 14;
+        meeple.style.transform = `translate(${x}px, ${y}px)`;
+        await sleep(msPerTile);
+    }
 }
 
 function render(st) {
@@ -196,12 +288,13 @@ function render(st) {
     if (st.last_push === null) currentPhase = 'push';
     else currentPhase = 'move';
 
-    document.getElementById('turn-dot').style.background = cp.color;
+    const displayTurnColor = getDisplayColor(cp.color);
+    document.getElementById('turn-dot').style.background = displayTurnColor;
     document.getElementById('turn-name').textContent = cp.name;
     document.getElementById('phase-label').textContent = currentPhase === 'push' ? "Push a Tile" : "Move your piece";
     document.getElementById('rotate-btn').disabled = (!canActThisTurn || currentPhase !== 'push' || isProcessing || st.phase === 'over');
     
-    document.documentElement.style.setProperty('--reach-player', cp.color);
+    document.documentElement.style.setProperty('--reach-player', displayTurnColor);
 
     const tilesLayer = document.getElementById('tiles-layer');
     const buttonsLayer = document.getElementById('buttons-layer');
@@ -210,7 +303,7 @@ function render(st) {
     tilesLayer.innerHTML = ''; 
     buttonsLayer.innerHTML = '';
     
-    const cell = 64; const gap = 3;
+    const { cell, gap, step } = getCellMetrics();
     const corners = [[0,0], [0,6], [6,6], [6,0]];
 
     // Build Tiles
@@ -221,7 +314,7 @@ function render(st) {
             
             const div = document.createElement('div');
             div.className = `tile ${isReachable ? 'reachable' : ''}`;
-            div.style.transform = `translate(${c*(cell+gap)}px, ${r*(cell+gap)}px)`;
+            div.style.transform = `translate(${c*step}px, ${r*step}px)`;
             
             const bg = document.createElement('div');
             bg.className = 'tile-bg';
@@ -241,7 +334,7 @@ function render(st) {
             const cornerIdx = corners.findIndex(p => p[0]===r && p[1]===c);
             if(cornerIdx !== -1 && st.players[cornerIdx]) {
                 const dot = document.createElement('div');
-                dot.style.cssText = `position:absolute; top:5px; left:5px; width:12px; height:12px; border-radius:50%; background:${st.players[cornerIdx].color}; border:2px solid #fff; z-index:3;`;
+                dot.style.cssText = `position:absolute; top:5px; left:5px; width:12px; height:12px; border-radius:50%; background:${getDisplayColor(st.players[cornerIdx].color)}; border:2px solid #fff; z-index:3;`;
                 div.appendChild(dot);
             }
 
@@ -257,10 +350,10 @@ function render(st) {
     // Push Buttons
     if(currentPhase === 'push' && canActThisTurn && st.phase !== 'over') {
         const offsets = {
-            'top': { x: c => c*(cell+gap)+16, y: -34, sym: '▼' },
-            'bottom': { x: c => c*(cell+gap)+16, y: 7*(cell+gap)+2, sym: '▲' },
-            'left': { x: -34, y: r => r*(cell+gap)+16, sym: '▶' },
-            'right': { x: 7*(cell+gap)+2, y: r => r*(cell+gap)+16, sym: '◀' }
+            'top': { x: c => c*step + (cell - 32) / 2, y: -34, sym: '▼' },
+            'bottom': { x: c => c*step + (cell - 32) / 2, y: 7*step + 2, sym: '▲' },
+            'left': { x: -34, y: r => r*step + (cell - 32) / 2, sym: '▶' },
+            'right': { x: 7*step + 2, y: r => r*step + (cell - 32) / 2, sym: '◀' }
         };
         const lp = st.last_push;
         const revDir = {'left':'right','right':'left','top':'bottom','bottom':'top'};
@@ -291,7 +384,8 @@ function render(st) {
             m.src = getMeeplePath(p.color);
             meeplesLayer.appendChild(m);
         }
-        m.style.transform = `translate(${p.col*(cell+gap)+14}px, ${p.row*(cell+gap)+14}px)`;
+        const tokenOffset = Math.round((cell - 36) / 2);
+        m.style.transform = `translate(${p.col*step + tokenOffset}px, ${p.row*step + tokenOffset}px)`;
     });
 
     // Spare Tile
@@ -323,7 +417,7 @@ function render(st) {
         card.innerHTML = `
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
                 <img src="${getMeeplePath(p.color)}" style="width:20px;">
-                <span style="font-family:'Cinzel Decorative'; color:${p.color}">${p.name} ${p.winner ? '👑' : ''}</span>
+                <span style="font-family:'Cinzel Decorative'; color:${getDisplayColor(p.color)}">${p.name} ${p.winner ? '👑' : ''}</span>
             </div>
             <div style="display:flex; align-items:center; gap:10px; background:rgba(0,0,0,0.3); padding:8px; border-radius:4px;">
                 <img src="${targetSrc}" style="width:40px; height:40px; object-fit:contain;">
@@ -349,6 +443,15 @@ async function handleAction(type, data) {
         body = {player_id: MY_ID, row: data.r, col: data.c ?? data.col};
     }
 
+    const movingPlayer = type === 'move'
+        ? state.players.find(p => p.id === state.current_turn)
+        : null;
+    const oldRow = movingPlayer ? movingPlayer.row : null;
+    const oldCol = movingPlayer ? movingPlayer.col : null;
+    const path = (type === 'move' && movingPlayer)
+        ? findPath(state.tiles, oldRow, oldCol, data.r, data.c ?? data.col)
+        : null;
+
     try {
         const res = await fetch(url, {
             method: 'POST',
@@ -364,6 +467,10 @@ async function handleAction(type, data) {
             return;
         }
 
+        if (type === 'move' && st.move_ok && movingPlayer && path) {
+            await animateMeepleAlongPath(movingPlayer.id, path, oldRow, oldCol);
+        }
+
         // Trigger animations/popups
         if(type === 'move') {
             if(st.message === 'TARGET_FOUND' || st.message === 'PLAYER_WON') {
@@ -372,12 +479,13 @@ async function handleAction(type, data) {
                 const title = document.getElementById('popup-title');
                 
                 if(st.message === 'PLAYER_WON') {
-                    title.textContent = `${state.current_player.name} WINS!`;
-                    img.src = getMeeplePath(state.current_player.color);
+                    title.textContent = `${st.current_player.name} WINS!`;
+                    img.src = getMeeplePath(st.current_player.color);
                     document.getElementById('game-over-btns').style.display = 'block';
                 } else {
                     title.textContent = "Target Found!";
-                    img.src = charImg(state.current_player.current_target);
+                    const prevTarget = movingPlayer ? movingPlayer.current_target : st.current_player.current_target;
+                    img.src = charImg(prevTarget);
                     setTimeout(() => pop.classList.remove('show'), 2500);
                 }
                 pop.classList.add('show');
