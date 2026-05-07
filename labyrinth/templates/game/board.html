@@ -124,20 +124,17 @@ body {
   transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); 
   left: 0; top: 0; border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);
   overflow: hidden; background: #2a2012; border: 1px solid rgba(201,168,76,0.2);
-  pointer-events: auto; /* FIX: Explicity make clickable */
+  pointer-events: auto;
 }
 .tile-bg { width: 100%; height: 100%; position: absolute; top: 0; left: 0; background-size: cover; transition: transform 0.3s ease; }
 .tile-char { width: 60%; height: 60%; position: absolute; top: 20%; left: 20%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); z-index: 2; transition: transform 0.3s ease; }
 .tile-overlay { position: absolute; inset: 0; pointer-events: none; transition: background 0.3s; z-index: 3; }
 
-/* Subtle Reachable Pulse - Triggers AFTER a tile is pushed */
 @keyframes pulse-reach {
   0% { background: rgba(220, 50, 50, 0.1); box-shadow: inset 0 0 0 2px var(--reach-bdr); }
   100% { background: rgba(220, 50, 50, 0.35); box-shadow: inset 0 0 0 4px var(--reach-bdr); }
 }
-.tile.reachable .tile-overlay {
-  animation: pulse-reach 1.2s infinite alternate ease-in-out;
-}
+.tile.reachable .tile-overlay { animation: pulse-reach 1.2s infinite alternate ease-in-out; }
 
 /* --- Meeples --- */
 .meeple {
@@ -159,13 +156,11 @@ body {
   cursor: pointer; z-index: 20; font-size: 14px;
   transition: all 0.2s;
   box-shadow: 0 4px 6px rgba(0,0,0,0.5);
-  pointer-events: auto; /* FIX: Guarantee they are clickable */
+  pointer-events: auto;
 }
 .push-btn:hover { 
-  background: var(--gold); 
-  color: var(--dark); 
-  transform: scale(1.1); 
-  box-shadow: 0 0 10px var(--gold); 
+  background: var(--gold); color: var(--dark); 
+  transform: scale(1.1); box-shadow: 0 0 10px var(--gold); 
 }
 .push-btn.disabled { opacity: 0.3; pointer-events: none; cursor: not-allowed; }
 
@@ -272,13 +267,22 @@ function charImg(id) {
   return `${IMG_BASE}character${n}.png`;
 }
 
-fetchState();
+function fetchState() { 
+  fetch(`${BASE_URL}/state/`)
+    .then(r => r.json())
+    .then(st => { state = st; render(st); })
+    .catch(e => console.error(e));
+}
+
 if (MODE === 'online') {
   setInterval(() => {
     if (isProcessing) return; 
-    fetch(`${BASE_URL}/poll/`).then(r => r.json()).then(newState => {
+    fetch(`${BASE_URL}/poll/`)
+      .then(r => r.json())
+      .then(newState => {
         if (!state || newState.seq > state.seq) { state = newState; render(state); }
-    });
+      })
+      .catch(e => console.error(e));
   }, 2500);
 }
 
@@ -477,14 +481,14 @@ function buildPlayers(st) {
   });
 }
 
-function fetchState() { fetch(`${BASE_URL}/state/`).then(r => r.json()).then(st => { state = st; render(st); }); }
-
+// FIX: Added robust error handling so the UI never freezes on a server crash
 function rotateSpare() {
   if (!canInteract() || phase !== 'push' || isProcessing) return;
   isProcessing = true;
   fetch(`${BASE_URL}/rotate-spare/`, {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}})
-    .then(r => r.json())
+    .then(r => { if (!r.ok) throw new Error(); return r.json(); })
     .then(st => render(st))
+    .catch(e => toast("Server Error! Please try again.", "#e74c3c"))
     .finally(() => isProcessing = false);
 }
 
@@ -492,7 +496,7 @@ function pushTile(dir, idx) {
   if (!canInteract() || phase !== 'push' || isProcessing) return;
   isProcessing = true;
   fetch(`${BASE_URL}/push/`, { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}, body: JSON.stringify({direction: dir, index: idx}) })
-  .then(r => r.json())
+  .then(r => { if (!r.ok) throw new Error(); return r.json(); })
   .then(st => {
     if (st.error) { toast(st.error, '#e74c3c'); return; }
     phase = 'move';
@@ -500,6 +504,7 @@ function pushTile(dir, idx) {
     document.documentElement.style.setProperty('--reach-player', currPlayer.color);
     render(st);
   })
+  .catch(e => toast("Server Error! Please try again.", "#e74c3c"))
   .finally(() => isProcessing = false);
 }
 
@@ -511,7 +516,7 @@ function moveTo(r, c) {
   const previousTarget = currP.current_target;
 
   fetch(`${BASE_URL}/move/`, { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}, body: JSON.stringify({player_id: MY_ID, row: r, col: c}) })
-  .then(res => res.json())
+  .then(r => { if (!r.ok) throw new Error(); return r.json(); })
   .then(st => {
     phase = st.phase === 'over' ? 'game_over' : 'push';
     render(st);
@@ -548,6 +553,7 @@ function moveTo(r, c) {
       if (st.phase !== 'over') toast(`${st.players[st.current_turn].name}'s turn`);
     }
   })
+  .catch(e => toast("Server Error! Please try again.", "#e74c3c"))
   .finally(() => isProcessing = false);
 }
 </script>
