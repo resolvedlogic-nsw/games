@@ -16,9 +16,10 @@
   --gold-dim:   rgba(201,168,76,0.35);
   --dark:       #0a0806;
   --dark2:      #120e05;
-  --cell:       clamp(56px, 9.2vmin, 96px);
+  --cell:       64px;
   --gap:        3px;
   --board-w:    calc(7 * var(--cell) + 6 * var(--gap));
+  --board-scale: 1;
   --reachable:  rgba(220, 50, 50, 0.2);
   --reach-bdr:  var(--reach-player, #dc3232);
 }
@@ -35,12 +36,12 @@ body {
 
 /* --- Layout Structure --- */
 .game-layout {
-  display: flex; width: 100%; max-width: 1400px; height: 100vh;
-  padding: 20px; gap: 30px; align-items: center; justify-content: space-between;
+  display: flex; width: 100%; max-width: none; height: 100vh;
+  padding: 10px 12px; gap: 20px; align-items: center; justify-content: space-between;
 }
 
 .side-panel {
-  flex: 0 1 260px; max-width: 280px; min-width: 180px; display: flex; flex-direction: column; gap: 24px; height: 100%; padding-top: 20px;
+  flex: 0 0 clamp(160px, 14vw, 240px); max-width: 260px; min-width: 140px; display: flex; flex-direction: column; gap: 16px; height: 100%; padding-top: 8px;
 }
 
 .panel-title {
@@ -66,12 +67,24 @@ body {
 
 /* --- Board & Tiles --- */
 .board-container {
-  position: relative; width: calc(var(--board-w) + 80px); height: calc(var(--board-w) + 80px); flex: 0 0 auto;
-  padding: 40px; background: #1a140b; border: 2px solid var(--gold-dim); border-radius: 8px;
+  position: relative;
+  width: calc((var(--board-w) + 80px) * var(--board-scale));
+  height: calc((var(--board-w) + 80px) * var(--board-scale));
+  flex: 1 1 auto;
+  margin: 0 auto;
+  padding: calc(40px * var(--board-scale));
+  background: #1a140b; border: 2px solid var(--gold-dim); border-radius: 8px;
   box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 40px rgba(0,0,0,0.8);
+  overflow: visible;
 }
 
-.board-grid { position: relative; width: var(--board-w); height: var(--board-w); }
+.board-grid {
+  position: relative;
+  width: var(--board-w);
+  height: var(--board-w);
+  transform: scale(var(--board-scale));
+  transform-origin: top left;
+}
 
 .tile {
   position: absolute; width: var(--cell); height: var(--cell);
@@ -115,19 +128,10 @@ body {
 #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #140e04; border: 1px solid var(--gold); padding: 12px 30px; border-radius: 30px; color: var(--gold); transition: transform 0.4s; z-index: 1000; }
 #toast.show { transform: translateX(-50%) translateY(0); }
 
-@media (max-width: 1200px) {
-  :root { --cell: clamp(48px, 8.4vmin, 84px); }
-  .game-layout { gap: 16px; padding: 12px; }
-  .side-panel { min-width: 160px; gap: 14px; }
-  .board-container { padding: 24px; }
-}
-
 @media (max-width: 980px) and (orientation: landscape) {
-  :root { --cell: clamp(40px, 7.4vmin, 72px); }
   html, body { overflow: auto; }
   .game-layout { height: auto; min-height: 100vh; align-items: flex-start; }
-  .side-panel { min-width: 140px; padding-top: 8px; }
-  .board-container { padding: 14px; }
+  .side-panel { min-width: 120px; max-width: 180px; }
 }
 </style>
 </head>
@@ -198,6 +202,12 @@ function getDisplayColor(color) {
     if (THEME === 'pokemon' && color === '#2ecc71') return '#9b59b6';
     return color;
 }
+function getDisplayName(player) {
+    if (THEME === 'pokemon' && player && player.color === '#2ecc71') {
+        return (player.name || '').replace(/green/gi, 'Purple');
+    }
+    return player.name;
+}
 function getMeeplePath(color) { 
     const displayColor = getDisplayColor(color);
     const colors = {'#e74c3c':'red', '#3498db':'blue', '#2ecc71':'green', '#f39c12':'yellow', '#9b59b6':'purple'};
@@ -206,10 +216,28 @@ function getMeeplePath(color) {
 }
 
 function getCellMetrics() {
-    const rootStyles = getComputedStyle(document.documentElement);
-    const cell = parseInt(rootStyles.getPropertyValue('--cell'), 10) || 64;
-    const gap = parseInt(rootStyles.getPropertyValue('--gap'), 10) || 3;
+    const cell = 64;
+    const gap = 3;
     return { cell, gap, step: cell + gap };
+}
+
+function updateBoardScale() {
+    const layout = document.querySelector('.game-layout');
+    const boardContainer = document.querySelector('.board-container');
+    const leftPanel = document.querySelector('.game-layout .side-panel:first-child');
+    const rightPanel = document.querySelector('.game-layout .side-panel:last-child');
+    if (!layout || !boardContainer || !leftPanel || !rightPanel) return;
+
+    const layoutStyles = getComputedStyle(layout);
+    const gap = parseFloat(layoutStyles.gap) || 20;
+    const baseOuter = 7 * 64 + 6 * 3 + 80; // board + container padding
+    const reservedWidth = leftPanel.offsetWidth + rightPanel.offsetWidth + gap * 2 + 6;
+    const availableWidth = Math.max(320, window.innerWidth - reservedWidth - 24);
+    const availableHeight = Math.max(320, window.innerHeight - 24);
+    const target = Math.min(availableWidth, availableHeight);
+    const scale = Math.max(0.62, Math.min(2.0, target / baseOuter));
+
+    document.documentElement.style.setProperty('--board-scale', scale.toFixed(3));
 }
 
 function sleep(ms) {
@@ -417,7 +445,7 @@ function render(st) {
         card.innerHTML = `
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
                 <img src="${getMeeplePath(p.color)}" style="width:20px;">
-                <span style="font-family:'Cinzel Decorative'; color:${getDisplayColor(p.color)}">${p.name} ${p.winner ? '👑' : ''}</span>
+                <span style="font-family:'Cinzel Decorative'; color:${getDisplayColor(p.color)}">${getDisplayName(p)} ${p.winner ? '👑' : ''}</span>
             </div>
             <div style="display:flex; align-items:center; gap:10px; background:rgba(0,0,0,0.3); padding:8px; border-radius:4px;">
                 <img src="${targetSrc}" style="width:40px; height:40px; object-fit:contain;">
@@ -429,6 +457,8 @@ function render(st) {
         `;
         pList.appendChild(card);
     });
+
+    updateBoardScale();
 }
 
 async function handleAction(type, data) {
@@ -508,7 +538,11 @@ function toast(msg, color='var(--gold)') {
 }
 
 // Initial Run
-document.addEventListener('DOMContentLoaded', () => render(state));
+document.addEventListener('DOMContentLoaded', () => {
+    render(state);
+    updateBoardScale();
+});
+window.addEventListener('resize', updateBoardScale);
 
 // Poll for multiplayer updates
 if(state.mode === 'online') {
