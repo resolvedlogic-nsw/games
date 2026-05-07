@@ -10,11 +10,7 @@
 <style>
   :root {
     --gold: #c9a84c;
-    --gold-light: #e8c97a;
     --dark: #0a0806;
-    --dark2: #1a1208;
-    --parchment: #f5e6c8;
-    --ink: #1c1004;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -51,191 +47,68 @@
     background: linear-gradient(145deg, #1e1507, #0f0b04);
     border: 1px solid rgba(201,168,76,0.3);
     border-radius: 4px;
-    padding: 60px 70px;
+    padding: 30px 40px; /* Reduced padding to save vertical space */
     text-align: center;
     max-width: 480px;
     width: 90%;
-    box-shadow:
-      0 0 0 1px rgba(201,168,76,0.08),
-      0 40px 80px rgba(0,0,0,0.8),
-      inset 0 1px 0 rgba(201,168,76,0.15);
+    box-shadow: 0 40px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(201,168,76,0.15);
   }
 
   .card::before, .card::after {
-    content: '';
-    position: absolute;
-    width: 40px; height: 40px;
-    border-color: var(--gold);
-    border-style: solid;
-    opacity: 0.5;
+    content: ''; position: absolute; width: 30px; height: 30px;
+    border-color: var(--gold); border-style: solid; opacity: 0.5;
   }
-  .card::before { top: 12px; left: 12px; border-width: 1px 0 0 1px; }
-  .card::after  { bottom: 12px; right: 12px; border-width: 0 1px 1px 0; }
+  .card::before { top: 10px; left: 10px; border-width: 1px 0 0 1px; }
+  .card::after  { bottom: 10px; right: 10px; border-width: 0 1px 1px 0; }
 
-  .title-container { min-height: 120px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+  .title-container { min-height: 90px; display: flex; align-items: center; justify-content: center; flex-direction: column; margin-bottom: 10px; }
   .title {
     font-family: 'Cinzel Decorative', serif;
-    font-size: clamp(2rem, 5vw, 3rem);
-    font-weight: 900;
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
     color: var(--gold);
-    letter-spacing: 0.05em;
-    text-shadow: 0 0 40px rgba(201,168,76,0.4), 0 2px 4px rgba(0,0,0,0.8);
-    margin-bottom: 8px;
+    text-shadow: 0 0 30px rgba(201,168,76,0.4);
+    margin-bottom: 4px;
   }
+  .subtitle { color: rgba(201,168,76,0.5); font-style: italic; font-size: 1rem; }
+  .pokemon-logo { max-width: 90%; max-height: 100px; display: none; }
 
-  .subtitle {
-    color: rgba(201,168,76,0.5);
-    font-style: italic;
-    font-size: 1.1rem;
-    letter-spacing: 0.15em;
-    margin-bottom: 30px;
-  }
-  
-  .pokemon-logo { max-width: 100%; max-height: 147px; display: none; margin-bottom: 30px; }
+  label { display: block; color: rgba(201,168,76,0.7); font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 10px; }
 
-  .divider {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 30px;
-  }
-  .divider::before, .divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(to right, transparent, rgba(201,168,76,0.4), transparent);
-  }
-  .divider-gem {
-    width: 6px; height: 6px;
-    background: var(--gold);
-    transform: rotate(45deg);
-    opacity: 0.6;
-  }
-
-  label {
-    display: block;
-    color: rgba(201,168,76,0.7);
-    font-size: 0.85rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    margin-bottom: 16px;
-  }
-
-  .player-select {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    margin-bottom: 30px;
-  }
-
+  .player-select { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
   .player-btn {
-    width: 56px; height: 56px;
-    background: transparent;
-    border: 1px solid rgba(201,168,76,0.3);
-    color: rgba(201,168,76,0.6);
-    font-family: 'Cinzel Decorative', serif;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
+    width: 48px; height: 48px;
+    background: transparent; border: 1px solid rgba(201,168,76,0.3); color: rgba(201,168,76,0.6);
+    font-family: 'Cinzel Decorative', serif; font-size: 1.1rem; cursor: pointer; transition: all 0.2s;
   }
-  .player-btn:hover, .player-btn.active {
-    background: rgba(201,168,76,0.12);
-    border-color: var(--gold);
-    color: var(--gold);
-    box-shadow: 0 0 20px rgba(201,168,76,0.2);
-  }
+  .player-btn:hover, .player-btn.active { background: rgba(201,168,76,0.12); border-color: var(--gold); color: var(--gold); }
 
-  .setup-group { margin-bottom: 30px; }
-
-  #token-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
-    max-width: 320px;
-    margin: 0 auto;
-  }
-
+  .setup-group { margin-bottom: 20px; }
+  #token-grid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 280px; margin: 0 auto; }
   .token-btn {
-    background: rgba(20,14,4,0.6);
-    border: 1px solid rgba(201,168,76,0.2);
-    color: rgba(212, 192, 154, 0.7);
-    width: 44px; height: 44px;
-    font-family: 'Cinzel Decorative', serif;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    border-radius: 4px;
+    background: rgba(20,14,4,0.6); border: 1px solid rgba(201,168,76,0.2); color: rgba(212, 192, 154, 0.7);
+    width: 38px; height: 38px; font-family: 'Cinzel Decorative', serif; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; border-radius: 4px;
   }
-  .token-btn:hover:not(:disabled) {
-    border-color: var(--gold);
-    color: var(--gold);
-    box-shadow: 0 0 8px rgba(201,168,76,0.2);
-  }
-  .token-btn.active {
-    background: linear-gradient(135deg, #4a3410, #8b6914);
-    border-color: var(--gold);
-    color: #fff;
-    box-shadow: 0 0 12px rgba(201,168,76,0.4);
-  }
-  .token-btn:disabled {
-    opacity: 0.15;
-    cursor: not-allowed;
-    background: rgba(0,0,0,0.5);
-    border-color: transparent;
-  }
+  .token-btn.active { background: linear-gradient(135deg, #4a3410, #8b6914); border-color: var(--gold); color: #fff; }
+  .token-btn:disabled { opacity: 0.15; cursor: not-allowed; border-color: transparent; }
 
   .start-btn, .online-btn {
-    width: 100%;
-    padding: 16px 32px;
-    font-family: 'Cinzel Decorative', serif;
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    cursor: pointer;
-    transition: all 0.3s;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 12px;
+    width: 100%; padding: 14px 20px; font-family: 'Cinzel Decorative', serif; font-size: 0.9rem; font-weight: 700;
+    letter-spacing: 0.1em; cursor: pointer; transition: all 0.3s; margin-bottom: 10px; text-transform: uppercase;
   }
-  
-  .start-btn {
-    background: linear-gradient(135deg, #8b6914, #c9a84c, #8b6914);
-    background-size: 200% 100%;
-    border: none;
-    color: var(--dark);
-  }
-  .start-btn::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to bottom, rgba(255,255,255,0.1), transparent);
-  }
-  .start-btn:hover {
-    background-position: 100% 0;
-    box-shadow: 0 0 30px rgba(201,168,76,0.4), 0 4px 20px rgba(0,0,0,0.4);
-    transform: translateY(-1px);
-  }
-
-  .online-btn {
-    background: transparent;
-    border: 1px solid var(--gold);
-    color: var(--gold);
-    text-decoration: none;
-    display: block;
-  }
+  .start-btn { background: linear-gradient(135deg, #8b6914, #c9a84c, #8b6914); border: none; color: var(--dark); }
+  .start-btn:hover { box-shadow: 0 0 20px rgba(201,168,76,0.4); transform: translateY(-1px); }
+  .online-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); text-decoration: none; display: block; }
   .online-btn:hover { background: rgba(201,168,76,0.1); }
 
   /* Theme Switcher */
-  .theme-toggle { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 20px; }
-  .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+  .theme-toggle { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px; }
+  .switch { position: relative; display: inline-block; width: 44px; height: 20px; }
   .switch input { opacity: 0; width: 0; height: 0; }
   .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(201,168,76,0.2); transition: .4s; border-radius: 24px; }
-  .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: var(--gold); transition: .4s; border-radius: 50%; }
+  .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: var(--gold); transition: .4s; border-radius: 50%; }
   input:checked + .slider { background-color: #e74c3c; }
-  input:checked + .slider:before { transform: translateX(26px); background-color: white; }
-  .theme-label { color: var(--gold); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; }
+  input:checked + .slider:before { transform: translateX(24px); background-color: white; }
+  .theme-label { color: var(--gold); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; }
 </style>
 </head>
 <body>
@@ -259,8 +132,6 @@
     </div>
     <img id="poke-logo" class="pokemon-logo" src="{% static 'images/pokemon/logo.png' %}" alt="Pokemon Logo">
   </div>
-  
-  <div class="divider"><div class="divider-gem"></div></div>
 
   <form method="POST" action="{% url 'labyrinth:new_game' %}">
     {% csrf_token %}
@@ -308,9 +179,7 @@ function toggleTheme() {
   
   document.getElementById('classic-title').style.display = isPoke ? 'none' : 'block';
   document.getElementById('poke-logo').style.display = isPoke ? 'block' : 'none';
-  
-  const onlineLink = document.getElementById('online-link');
-  onlineLink.href = "{% url 'labyrinth:online' %}?theme=" + theme;
+  document.getElementById('online-link').href = "{% url 'labyrinth:online' %}?theme=" + theme;
 }
 
 function selectPlayers(el) {
@@ -328,32 +197,25 @@ function updateTokens(numPlayers) {
   tokenBtns.forEach(btn => {
     const val = parseInt(btn.dataset.val);
     if (val > maxTokens) {
-      btn.disabled = true;
-      btn.classList.remove('active');
+      btn.disabled = true; btn.classList.remove('active');
     } else {
       btn.disabled = false;
     }
   });
 
-  if (currentSelected > maxTokens) { selectToken(maxTokens); }
+  if (currentSelected > maxTokens) selectToken(maxTokens);
 }
 
 function selectToken(val) {
   hiddenInput.value = val;
   tokenBtns.forEach(b => {
-    if (parseInt(b.dataset.val) === val) { b.classList.add('active'); }
-    else { b.classList.remove('active'); }
+    if (parseInt(b.dataset.val) === val) b.classList.add('active');
+    else b.classList.remove('active');
   });
 }
 
-tokenBtns.forEach(btn => {
-  btn.addEventListener('click', (e) => { selectToken(parseInt(e.target.dataset.val)); });
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-  updateTokens(2);
-  selectToken(12);
-});
+tokenBtns.forEach(btn => btn.addEventListener('click', (e) => selectToken(parseInt(e.target.dataset.val))));
+document.addEventListener('DOMContentLoaded', () => { updateTokens(2); selectToken(12); });
 </script>
 </body>
 </html>
