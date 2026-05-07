@@ -131,16 +131,15 @@ def board(request, labyrinth_id):
         'player_id': player_id,
         'is_host': is_host,
         'theme': game.theme,
-        # FIX: Restored player_id parameter here
-        'state_json': json.dumps(game.get_state_dict(player_id=player_id)),
+        # Restored to player_perspective so it perfectly matches your models.py!
+        'state_json': json.dumps(game.get_state_dict(player_perspective=player_id)),
     })
 
 @require_GET
 def poll_state(request, labyrinth_id):
     game = get_object_or_404(Game, pk=labyrinth_id)
     player_id = request.session.get(f'player_id_{game.id}', 0) if game.mode == 'online' else 0
-    # FIX: Restored player_id parameter here
-    return JsonResponse(game.get_state_dict(player_id=player_id))
+    return JsonResponse(game.get_state_dict(player_perspective=player_id))
 
 @csrf_exempt
 @require_POST
@@ -148,8 +147,7 @@ def api_rotate_spare(request, labyrinth_id):
     game = get_object_or_404(Game, pk=labyrinth_id)
     game.rotate_spare()
     pid = request.session.get(f'player_id_{game.id}', 0) if game.mode == 'online' else 0
-    # FIX: Restored player_id parameter here
-    return JsonResponse(game.get_state_dict(player_id=pid))
+    return JsonResponse(game.get_state_dict(player_perspective=pid))
 
 @csrf_exempt
 @require_POST
@@ -164,8 +162,8 @@ def api_push(request, labyrinth_id):
 
     ok = game.push_tile(direction, index)
     pid = request.session.get(f'player_id_{game.id}', 0) if game.mode == 'online' else 0
-    # FIX: Restored player_id parameter here
-    state = game.get_state_dict(player_id=pid)
+    
+    state = game.get_state_dict(player_perspective=pid)
     state['push_ok'] = ok
     if not ok: state['error'] = 'Cannot reverse the previous push'
     return JsonResponse(state)
@@ -181,9 +179,8 @@ def api_move(request, labyrinth_id):
 
     ok, msg = game.move_player(player_id, target_row, target_col)
     pid = request.session.get(f'player_id_{game.id}', 0) if game.mode == 'online' else 0
-    # FIX: Restored player_id parameter here
-    state = game.get_state_dict(player_id=pid)
     
+    state = game.get_state_dict(player_perspective=pid)
     state['move_ok'] = ok
     state['message'] = msg  
     if not ok: state['error'] = msg
@@ -193,5 +190,4 @@ def api_move(request, labyrinth_id):
 def api_state(request, labyrinth_id):
     game = get_object_or_404(Game, pk=labyrinth_id)
     pid = request.session.get(f'player_id_{game.id}', 0) if game.mode == 'online' else 0
-    # FIX: Restored player_id parameter here
-    return JsonResponse(game.get_state_dict(player_id=pid))
+    return JsonResponse(game.get_state_dict(player_perspective=pid))
