@@ -103,7 +103,7 @@ body {
 /* --- The Board --- */
 .board-container {
   position: relative;
-  width: calc(var(--board-w) + 60px); /* Extra padding for the buttons */
+  width: calc(var(--board-w) + 60px); 
   height: calc(var(--board-w) + 60px);
   padding: 30px;
   background: #1a140b;
@@ -146,7 +146,7 @@ body {
   left: 0; top: 0; 
 }
 
-/* --- Refined Push Buttons (No flashing, no circles) --- */
+/* --- Refined Push Buttons --- */
 .push-btn {
   position: absolute; 
   width: 32px; height: 32px;
@@ -165,7 +165,7 @@ body {
   transform: scale(1.1); 
   box-shadow: 0 0 10px var(--gold); 
 }
-.push-btn.disabled { opacity: 0.3; pointer-events: none; }
+.push-btn.disabled { opacity: 0.3; pointer-events: none; cursor: not-allowed; }
 
 /* --- Player Cards --- */
 #players-list { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding-right: 5px; }
@@ -219,7 +219,11 @@ body {
   </div>
 
   <div class="board-container" id="board-container">
-    <div class="board-grid" id="grid"></div>
+    <div class="board-grid">
+      <div id="tiles-layer"></div>
+      <div id="buttons-layer"></div>
+      <div id="meeples-layer" style="position: absolute; inset: 0; pointer-events: none; z-index: 10;"></div>
+    </div>
   </div>
 
   <div class="side-panel right-panel">
@@ -252,7 +256,7 @@ const IMG_BASE = THEME === 'pokemon' ? `${STATIC_URL}images/pokemon/` : `${STATI
 
 let state = null;
 let phase = 'push';
-let isProcessing = false; // The Double-Click Lock Flag
+let isProcessing = false; // Locks the UI immediately upon click
 
 function getTilePath(shape) { return THEME === 'pokemon' ? `${IMG_BASE}path${shape}.jpg` : `${IMG_BASE}shape${shape}.svg`; }
 function getMeeplePath(colorHex) {
@@ -269,7 +273,6 @@ function charImg(id) {
 fetchState();
 if (MODE === 'online') {
   setInterval(() => {
-    // Don't poll if we are currently mid-move
     if (isProcessing) return; 
     fetch(`${BASE_URL}/poll/`).then(r => r.json()).then(newState => {
         if (!state || newState.seq > state.seq) { state = newState; render(state); }
@@ -289,8 +292,11 @@ function canInteract() { return MODE === 'pass_and_play' || state.current_turn =
 function render(st) {
   state = st;
   
-  document.getElementById('turn-dot').style.background = st.current_player.color;
-  document.getElementById('turn-name').textContent = st.current_player.name;
+  // Safe extraction to prevent the "null" crash on Game Over
+  const currPlayer = st.current_player || st.players[st.current_turn];
+  
+  document.getElementById('turn-dot').style.background = currPlayer.color;
+  document.getElementById('turn-name').textContent = currPlayer.name;
   
   if (MODE === 'online' && st.current_turn !== MY_ID) {
     document.getElementById('phase-label').textContent = `Waiting for move...`;
@@ -298,7 +304,6 @@ function render(st) {
     document.getElementById('phase-label').textContent = phase === 'push' ? "Push a Tile" : "Move your piece";
   }
 
-  // Visual lock state for rotate button
   document.getElementById('rotate-btn').disabled = (phase !== 'push' || !canInteract() || isProcessing);
 
   buildGrid(st);
@@ -314,9 +319,16 @@ function render(st) {
 }
 
 function buildGrid(st) {
-  const gridEl = document.getElementById('grid');
-  gridEl.innerHTML = '';
+  const tilesEl = document.getElementById('tiles-layer');
+  const buttonsEl = document.getElementById('buttons-layer');
+  const meeplesEl = document.getElementById('meeples-layer');
+  
+  tilesEl.innerHTML = '';
+  buttonsEl.innerHTML = '';
+  // Notice we DO NOT clear meeplesEl, allowing them to animate!
+
   const cell = 64; const gap = 3;
+  const corners = [[0,0], [0,6], [6,6], [6,0]];
   
   for (let r = 0; r < 7; r++) {
     for (let c = 0; c < 7; c++) {
@@ -346,15 +358,32 @@ function buildGrid(st) {
         bg.appendChild(img);
       }
       
+      // Draw Home Corner Colored Dots
+      const cornerIndex = corners.findIndex(pos => pos[0] === r && pos[1] === c);
+      if (cornerIndex !== -1 && st.players[cornerIndex]) {
+        const homeDot = document.createElement('div');
+        homeDot.style.position = 'absolute';
+        homeDot.style.width = '18px';
+        homeDot.style.height = '18px';
+        homeDot.style.borderRadius = '50%';
+        homeDot.style.backgroundColor = st.players[cornerIndex].color;
+        homeDot.style.top = '6px';
+        homeDot.style.left = '6px';
+        homeDot.style.border = '2px solid rgba(255,255,255,0.8)';
+        homeDot.style.boxShadow = '0 2px 5px rgba(0,0,0,0.8)';
+        homeDot.style.zIndex = '4';
+        div.appendChild(homeDot);
+      }
+
       const overlay = document.createElement('div');
       overlay.className = 'tile-overlay';
       div.appendChild(overlay);
 
-      gridEl.appendChild(div);
+      tilesEl.appendChild(div);
     }
   }
 
-  // Draw sleek push buttons (Left/Top positioning ensures perfect alignment)
+  // Draw Static Push Buttons
   if (phase === 'push' && canInteract() && st.phase !== 'over') {
     const indices = [1, 3, 5];
     const offsets = {
@@ -377,17 +406,22 @@ function buildGrid(st) {
         btn.style.top = `${fn.y(idx)}px`;
         btn.textContent = fn.sym;
         btn.onclick = () => pushTile(dir, idx);
-        gridEl.appendChild(btn);
+        buttonsEl.appendChild(btn);
       });
     });
   }
 
+  // Draw Meeples (Updating existing ones to trigger CSS transition)
   st.players.forEach(p => {
-    const m = document.createElement('img');
-    m.className = 'meeple';
-    m.src = getMeeplePath(p.color);
+    let m = document.getElementById(`meeple-${p.id}`);
+    if (!m) {
+      m = document.createElement('img');
+      m.id = `meeple-${p.id}`;
+      m.className = 'meeple';
+      m.src = getMeeplePath(p.color);
+      meeplesEl.appendChild(m);
+    }
     m.style.transform = `translate(${p.col * (cell + gap) + cell/2 - 18}px, ${p.row * (cell + gap) + cell/2 - 18}px)`;
-    gridEl.appendChild(m);
   });
 }
 
@@ -453,8 +487,8 @@ function rotateSpare() {
   isProcessing = true;
   fetch(`${BASE_URL}/rotate-spare/`, {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}})
     .then(r => r.json())
-    .then(st => { render(st); isProcessing = false; })
-    .catch(() => isProcessing = false);
+    .then(st => render(st))
+    .finally(() => isProcessing = false);
 }
 
 function pushTile(dir, idx) {
@@ -463,42 +497,44 @@ function pushTile(dir, idx) {
   fetch(`${BASE_URL}/push/`, { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}, body: JSON.stringify({direction: dir, index: idx}) })
   .then(r => r.json())
   .then(st => {
-    isProcessing = false;
     if (st.error) { toast(st.error, '#e74c3c'); return; }
     phase = 'move';
-    document.documentElement.style.setProperty('--reach-player', st.current_player.color);
+    const currPlayer = st.current_player || st.players[st.current_turn];
+    document.documentElement.style.setProperty('--reach-player', currPlayer.color);
     render(st);
-    toast("Now move your piece!");
-  }).catch(() => isProcessing = false);
+  })
+  .finally(() => isProcessing = false);
 }
 
 function moveTo(r, c) {
   if (!canInteract() || phase !== 'move' || isProcessing) return;
   isProcessing = true;
-  const previousTarget = state.current_player.current_target;
+  
+  const currP = state.current_player || state.players[state.current_turn];
+  const previousTarget = currP.current_target;
 
   fetch(`${BASE_URL}/move/`, { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}, body: JSON.stringify({player_id: MY_ID, row: r, col: c}) })
   .then(res => res.json())
   .then(st => {
-    isProcessing = false;
-    if (st.error) { toast(st.error, '#e74c3c'); return; }
-    
     phase = st.phase === 'over' ? 'game_over' : 'push';
     render(st);
 
+    if (st.error) { toast(st.error, '#e74c3c'); return; }
+    
     const popup = document.getElementById('treasure-popup');
     const img = document.getElementById('treasure-img');
     const title = document.getElementById('popup-title');
     const btnGroup = document.getElementById('game-over-buttons');
+    
+    const updatedCurrP = st.current_player || st.players[st.current_turn];
 
     if (st.message === "PLAYER_WON") {
-      title.textContent = `${st.current_player.name} WINS!`;
-      title.style.color = st.current_player.color;
-      title.style.textShadow = `0 0 20px ${st.current_player.color}`;
-      img.src = getMeeplePath(st.current_player.color); 
+      title.textContent = `${updatedCurrP.name} WINS!`;
+      title.style.color = updatedCurrP.color;
+      title.style.textShadow = `0 0 20px ${updatedCurrP.color}`;
+      img.src = getMeeplePath(updatedCurrP.color); 
       btnGroup.style.display = 'flex';
       popup.classList.add('show');
-      toast(`Game Over! ${st.current_player.name} is the winner!`, st.current_player.color);
     } else if (st.message === "TARGET_FOUND") {
       title.textContent = "Target Found!";
       title.style.color = "var(--gold)";
@@ -514,7 +550,8 @@ function moveTo(r, c) {
     } else {
       if (st.phase !== 'over') toast(`${st.players[st.current_turn].name}'s turn`);
     }
-  }).catch(() => isProcessing = false);
+  })
+  .finally(() => isProcessing = false);
 }
 </script>
 </body>
