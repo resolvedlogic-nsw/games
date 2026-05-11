@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block title %}Join the Game{% endblock %}
+{% block extra_head %}
+<style>
+body {
+  background: var(--white);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.join-card {
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.game-logo {
+  font-family: var(--font-display);
+  font-size: 4.5rem;
+  color: var(--slate);
+  line-height: 1;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+
+.game-tagline {
+  color: var(--grey);
+  font-size: 0.95rem;
+  margin-bottom: 48px;
+  font-weight: 500;
+}
+
+.letter-badge {
+  display: inline-block;
+  width: 72px;
+  height: 72px;
+  background: var(--amber);
+  color: var(--slate);
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  line-height: 72px;
+  border-radius: 14px;
+  margin-bottom: 32px;
+  box-shadow: 0 8px 24px rgba(245,158,11,0.35);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 8px 24px rgba(245,158,11,0.35); }
+  50% { transform: scale(1.05); box-shadow: 0 12px 32px rgba(245,158,11,0.5); }
+}
+
+.join-label {
+  display: block;
+  font-weight: 700;
+  color: var(--slate);
+  font-size: 1rem;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.join-input {
+  width: 100%;
+  padding: 16px 18px;
+  font-size: 1.3rem;
+  border: 2.5px solid var(--grey-light);
+  border-radius: var(--radius);
+  outline: none;
+  color: var(--slate);
+  font-weight: 500;
+  transition: border-color 0.15s;
+  margin-bottom: 20px;
+}
+
+.join-input:focus {
+  border-color: var(--amber);
+}
+
+.join-btn {
+  width: 100%;
+  padding: 18px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  background: var(--slate);
+  color: white;
+  border-radius: var(--radius);
+  letter-spacing: 0.04em;
+}
+.join-btn:hover { background: var(--slate-mid); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+
+.error-msg {
+  color: var(--red);
+  font-size: 0.9rem;
+  margin-top: -12px;
+  margin-bottom: 16px;
+  display: none;
+}
+
+.rules-hint {
+  margin-top: 32px;
+  padding: 16px;
+  background: #f1f5f9;
+  border-radius: var(--radius);
+  text-align: left;
+}
+
+.rules-hint h3 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--slate);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.rules-hint ul {
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--grey);
+  line-height: 1.7;
+}
+
+.rules-hint ul li::before { content: '→ '; color: var(--amber); font-weight: 700; }
+</style>
+{% endblock %}
+{% block body %}
+<div class="join-card">
+  <div class="letter-badge">S</div>
+  <div class="game-logo">SCATTEGORIES</div>
+  <div class="game-tagline">One letter. Ten categories. Think fast.</div>
+
+  <label class="join-label" for="name-input">What's your name?</label>
+  <input
+    class="join-input"
+    id="name-input"
+    type="text"
+    placeholder="Enter your name…"
+    maxlength="50"
+    autocomplete="off"
+    autocorrect="off"
+    spellcheck="false"
+  >
+  <div class="error-msg" id="error-msg">Please enter your name to continue.</div>
+  <button class="join-btn" id="join-btn" onclick="joinGame()">JOIN THE GAME →</button>
+
+  <div class="rules-hint">
+    <h3>Quick Rules</h3>
+    <ul>
+      <li>Answers must start with the round letter</li>
+      <li>Single nouns only — no phrases</li>
+      <li>No describing words to force the letter</li>
+      <li>Unique answers score a point — duplicates don't</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'scattegories_uuid';
+
+async function joinGame() {
+  const nameInput = document.getElementById('name-input');
+  const errorMsg = document.getElementById('error-msg');
+  const name = nameInput.value.trim();
+
+  if (!name) {
+    errorMsg.style.display = 'block';
+    nameInput.focus();
+    return;
+  }
+  errorMsg.style.display = 'none';
+
+  const existingUUID = localStorage.getItem(STORAGE_KEY);
+
+  const res = await fetch('/api/register/', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+    body: JSON.stringify({ display_name: name, uuid: existingUUID }),
+  });
+
+  const data = await res.json();
+  if (data.uuid) {
+    localStorage.setItem(STORAGE_KEY, data.uuid);
+    window.location.href = '/lobby/';
+  }
+}
+
+document.getElementById('name-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') joinGame();
+});
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    for (const cookie of document.cookie.split(';')) {
+      const [k, v] = cookie.trim().split('=');
+      if (k === name) { cookieValue = decodeURIComponent(v); break; }
+    }
+  }
+  return cookieValue;
+}
+
+// Pre-fill name if returning
+window.addEventListener('DOMContentLoaded', () => {
+  const stored = localStorage.getItem('scattegories_name');
+  if (stored) document.getElementById('name-input').value = stored;
+});
+</script>
+{% endblock %}

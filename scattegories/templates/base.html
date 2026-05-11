@@ -1,0 +1,68 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>{% block title %}Scattegories{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green: #22c55e;
+  --green-dim: #15803d;
+  --red: #ef4444;
+  --red-dim: #991b1b;
+  --amber: #f59e0b;
+  --grey: #6b7280;
+  --grey-light: #e5e7eb;
+  --slate: #1e293b;
+  --slate-mid: #334155;
+  --slate-light: #475569;
+  --white: #f8fafc;
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --radius: 10px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.18);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body { font-family: var(--font-body); -webkit-font-smoothing: antialiased; }
+
+button { cursor: pointer; border: none; font-family: var(--font-body); font-weight: 700; transition: all 0.15s ease; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+input { font-family: var(--font-body); }
+
+.btn-accept {
+  background: var(--green); color: white;
+  padding: 10px 20px; border-radius: var(--radius);
+  font-size: 1rem;
+}
+.btn-accept:hover:not(:disabled) { background: var(--green-dim); transform: translateY(-1px); }
+
+.btn-reject {
+  background: var(--red); color: white;
+  padding: 10px 20px; border-radius: var(--radius);
+  font-size: 1rem;
+}
+.btn-reject:hover:not(:disabled) { background: var(--red-dim); transform: translateY(-1px); }
+
+.btn-primary {
+  background: var(--amber); color: var(--slate);
+  padding: 12px 28px; border-radius: var(--radius);
+  font-size: 1.1rem; letter-spacing: 0.02em;
+}
+.btn-primary:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
+
+.badge-green { background: var(--green); color: white; padding: 3px 10px; border-radius: 99px; font-size: 0.8rem; font-weight: 700; }
+.badge-red { background: var(--red); color: white; padding: 3px 10px; border-radius: 99px; font-size: 0.8rem; font-weight: 700; }
+.badge-amber { background: var(--amber); color: var(--slate); padding: 3px 10px; border-radius: 99px; font-size: 0.8rem; font-weight: 700; }
+.badge-grey { background: var(--grey); color: white; padding: 3px 10px; border-radius: 99px; font-size: 0.8rem; font-weight: 700; }
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+{% block body %}{% endblock %}
+</body>
+</html>
