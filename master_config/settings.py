@@ -23,9 +23,7 @@ INSTALLED_APPS = [
     'cinqo',
     'blokus',
     'scattegories',
-    'scattegories.answers.apps.AnswersConfig',
-    'scattegories.game_core.apps.GameCoreConfig',
-    'scattegories.players.apps.PlayersConfig',
+
     'yahtzee',
 ]
 
