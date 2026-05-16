@@ -1,8 +1,4 @@
-from django.urls import path
-from . import views   # ← correct import
+from django.shortcuts import render
 
-app_name = "scattegories"
-
-urlpatterns = [
-    path('', views.landing, name='index'),
-]
+def landing(request):
+    return render(request, "scattegories_landing.html")
