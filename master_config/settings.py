@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'labyrinth.game',
     'fivecrowns',
     'cinqo',
+    'yahtzee',
 ]
 
 MIDDLEWARE = [

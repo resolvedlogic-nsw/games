@@ -9,4 +9,5 @@ urlpatterns = [
     path('fivecrowns/', include('fivecrowns.urls')),
     path('knightstrap/', include('knightstrap.urls')),
     path('labyrinth/', include('labyrinth.game.urls')),
+    path('yahtzee/', include('yahtzee.urls')),
 ]
