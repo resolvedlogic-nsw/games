@@ -2,84 +2,402 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Launcher</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --gold: #d4a843;
+            --gold-bright: #f0c860;
+            --gold-dim: #8a6820;
+            --ember: #ff5e1a;
+            --deep: #06030f;
+            --mid: #0e0820;
+            --surface: #14102a;
+        }
+
+        html, body {
+            min-height: 100vh;
+            background: var(--deep);
+            overflow-x: hidden;
+        }
+
         body {
-            margin: 0;
-            padding: 0;
-            font-family: "Segoe UI", Arial, sans-serif;
-            background: #0d0d0f;
-            color: #e6e6e6;
+            font-family: 'Rajdhani', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            background: radial-gradient(circle at top, #1a1a1d, #0d0d0f 70%);
+            position: relative;
         }
 
-        h1 {
-            font-size: 42px;
-            margin-bottom: 40px;
-            letter-spacing: 2px;
-            color: #ffffff;
-            text-shadow: 0 0 12px #6a00ff;
+        /* ── Starfield ── */
+        #stars-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
         }
 
-        .button-container {
+        /* ── Atmospheric glow ── */
+        .atmos {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .atmos-1 {
+            width: 600px; height: 400px;
+            background: radial-gradient(ellipse, rgba(106,0,255,0.18), transparent 70%);
+            top: -100px; left: 50%; transform: translateX(-50%);
+        }
+        .atmos-2 {
+            width: 400px; height: 300px;
+            background: radial-gradient(ellipse, rgba(212,168,67,0.12), transparent 70%);
+            bottom: 60px; left: 50%; transform: translateX(-50%);
+        }
+
+        /* ── Main wrapper ── */
+        .wrapper {
+            position: relative;
+            z-index: 1;
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            width: 320px;
+            align-items: center;
+            padding: 60px 24px 80px;
+            width: 100%;
+            max-width: 560px;
         }
 
-        a.game-button {
-            display: block;
-            padding: 16px 20px;
-            background: #1f1f24;
-            color: #ffffff;
-            text-decoration: none;
-            font-size: 20px;
-            border-radius: 10px;
-            border: 2px solid #6a00ff;
+        /* ── Crown icon ── */
+        .crown {
+            margin-bottom: 16px;
+            animation: float 4s ease-in-out infinite;
+        }
+        .crown svg {
+            width: 64px; height: 64px;
+            filter: drop-shadow(0 0 18px rgba(212,168,67,0.7));
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* ── Title ── */
+        .title-wrap {
             text-align: center;
-            transition: 
-                background 0.25s ease,
-                transform 0.15s ease,
-                box-shadow 0.25s ease;
+            margin-bottom: 12px;
+        }
+        .eyebrow {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 300;
+            font-size: 13px;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            color: var(--gold-dim);
+            margin-bottom: 10px;
+        }
+        h1 {
+            font-family: 'Cinzel Decorative', serif;
+            font-weight: 900;
+            font-size: clamp(28px, 6vw, 48px);
+            line-height: 1.1;
+            letter-spacing: 3px;
+            background: linear-gradient(160deg, #f0c860 0%, #d4a843 40%, #ff8c30 80%, #f0c860 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 30px rgba(212,168,67,0.4));
         }
 
+        /* ── Divider ── */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 22px 0 36px;
+            width: 100%;
+            max-width: 420px;
+        }
+        .divider-line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--gold-dim));
+        }
+        .divider-line:last-child {
+            background: linear-gradient(to left, transparent, var(--gold-dim));
+        }
+        .divider-gem {
+            width: 8px; height: 8px;
+            background: var(--gold);
+            transform: rotate(45deg);
+            box-shadow: 0 0 8px var(--gold);
+        }
+
+        /* ── Button grid ── */
+        .button-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        /* ── Individual game button ── */
+        a.game-button {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 24px;
+            text-decoration: none;
+            border-radius: 4px;
+            overflow: hidden;
+            background: var(--surface);
+            border: 1px solid rgba(212,168,67,0.25);
+            transition: border-color 0.3s, transform 0.2s;
+            cursor: pointer;
+        }
+
+        /* Corner accents */
+        a.game-button::before,
+        a.game-button::after {
+            content: '';
+            position: absolute;
+            width: 12px; height: 12px;
+            border-color: var(--gold);
+            border-style: solid;
+            opacity: 0.6;
+            transition: opacity 0.3s, width 0.3s, height 0.3s;
+        }
+        a.game-button::before {
+            top: -1px; left: -1px;
+            border-width: 2px 0 0 2px;
+        }
+        a.game-button::after {
+            bottom: -1px; right: -1px;
+            border-width: 0 2px 2px 0;
+        }
+
+        /* Sweep fill on hover */
+        .btn-fill {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(105deg, rgba(212,168,67,0.12) 0%, rgba(255,94,26,0.08) 100%);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        .btn-label {
+            position: relative;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            font-size: 20px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #d8cfa8;
+            transition: color 0.3s;
+        }
+
+        .btn-icon {
+            position: relative;
+            font-size: 20px;
+            color: var(--gold-dim);
+            transition: color 0.3s, transform 0.3s;
+            flex-shrink: 0;
+        }
+
+        /* Hover state */
         a.game-button:hover {
-            background: #6a00ff;
-            transform: translateY(-4px);
-            box-shadow: 0 0 18px #6a00ff;
+            border-color: rgba(212,168,67,0.7);
+            transform: translateX(4px);
+        }
+        a.game-button:hover::before,
+        a.game-button:hover::after {
+            opacity: 1;
+            width: 18px; height: 18px;
+        }
+        a.game-button:hover .btn-fill {
+            transform: scaleX(1);
+        }
+        a.game-button:hover .btn-label {
+            color: var(--gold-bright);
+        }
+        a.game-button:hover .btn-icon {
+            color: var(--gold);
+            transform: translateX(5px);
         }
 
         a.game-button:active {
-            transform: translateY(0);
-            box-shadow: 0 0 8px #6a00ff;
+            transform: translateX(2px) scale(0.98);
         }
 
+        /* Staggered entrance */
+        a.game-button {
+            opacity: 0;
+            animation: slideIn 0.6s cubic-bezier(0.2,0,0,1) forwards;
+        }
+        a.game-button:nth-child(1) { animation-delay: 0.3s; }
+        a.game-button:nth-child(2) { animation-delay: 0.42s; }
+        a.game-button:nth-child(3) { animation-delay: 0.54s; }
+        a.game-button:nth-child(4) { animation-delay: 0.66s; }
+        a.game-button:nth-child(5) { animation-delay: 0.78s; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Heading entrance */
+        .crown { opacity: 0; animation: fadeDown 0.8s ease 0.05s forwards; }
+        .eyebrow { opacity: 0; animation: fadeDown 0.7s ease 0.15s forwards; }
+        h1 { opacity: 0; animation: fadeDown 0.7s ease 0.22s forwards; }
+        .divider { opacity: 0; animation: fadeIn 0.6s ease 0.35s forwards; }
+
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        /* ── Footer ── */
         footer {
-            margin-top: 50px;
-            font-size: 14px;
-            opacity: 0.5;
+            position: fixed;
+            bottom: 20px;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 300;
+            font-size: 12px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--gold-dim);
+            opacity: 0.6;
+            z-index: 1;
         }
     </style>
 </head>
 <body>
 
-    <h1>Game Launcher</h1>
+    <canvas id="stars-canvas"></canvas>
+    <div class="atmos atmos-1"></div>
+    <div class="atmos atmos-2"></div>
 
-    <div class="button-container">
-        <a class="game-button" href="{% url 'cinqo:index' %}">Play Cinqo</a>
-        <a class="game-button" href="{% url 'fivecrowns:index' %}">Play Five Crowns</a>
-        <a class="game-button" href="{% url 'knightstrap:index' %}">Play Knightstrap</a>
-        <a class="game-button" href="{% url 'labyrinth:index' %}">Play Labyrinth</a>
-        <a class="game-button" href="{% url 'yahtzee:index' %}">Play Yahtzee</a>
+    <div class="wrapper">
+        <div class="crown">
+            <svg viewBox="0 0 64 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 44 L12 16 L24 30 L32 8 L40 30 L52 16 L60 44 Z"
+                      fill="none" stroke="#d4a843" stroke-width="2.5"
+                      stroke-linejoin="round" stroke-linecap="round"/>
+                <circle cx="32" cy="8" r="3.5" fill="#f0c860"/>
+                <circle cx="12" cy="16" r="2.5" fill="#d4a843"/>
+                <circle cx="52" cy="16" r="2.5" fill="#d4a843"/>
+                <line x1="4" y1="44" x2="60" y2="44" stroke="#d4a843" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+        </div>
+
+        <div class="title-wrap">
+            <p class="eyebrow">Resolved Logic</p>
+            <h1>Game Vault</h1>
+        </div>
+
+        <div class="divider">
+            <div class="divider-line"></div>
+            <div class="divider-gem"></div>
+            <div class="divider-line"></div>
+        </div>
+
+        <nav class="button-grid" aria-label="Game selection">
+            <a class="game-button" href="{% url 'cinqo:index' %}">
+                <div class="btn-fill"></div>
+                <span class="btn-label">Cinqo</span>
+                <span class="btn-icon" aria-hidden="true">&#8594;</span>
+            </a>
+            <a class="game-button" href="{% url 'fivecrowns:index' %}">
+                <div class="btn-fill"></div>
+                <span class="btn-label">Five Crowns</span>
+                <span class="btn-icon" aria-hidden="true">&#8594;</span>
+            </a>
+            <a class="game-button" href="{% url 'knightstrap:index' %}">
+                <div class="btn-fill"></div>
+                <span class="btn-label">Knightstrap</span>
+                <span class="btn-icon" aria-hidden="true">&#8594;</span>
+            </a>
+            <a class="game-button" href="{% url 'labyrinth:index' %}">
+                <div class="btn-fill"></div>
+                <span class="btn-label">Labyrinth</span>
+                <span class="btn-icon" aria-hidden="true">&#8594;</span>
+            </a>
+            <a class="game-button" href="{% url 'scattegories.game:index' %}">
+                <div class="btn-fill"></div>
+                <span class="btn-label">Scattegories</span>
+                <span class="btn-icon" aria-hidden="true">&#8594;</span>
+            </a>
+            <a class="game-button" href="{% url 'yahtzee:index' %}">
+                <div class="btn-fill"></div>
+                <span class="btn-label">yahtzee</span>
+                <span class="btn-icon" aria-hidden="true">&#8594;</span>
+            </a>
+        </nav>
     </div>
 
     <footer>games.resolvedlogic.com.au</footer>
 
+    <script>
+        const canvas = document.getElementById('stars-canvas');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function mkStar() {
+            return {
+                x: Math.random() * W,
+                y: Math.random() * H,
+                r: Math.random() * 1.4 + 0.2,
+                speed: Math.random() * 0.15 + 0.02,
+                twinkle: Math.random() * Math.PI * 2,
+                twinkleSpeed: Math.random() * 0.02 + 0.005,
+                gold: Math.random() < 0.12
+            };
+        }
+
+        function init() {
+            resize();
+            stars = Array.from({ length: 220 }, mkStar);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            for (const s of stars) {
+                s.twinkle += s.twinkleSpeed;
+                const alpha = 0.35 + 0.55 * Math.abs(Math.sin(s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = s.gold
+                    ? `rgba(212,168,67,${alpha})`
+                    : `rgba(210,200,255,${alpha * 0.7})`;
+                ctx.fill();
+
+                s.y -= s.speed;
+                if (s.y < -2) { s.y = H + 2; s.x = Math.random() * W; }
+            }
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); });
+        init();
+        draw();
+    </script>
 </body>
 </html>

@@ -6,8 +6,11 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('gamehub.urls')),
     path('cinqo/', include('cinqo.urls')),
+    path('yahtzee/', include('yahtzee.urls')),
     path('fivecrowns/', include('fivecrowns.urls')),
     path('knightstrap/', include('knightstrap.urls')),
     path('labyrinth/', include('labyrinth.game.urls')),
-    path('yahtzee/', include('yahtzee.urls')),
+    path('scattegories/', include('scattegories.urls')),
+    path('blokus/', include('blokus.urls', namespace='blokus')),
+    
 ]

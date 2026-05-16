@@ -21,6 +21,11 @@ INSTALLED_APPS = [
     'labyrinth.game',
     'fivecrowns',
     'cinqo',
+    'blokus',
+    'scattegories',
+    'scattegories.answers.apps.AnswersConfig',
+    'scattegories.game_core.apps.GameCoreConfig',
+    'scattegories.players.apps.PlayersConfig',
     'yahtzee',
 ]
 
@@ -42,6 +47,8 @@ TEMPLATES = [
         'DIRS': [
             BASE_DIR / 'gamehub' / 'templates',
             BASE_DIR / 'labyrinth' / 'templates',
+            BASE_DIR / 'scattegories/templates',
+            BASE_DIR / 'blokus' / 'templates',
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -71,3 +78,5 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
+TIME_ZONE = 'Australia/Melbourne'
