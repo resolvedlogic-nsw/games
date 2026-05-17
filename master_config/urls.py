@@ -10,7 +10,7 @@ urlpatterns = [
     path('fivecrowns/', include('fivecrowns.urls')),
     path('knightstrap/', include('knightstrap.urls')),
     path('labyrinth/', include('labyrinth.game.urls')),
-    path('scattegories/', include('scattegories.urls')),
+    #path('scattegories/', include('scattegories.urls')),
     path('blokus/', include('blokus.urls', namespace='blokus')),
  
     
