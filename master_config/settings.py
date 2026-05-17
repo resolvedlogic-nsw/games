@@ -23,8 +23,8 @@ INSTALLED_APPS = [
     'cinqo',
     'blokus',
     'scattegories',
-
     'yahtzee',
+    'jezzball'
 ]
 
 MIDDLEWARE = [

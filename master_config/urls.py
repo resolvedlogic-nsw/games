@@ -12,5 +12,6 @@ urlpatterns = [
     path('labyrinth/', include('labyrinth.game.urls')),
     path('scattegories/', include('scattegories.urls')),
     path('blokus/', include('blokus.urls', namespace='blokus')),
+    path('jezzball/', include('jezzball.urls')),
     
 ]
