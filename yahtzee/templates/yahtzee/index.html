@@ -9,6 +9,47 @@
 html, body { margin:0; height:100%; background:#1a4d2e; font-family:system-ui,sans-serif; color:white; overflow:hidden; }
 #app { width:100vw; height:100vh; display:flex; flex-direction:column; }
 
+/* MODE SELECT OVERLAY */
+#mode-overlay {
+  position:fixed; inset:0; z-index:50000;
+  background:linear-gradient(135deg,#0d2818 0%,#1a4d2e 50%,#0d2818 100%);
+  display:flex; align-items:center; justify-content:center;
+  transition: opacity 0.4s ease;
+}
+#mode-overlay.hide { opacity:0; pointer-events:none; }
+#mode-box {
+  text-align:center; padding:50px 60px;
+  background:rgba(0,0,0,0.3); border:2px solid #27543a;
+  border-radius:24px; box-shadow:0 20px 60px rgba(0,0,0,0.6);
+  max-width:440px; width:90vw;
+}
+#mode-box h1 { font-size:2.8rem; margin:0 0 6px; letter-spacing:3px; color:#fbbf24; text-shadow:0 0 30px rgba(251,191,36,0.4); }
+#mode-box p { color:#4a7c5e; font-size:0.9rem; margin:0 0 36px; letter-spacing:2px; text-transform:uppercase; }
+.mode-btn {
+  display:block; width:100%; margin:12px 0; padding:18px 24px;
+  font-size:1.15rem; font-weight:bold; border-radius:14px; border:2px solid transparent;
+  cursor:pointer; transition:all 0.2s; text-align:center;
+}
+.mode-btn-p2 { background:#fbbf24; color:#0d2818; border-color:#fbbf24; }
+.mode-btn-p2:hover { background:#fcd34d; transform:scale(1.03); box-shadow:0 6px 20px rgba(251,191,36,0.4); }
+.mode-btn-cpu { background:transparent; color:#60a5fa; border-color:#60a5fa; }
+.mode-btn-cpu:hover { background:rgba(96,165,250,0.12); transform:scale(1.03); box-shadow:0 6px 20px rgba(96,165,250,0.3); }
+.mode-sub { font-size:0.75rem; opacity:0.7; display:block; margin-top:3px; font-weight:normal; }
+
+/* CPU THINKING INDICATOR */
+#cpu-thinking {
+  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  background:rgba(13,40,24,0.95); border:2px solid #60a5fa; border-radius:16px;
+  padding:20px 36px; z-index:40000; text-align:center;
+  opacity:0; transition:opacity 0.3s; pointer-events:none;
+}
+#cpu-thinking.show { opacity:1; }
+#cpu-thinking p { margin:0; color:#60a5fa; font-size:1rem; font-weight:bold; letter-spacing:2px; }
+.cpu-dots span { animation:blink 1.2s infinite; display:inline-block; }
+.cpu-dots span:nth-child(2) { animation-delay:0.2s; }
+.cpu-dots span:nth-child(3) { animation-delay:0.4s; }
+@keyframes blink { 0%,80%,100%{opacity:0} 40%{opacity:1} }
+
 /* SCOREBOARD */
 #scoreboard {
   height:9%; display:flex; justify-content:space-around; align-items:center;
@@ -20,7 +61,6 @@ html, body { margin:0; height:100%; background:#1a4d2e; font-family:system-ui,sa
 .player:nth-child(1).active { color:#fbbf24; }
 .player:nth-child(3).active { color:#60a5fa; }
 #roll-counter { color:#94a3b8; font-size:1rem; text-align:center; line-height:1.4; }
-
 /* HOLD BAR */
 #hold-bar {
   position:relative; height:16%;
@@ -45,7 +85,6 @@ html, body { margin:0; height:100%; background:#1a4d2e; font-family:system-ui,sa
   color:rgba(255,255,255,0.18); text-transform:uppercase; letter-spacing:2px;
   pointer-events:none; bottom:4px; left:50%; transform:translateX(-50%); white-space:nowrap;
 }
-
 /* BUTTONS */
 button {
   font-size:0.95rem; font-weight:bold; padding:10px 22px;
@@ -54,7 +93,6 @@ button {
 }
 button:hover:not(:disabled) { background:#fcd34d; transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,0.4); }
 button:disabled { background:#2d5f47; color:#4a7c5e; cursor:not-allowed; box-shadow:none; transform:none; }
-
 /* CORNER PLAY AREA BUTTONS */
 #rollBtn {
   position: absolute;
@@ -76,10 +114,8 @@ button:disabled { background:#2d5f47; color:#4a7c5e; cursor:not-allowed; box-sha
   border:1px solid #2d5f47;
 }
 #newGameBtn:hover { background:#2d5f47; color:#fff; }
-
 /* GAME CONTAINER */
 #game-container { display:flex; flex:1; width:100%; overflow:hidden; min-height:0; }
-
 /* LEFT SIDEBAR — scorecard */
 #left-sidebar {
   width:245px; background:#0d2818; border-right:1px solid #27543a;
@@ -143,7 +179,6 @@ button:disabled { background:#2d5f47; color:#4a7c5e; cursor:not-allowed; box-sha
 .sc-total-row span:last-child { font-size:1.2rem; }
 .p1-card .sc-total-row span:last-child { color:#fbbf24; }
 .p2-card .sc-total-row span:last-child { color:#60a5fa; }
-
 /* DICE TABLE */
 #dice-table {
   position:relative; flex:1;
@@ -159,7 +194,6 @@ button:disabled { background:#2d5f47; color:#4a7c5e; cursor:not-allowed; box-sha
   font-size:0.62rem; color:rgba(255,255,255,0.18); letter-spacing:2px;
   text-transform:uppercase; pointer-events:none; white-space:nowrap;
 }
-
 /* RIGHT SIDEBAR */
 #right-sidebar {
   width:215px; background:#0d2818; border-left:1px solid #27543a;
@@ -187,7 +221,6 @@ button:disabled { background:#2d5f47; color:#4a7c5e; cursor:not-allowed; box-sha
 #log-panel h3 { font-size:0.7rem; letter-spacing:2px; color:#4a7c5e; margin:0 0 5px; text-align:center; text-transform:uppercase; }
 #log-list { list-style:none; padding:0; margin:0; font-size:0.72rem; }
 #log-list li { padding:3px 0; border-bottom:1px solid #1a3d28; color:#94a3b8; }
-
 /* 3-D DICE */
 .die-wrapper {
   position:absolute; width:80px; height:80px;
@@ -197,7 +230,6 @@ button:disabled { background:#2d5f47; color:#4a7c5e; cursor:not-allowed; box-sha
 .die-wrapper.held-die { position:absolute; cursor:grab; }
 .die-wrapper.held-die:hover { filter:drop-shadow(0 0 10px rgba(251,191,36,0.7)); }
 .die-wrapper.sliding-transit { pointer-events:none; cursor:default; z-index:5000; }
-
 .cube { width:70px; height:70px; position:absolute; top:5px; left:5px; transform-style:preserve-3d; pointer-events:none; }
 .face {
   position:absolute; width:70px; height:70px;
@@ -215,7 +247,6 @@ button:disabled { background:#2d5f47; color:#4a7c5e; cursor:not-allowed; box-sha
 .face.left   { transform:rotateY(-90deg) translateZ(35px); }
 .face.top    { transform:rotateX(90deg)  translateZ(35px); }
 .face.bottom { transform:rotateX(-90deg) translateZ(35px); }
-
 .pip-grid {
   display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr);
   width:100%; height:100%; padding:12%;
@@ -225,7 +256,6 @@ button:disabled { background:#2d5f47; color:#4a7c5e; cursor:not-allowed; box-sha
   justify-self:center; align-self:center;
 }
 .face.blank .pip { opacity:0; }
-
 /* SCORE POPUP */
 #score-popup {
   position:fixed; top:50%; left:50%;
@@ -246,7 +276,6 @@ button:disabled { background:#2d5f47; color:#4a7c5e; cursor:not-allowed; box-sha
 #score-popup.ytz-popup .final-score { color:#a855f7; text-shadow:0 0 20px rgba(168,85,247,0.5); }
 #score-popup button { margin-top:14px; font-size:1.1rem; }
 .popup-timer { font-size:0.7rem; color:#4a7c5e; margin-top:8px; letter-spacing:1px; }
-
 /* WINNER */
 #fireworks-canvas { position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:29999; pointer-events:none; }
 #winner-overlay { position:fixed; inset:0; z-index:30000; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.5s ease; }
@@ -275,20 +304,39 @@ button:disabled { background:#2d5f47; color:#4a7c5e; cursor:not-allowed; box-sha
 </style>
 </head>
 <body>
-<div id="app">
 
+<!-- MODE SELECT -->
+<div id="mode-overlay">
+  <div id="mode-box">
+    <h1>🎲 CINQO</h1>
+    <p>Yahtzee · Select Mode</p>
+    <button class="mode-btn mode-btn-p2" onclick="startGame(false)">
+      2 Players
+      <span class="mode-sub">Pass & play on one screen</span>
+    </button>
+    <button class="mode-btn mode-btn-cpu" onclick="startGame(true)">
+      vs CPU 🤖
+      <span class="mode-sub">Play against a smart computer opponent</span>
+    </button>
+  </div>
+</div>
+
+<!-- CPU THINKING -->
+<div id="cpu-thinking">
+  <p>CPU thinking<span class="cpu-dots"><span>.</span><span>.</span><span>.</span></span></p>
+</div>
+
+<div id="app">
   <div id="scoreboard">
     <div class="player active" id="p1-banner">P1: <span id="p1score">0</span></div>
     <div id="roll-counter">Roll <span id="rolls">0</span> / 3</div>
     <div class="player" id="p2-banner">P2: <span id="p2score">0</span></div>
   </div>
-
   <div id="hold-bar">
     <div id="hold-area">
       <div class="area-label">HOLD — double-click or drag to park in spaces · double-click held die to return</div>
     </div>
   </div>
-
   <div id="game-container">
     <div id="left-sidebar">
       <div id="scorecard-tabs">
@@ -298,14 +346,11 @@ button:disabled { background:#2d5f47; color:#4a7c5e; cursor:not-allowed; box-sha
       <div class="scorecard-panel p1-card visible" id="panel-p1"></div>
       <div class="scorecard-panel p2-card"         id="panel-p2"></div>
     </div>
-
     <div id="dice-table">
       <button id="rollBtn">Roll Dice</button>
       <button id="newGameBtn" onclick="confirmNew()">New Game</button>
-      
       <div id="dbl-hint">Double-click a die to hold/release · click scorecard or suggestion to score</div>
     </div>
-
     <div id="right-sidebar">
       <div id="suggest-panel">
         <h3>SUGGESTIONS</h3>
@@ -318,13 +363,33 @@ button:disabled { background:#2d5f47; color:#4a7c5e; cursor:not-allowed; box-sha
     </div>
   </div>
 </div>
-
 <script>
 // ================================================================ CONSTANTS
 const NUM_DICE=5, MAX_ROLLS=3;
 const GRAVITY=0.55, BOUNCE_DAMP=0.52, FRICTION=0.90, MIN_VEL=0.5;
 const FLAT_ROT={1:{x:0,y:0,z:0},2:{x:-90,y:0,z:0},3:{x:0,y:-90,z:0},4:{x:0,y:90,z:0},5:{x:90,y:0,z:0},6:{x:0,y:180,z:0}};
 const VAL_FACE={1:'front',2:'top',3:'right',4:'left',5:'bottom',6:'back'};
+
+// ================================================================ GAME MODE
+let isCPUMode = false;
+let cpuIsThinking = false;
+
+function startGame(cpu) {
+  isCPUMode = cpu;
+  const overlay = document.getElementById('mode-overlay');
+  overlay.classList.add('hide');
+  setTimeout(() => { overlay.style.display='none'; }, 400);
+
+  // Update labels
+  if (cpu) {
+    document.getElementById('p2-banner').innerHTML = '🤖 CPU: <span id="p2score">0</span>';
+    document.getElementById('tab-p2').textContent = 'CPU CARD';
+  }
+
+  initHoldSlots();
+  initDice();
+  renderCard(0); renderCard(1); switchTab(0);
+}
 
 // ================================================================ CATEGORIES
 const UPPER=[
@@ -344,7 +409,6 @@ const LOWER=[
   {key:'yahtzee',  name:'YAHTZEE',     hint:'5 alike → 50 pts'},
   {key:'chance',   name:'Chance',      hint:'Sum of all'},
 ];
-
 function calcScore(key,vals){
   const c=[0,0,0,0,0,0,0]; vals.forEach(v=>c[v]++);
   const sum=vals.reduce((a,b)=>a+b,0);
@@ -365,12 +429,10 @@ function calcScore(key,vals){
   }
   return 0;
 }
-
 function isYahtzeeWildcard(p, vals) {
   const isYtz = vals.every(v => v === vals[0]);
   return isYtz && SD[p].yahtzee === 50;
 }
-
 function upperTotal(p){return UPPER.reduce((s,cat)=>{const v=SD[p][cat.key];return s+(v!==null?v:0);},0);}
 function bonus(p){return upperTotal(p)>=63?35:0;}
 function yBonusTotal(p){return (SD[p].yahtzeeBonuses||0)*100;}
@@ -380,7 +442,6 @@ function grandTotal(p){return upperTotal(p)+bonus(p)+LOWER.reduce((s,cat)=>{cons
 function blank(){return {ones:null,twos:null,threes:null,fours:null,fives:null,sixes:null,threeKind:null,fourKind:null,fullHouse:null,smStr:null,lgStr:null,yahtzee:null,chance:null,yahtzeeBonuses:0};}
 let SD=[blank(),blank()];
 let curP=0, rollsN=0, flying=false, transitBusy=false, rafId=null, dragged=null, dice=[], rolled=false;
-
 let holdSlots = [null, null, null, null, null];
 
 // ================================================================ DOM
@@ -390,7 +451,6 @@ const ROLLBTN=document.getElementById('rollBtn');
 const ROLLDISP=document.getElementById('rolls');
 const P1BAN  =document.getElementById('p1-banner');
 const P2BAN  =document.getElementById('p2-banner');
-
 function initHoldSlots() {
   for (let i = 0; i < 5; i++) {
     const slotMarker = document.createElement('div');
@@ -407,7 +467,6 @@ function mkPips(v){
   PM[v].forEach(([col,row])=>{const p=document.createElement('div');p.className='pip';p.style.gridColumn=col;p.style.gridRow=row;g.appendChild(p);});
   return g;
 }
-
 function buildFaces(die,blank){
   die.cube.innerHTML='';
   const sides=['front','back','right','left','top','bottom'],vals=[1,6,3,4,2,5];
@@ -417,13 +476,11 @@ function buildFaces(die,blank){
     f.appendChild(mkPips(vals[i]));
     die.cube.appendChild(f);
   });
-  
   const t = FLAT_ROT[die.value];
   if(t) {
     die.cube.style.transform = `rotateX(${t.x}deg) rotateY(${t.y}deg) rotateZ(${t.z}deg)`;
   }
 }
-
 function highlightFace(die){
   die.cube.querySelectorAll('.face').forEach(f=>{f.classList.remove('active','blank');});
   const f=die.cube.querySelector('.face.'+VAL_FACE[die.value]);
@@ -432,7 +489,6 @@ function highlightFace(die){
 
 // ================================================================ CREATE DIE
 function rand(a,b){return Math.random()*(b-a)+a;}
-
 function mkDie(id){
   const w=document.createElement('div');
   w.className=`die-wrapper p${curP+1}-die`; w.dataset.id=id;
@@ -441,50 +497,42 @@ function mkDie(id){
   const tr=TABLE.getBoundingClientRect();
   const die={id,wrapper:w,cube,x:tr.width/2+rand(-110,110)-40,y:-90,vx:0,vy:0,angV:0,rot:{x:rand(0,360),y:rand(0,360),z:rand(0,360)},value:1,zone:'table',settled:true,collided:false,sf:0,preRoll:true,currentSlot:null};
   buildFaces(die,true);
-  
+
   w.addEventListener('mousedown',e=>{
-    if(e.detail===1) startDrag(e,die);
+    if(e.detail===1 && !cpuIsThinking) startDrag(e,die);
   });
-  w.addEventListener('dblclick',()=>{ if(!transitBusy) toggleDieZoneAnimated(die); });
-  w.addEventListener('touchstart',e=>startDrag(e.touches[0],die),{passive:true});
+  w.addEventListener('dblclick',()=>{ if(!transitBusy && !cpuIsThinking) toggleDieZoneAnimated(die); });
+  w.addEventListener('touchstart',e=>{ if(!cpuIsThinking) startDrag(e.touches[0],die); },{passive:true});
   dice.push(die);
   return die;
 }
-
 function wakeDie(d){d.settled=false;d.collided=false;d.sf=0;d.angV=rand(-15,15);}
 
-// ================================================================ 0.5s SMOOTH SLIDE ANIMATION
+// ================================================================ SMOOTH SLIDE ANIMATION
 function toggleDieZoneAnimated(die) {
   if(!rolled||flying||transitBusy) return;
-  
+
   const appContainer = document.getElementById('app');
   const appRect = appContainer.getBoundingClientRect();
   const sr = die.wrapper.getBoundingClientRect();
-  
-  // Track global viewport workspace positions
+
   const startX = sr.left - appRect.left;
   const startY = sr.top - appRect.top;
   let targetX, targetY;
   let targetSlotIdx = -1;
-
   if(die.zone === 'table') {
     targetSlotIdx = holdSlots.findIndex(s => s === null);
-    if(targetSlotIdx === -1) return; // Full capacity
-    
-    // Reserve slot spot immediately
+    if(targetSlotIdx === -1) return;
     holdSlots[targetSlotIdx] = die;
     const slotBox = document.getElementById(`hold-slot-${targetSlotIdx}`).getBoundingClientRect();
     targetX = slotBox.left - appRect.left;
     targetY = slotBox.top - appRect.top;
   } else {
-    if(die.currentSlot !== null) {
-      holdSlots[die.currentSlot] = null;
-    }
+    if(die.currentSlot !== null) { holdSlots[die.currentSlot] = null; }
     const tr = TABLE.getBoundingClientRect();
     targetX = (tr.left - appRect.left) + tr.width / 2 - 40 + rand(-80, 80);
     targetY = (tr.top - appRect.top) + tr.height * 0.35 + rand(-30, 30);
   }
-
   transitBusy = true;
   die.wrapper.classList.add('sliding-transit');
   die.wrapper.style.position = 'absolute';
@@ -492,28 +540,20 @@ function toggleDieZoneAnimated(die) {
   die.wrapper.style.top = startY + 'px';
   die.wrapper.style.zIndex = '5000';
   appContainer.appendChild(die.wrapper);
-
-  const duration = 500; // Exactly 0.5 seconds
+  const duration = 500;
   const startTime = performance.now();
-
   function step(now) {
     const elapsed = now - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    
-    // Smooth linear interpolation flight path track
     const currentX = startX + (targetX - startX) * progress;
     const currentY = startY + (targetY - startY) * progress;
-    
     die.wrapper.style.left = currentX + 'px';
     die.wrapper.style.top = currentY + 'px';
-
     if (progress < 1) {
       requestAnimationFrame(step);
     } else {
-      // Land destination processing blocks
       die.wrapper.classList.remove('sliding-transit');
       die.wrapper.style.zIndex = '';
-
       if (die.zone === 'table') {
         die.zone = 'hold';
         die.currentSlot = targetSlotIdx;
@@ -545,24 +585,17 @@ function toggleDieZoneAnimated(die) {
   }
   requestAnimationFrame(step);
 }
-
 function moveDieToSlotDirect(die, slotIdx) {
-  if(die.currentSlot !== null) {
-    holdSlots[die.currentSlot] = null;
-  }
-  
+  if(die.currentSlot !== null) { holdSlots[die.currentSlot] = null; }
   die.zone = 'hold';
   die.currentSlot = slotIdx;
   holdSlots[slotIdx] = die;
-  
   const targetSlotMarker = document.getElementById(`hold-slot-${slotIdx}`);
   targetSlotMarker.appendChild(die.wrapper);
-  
   die.wrapper.classList.add('held-die');
   die.wrapper.style.left = '0px';
   die.wrapper.style.top = '0px';
   die.wrapper.style.position = 'absolute';
-  
   buildFaces(die, false);
   highlightFace(die);
 }
@@ -581,40 +614,29 @@ document.addEventListener('mousemove',e=>{if(!dragged)return;dragged.wrapper.sty
 document.addEventListener('touchmove',e=>{if(!dragged)return;dragged.wrapper.style.left=(e.touches[0].clientX-40)+'px';dragged.wrapper.style.top=(e.touches[0].clientY-40)+'px';},{passive:true});
 document.addEventListener('mouseup',e=>endDrag(e));
 document.addEventListener('touchend',e=>endDrag(e.changedTouches[0]));
-
 function endDrag(e){
   if(!dragged) return;
   const die=dragged; dragged=null;
   die.wrapper.classList.remove('dragging');
-  
   const cx = e.clientX, cy = e.clientY;
   const tr = TABLE.getBoundingClientRect();
-  
   let droppedOnSlotIdx = -1;
   for (let i = 0; i < 5; i++) {
     const box = document.getElementById(`hold-slot-${i}`).getBoundingClientRect();
     if (cx >= box.left && cx <= box.right && cy >= box.top && cy <= box.bottom) {
-      droppedOnSlotIdx = i;
-      break;
+      droppedOnSlotIdx = i; break;
     }
   }
-
   if (droppedOnSlotIdx !== -1) {
     if (holdSlots[droppedOnSlotIdx] === null || holdSlots[droppedOnSlotIdx] === die) {
       moveDieToSlotDirect(die, droppedOnSlotIdx);
     } else {
       let lowestOpenIdx = holdSlots.findIndex(s => s === null);
-      if (lowestOpenIdx !== -1) {
-        moveDieToSlotDirect(die, lowestOpenIdx);
-      } else {
-        revertDiePlacement(die);
-      }
+      if (lowestOpenIdx !== -1) { moveDieToSlotDirect(die, lowestOpenIdx); }
+      else { revertDiePlacement(die); }
     }
   } else if (cy >= tr.top && cy <= tr.bottom && cx >= tr.left && cx <= tr.right) {
-    if (die.currentSlot !== null) {
-      holdSlots[die.currentSlot] = null;
-      die.currentSlot = null;
-    }
+    if (die.currentSlot !== null) { holdSlots[die.currentSlot] = null; die.currentSlot = null; }
     die.zone = 'table';
     die.wrapper.classList.remove('held-die');
     TABLE.appendChild(die.wrapper);
@@ -623,13 +645,9 @@ function endDrag(e){
     die.wrapper.style.left = die.x + 'px';
     die.wrapper.style.top = die.y + 'px';
     wakeDie(die); if(!rafId) animate();
-  } else {
-    revertDiePlacement(die);
-  }
-  
+  } else { revertDiePlacement(die); }
   renderSug(); renderCard(0); renderCard(1);
 }
-
 function revertDiePlacement(die) {
   die.wrapper.style.position = 'absolute';
   if (die.zone === 'hold') {
@@ -646,7 +664,7 @@ function revertDiePlacement(die) {
 
 // ================================================================ ROLL
 function rollDice(){
-  if(rollsN>=MAX_ROLLS||flying||transitBusy) return;
+  if(rollsN>=MAX_ROLLS||flying||transitBusy||cpuIsThinking) return;
   const td=dice.filter(d=>d.zone==='table');
   if(!td.length){showToast('All dice are held!');return;}
   rollsN++; ROLLDISP.textContent=rollsN; rolled=true; flying=true;
@@ -682,7 +700,193 @@ function animate(){
     d.cube.style.transform=`rotateX(${d.rot.x}deg) rotateY(${d.rot.y}deg) rotateZ(${d.rot.z}deg)`;
   });
   if(still){rafId=requestAnimationFrame(animate);}
-  else{rafId=null;flying=false;dice.forEach(d=>{if(d.zone==='table'&&!d.preRoll)highlightFace(d);});renderSug();renderCard(0);renderCard(1);}
+  else{
+    rafId=null; flying=false;
+    dice.forEach(d=>{if(d.zone==='table'&&!d.preRoll)highlightFace(d);});
+    renderSug(); renderCard(0); renderCard(1);
+    // Trigger CPU if it's CPU's turn
+    if(isCPUMode && curP === 1 && rolled) {
+      scheduleCPU();
+    }
+  }
+}
+
+// ================================================================ CPU AI
+function scheduleCPU() {
+  if(cpuIsThinking) return;
+  cpuIsThinking = true;
+  ROLLBTN.disabled = true;
+  document.getElementById('cpu-thinking').classList.add('show');
+  setTimeout(doCPUTurn, 900 + Math.random() * 600);
+}
+
+function cpuChooseDiceToHold(vals) {
+  // Returns array of indices to HOLD (move to hold zone)
+  const c = [0,0,0,0,0,0,0]; vals.forEach(v => c[v]++);
+  const sc = SD[1];
+
+  // Priority-based holding strategy
+  // 1. Yahtzee in progress (4+ of a kind)
+  for(let v=1;v<=6;v++) {
+    if(c[v] >= 4) return vals.map((d,i) => d===v ? i : -1).filter(i=>i>=0);
+  }
+
+  // 2. Almost large straight (4 in a sequence)
+  const u = [...new Set(vals)].sort((a,b)=>a-b);
+  if(u.length >= 4) {
+    let bestRun = [], bestLen = 0;
+    for(let start=0;start<=u.length-4;start++){
+      let run=[u[start]]; let good=true;
+      for(let j=start+1;j<u.length;j++){
+        if(u[j]===u[j-1]+1) run.push(u[j]);
+        else if(u[j]!==u[j-1]) { if(run.length+1 < 4) { good=false; break; } }
+      }
+      if(run.length > bestLen) { bestLen=run.length; bestRun=run; }
+    }
+    // Check for 4-consecutive
+    for(let i=0;i<=u.length-4;i++){
+      if(u[i+1]===u[i]+1 && u[i+2]===u[i]+2 && u[i+3]===u[i]+3){
+        const seqSet = new Set([u[i],u[i+1],u[i+2],u[i+3]]);
+        if(sc.lgStr===null) return vals.map((d,i2) => seqSet.has(d) ? i2 : -1).filter(i2=>i2>=0);
+      }
+    }
+  }
+
+  // 3. Three of a kind
+  for(let v=6;v>=1;v--) {
+    if(c[v] >= 3) return vals.map((d,i) => d===v ? i : -1).filter(i=>i>=0);
+  }
+
+  // 4. Full house setup (2 pairs or pair+triple)
+  const pairs = [], triples = [];
+  for(let v=1;v<=6;v++){ if(c[v]===2) pairs.push(v); if(c[v]===3) triples.push(v); }
+  if(triples.length && pairs.length && sc.fullHouse===null) {
+    return vals.map((d,i) => (triples.includes(d)||pairs.includes(d)) ? i : -1).filter(i=>i>=0);
+  }
+
+  // 5. Small straight fragments (3 consecutive)
+  if(u.length >= 3) {
+    for(let i=0;i<=u.length-3;i++){
+      if(u[i+1]===u[i]+1 && u[i+2]===u[i]+2){
+        const seqSet = new Set([u[i],u[i+1],u[i+2]]);
+        if(sc.smStr===null || sc.lgStr===null) return vals.map((d,i2) => seqSet.has(d) ? i2 : -1).filter(i2=>i2>=0);
+      }
+    }
+  }
+
+  // 6. Keep pairs (prefer high values)
+  for(let v=6;v>=1;v--) {
+    if(c[v] === 2) return vals.map((d,i) => d===v ? i : -1).filter(i=>i>=0);
+  }
+
+  // 7. Keep highest single for upper section if not filled
+  const upperMap = {1:'ones',2:'twos',3:'threes',4:'fours',5:'fives',6:'sixes'};
+  for(let v=6;v>=1;v--) {
+    if(c[v]>0 && sc[upperMap[v]]===null) {
+      return vals.map((d,i) => d===v ? i : -1).filter(i=>i>=0);
+    }
+  }
+
+  // 8. Keep the highest die
+  const maxVal = Math.max(...vals);
+  return [vals.indexOf(maxVal)];
+}
+
+function cpuChooseCategory(vals) {
+  const sc = SD[1];
+  const isWld = isYahtzeeWildcard(1, vals);
+
+  const opts = [...UPPER,...LOWER].filter(c => sc[c.key]===null).map(cat => {
+    let pts = 0;
+    if(isWld) {
+      if(cat.key==='fullHouse') pts=25;
+      else if(cat.key==='smStr') pts=30;
+      else if(cat.key==='lgStr') pts=40;
+      else pts=calcScore(cat.key,vals);
+    } else {
+      pts = calcScore(cat.key,vals);
+    }
+    // Add bonus consideration: if upper section needed
+    let bonus = 0;
+    const upperMap = {ones:1,twos:2,threes:3,fours:4,fives:5,sixes:6};
+    if(upperMap[cat.key] && upperTotal(1) < 63) bonus = pts * 0.3; // slight bias for upper when behind
+    return { ...cat, pts, score: pts + bonus };
+  });
+
+  opts.sort((a,b) => b.score - a.score);
+  return opts[0]?.key || null;
+}
+
+function doCPUTurn() {
+  // CPU decides: roll again and hold, or score?
+  const vals = dice.map(d => d.value);
+  const bestCat = cpuChooseCategory(vals);
+  const bestScore = bestCat ? calcScore(bestCat, vals) : 0;
+
+  const shouldRollAgain = rollsN < MAX_ROLLS && (
+    bestScore < 20 ||
+    (bestScore < 35 && rollsN < 2)
+  );
+
+  if(shouldRollAgain) {
+    // Decide which dice to hold
+    const holdIndices = cpuChooseDiceToHold(vals);
+    // Move un-held dice back to table zone (they're already there), hold the chosen ones
+    // Actually: current dice in table zone will be rerolled, held zone will be kept
+    // First release all held dice back to table
+    dice.forEach(d => {
+      if(d.zone === 'hold') {
+        holdSlots[d.currentSlot] = null;
+        d.zone = 'table';
+        d.currentSlot = null;
+        d.wrapper.classList.remove('held-die');
+        TABLE.appendChild(d.wrapper);
+        const tr = TABLE.getBoundingClientRect();
+        d.x = tr.width/2 + rand(-100,100) - 40;
+        d.y = tr.height * 0.4 + rand(-20,20);
+        d.wrapper.style.left = d.x + 'px';
+        d.wrapper.style.top = d.y + 'px';
+      }
+    });
+
+    // Hold the chosen indices
+    holdIndices.forEach(idx => {
+      const die = dice[idx];
+      if(die && die.zone === 'table') {
+        const slotIdx = holdSlots.findIndex(s => s === null);
+        if(slotIdx !== -1) moveDieToSlotDirect(die, slotIdx);
+      }
+    });
+
+    cpuIsThinking = false;
+    document.getElementById('cpu-thinking').classList.remove('show');
+
+    // Now roll the remaining table dice
+    setTimeout(() => {
+      rollsN++; ROLLDISP.textContent=rollsN; rolled=true; flying=true;
+      const td = dice.filter(d => d.zone==='table');
+      td.forEach(d=>{
+        d.preRoll=false; wakeDie(d);
+        d.value=Math.floor(Math.random()*6)+1;
+        buildFaces(d,false);
+        d.vx=rand(-9,9); d.vy=rand(-17,-11); d.angV=rand(-20,20);
+      });
+      ROLLBTN.disabled=rollsN>=MAX_ROLLS;
+      if(!rafId) animate();
+      renderSug();
+      // animate() will call scheduleCPU() when dice settle
+    }, 600);
+  } else {
+    // Score the best category
+    cpuIsThinking = false;
+    document.getElementById('cpu-thinking').classList.remove('show');
+
+    if(bestCat) {
+      setTimeout(() => {
+        scoreCategory(bestCat);
+      }, 400);
+    }
+  }
 }
 
 // ================================================================ SCORING
@@ -691,7 +895,6 @@ function scoreCategory(key){
   const p=curP, sc=SD[p];
   const vals=dice.map(d=>d.value);
   const isYtz = vals.every(v=>v===vals[0]);
-
   if(key==='yahtzee'){
     if(sc.yahtzee!==null){
       if(isYtz && sc.yahtzee===50) {
@@ -711,19 +914,15 @@ function scoreCategory(key){
     finishScore(pts,'YAHTZEE');
     return;
   }
-
   if(sc[key]!==null){showToast('Already scored!');return;}
-
+  // Only block human scoring on their turn
+  if(isCPUMode && curP===1 && !cpuIsThinking) return;
   let pts = 0;
   if (isYahtzeeWildcard(p, vals)) {
     const matchingNumber = vals[0];
     const upperKey = UPPER[matchingNumber - 1].key;
-    
     if (sc[upperKey] === null) {
-      if (key !== upperKey) {
-        showToast(`Must score in ${UPPER[matchingNumber - 1].name} first per official rules!`);
-        return;
-      }
+      if (key !== upperKey) { showToast(`Must score in ${UPPER[matchingNumber - 1].name} first!`); return; }
       pts = calcScore(key, vals);
     } else {
       if (key === 'fullHouse') pts = 25;
@@ -731,30 +930,27 @@ function scoreCategory(key){
       else if (key === 'lgStr') pts = 40;
       else pts = calcScore(key, vals);
     }
-    
     sc.yahtzeeBonuses = (sc.yahtzeeBonuses || 0) + 1;
     addLog('★ YAHTZEE BONUS +100!');
   } else {
     pts = calcScore(key, vals);
   }
-
   sc[key]=pts;
   const name=[...UPPER,...LOWER].find(c=>c.key===key)?.name||key;
   addLog(name+': +'+pts);
   finishScore(pts,name);
 }
-
 function finishScore(pts,name){
   renderCard(0);renderCard(1);
   if([0,1].every(p=>[...UPPER,...LOWER].every(c=>SD[p][c.key]!==null))){showWinner();return;}
   showTurnPopup(pts,name);
 }
 
-// ================================================================ YAHTZEE POPUP (auto-dismiss 4s)
+// ================================================================ YAHTZEE POPUP
 function showYtzPopup(){
   clearPopup();
   const p=document.createElement('div'); p.id='score-popup'; p.classList.add('ytz-popup');
-  p.innerHTML=`<h2>🎲 YAHTZEE! 🎲</h2><div class="score-detail">Player ${curP+1}</div><div class="final-score">+50 pts</div><div class="popup-timer">Auto-continuing in 4s…</div><button onclick="ytzContinue()">Continue →</button>`;
+  p.innerHTML=`<h2>🎲 YAHTZEE! 🎲</h2><div class="score-detail">${isCPUMode&&curP===1?'CPU':'Player '+(curP+1)}</div><div class="final-score">+50 pts</div><div class="popup-timer">Auto-continuing in 4s…</div><button onclick="ytzContinue()">Continue →</button>`;
   document.body.appendChild(p);
   setTimeout(()=>p.classList.add('show'),40);
   p._tid=setTimeout(ytzContinue,4000);
@@ -772,9 +968,15 @@ function showTurnPopup(pts,name){
   clearPopup();
   const p=document.createElement('div'); p.id='score-popup';
   if(curP===1) p.classList.add('p2-popup');
-  p.innerHTML=`<h2>Player ${curP+1}</h2><div class="score-detail">${name}</div><div class="final-score">+${pts} pts</div><button onclick="nextTurn()">Continue →</button>`;
+  const label = (isCPUMode && curP===1) ? '🤖 CPU' : `Player ${curP+1}`;
+  const isCPUTurn = isCPUMode && curP===1;
+  p.innerHTML=`<h2>${label}</h2><div class="score-detail">${name}</div><div class="final-score">+${pts} pts</div>
+    ${isCPUTurn ? `<div class="popup-timer">Auto-continuing in 2.5s…</div><button onclick="nextTurn()">Continue →</button>` : `<button onclick="nextTurn()">Continue →</button>`}`;
   document.body.appendChild(p);
   setTimeout(()=>p.classList.add('show'),40);
+  if(isCPUTurn) {
+    p._tid = setTimeout(nextTurn, 2500);
+  }
 }
 function clearPopup(){const e=document.getElementById('score-popup');if(e){clearTimeout(e._tid);e.remove();}}
 
@@ -785,11 +987,28 @@ function nextTurn(){
   P1BAN.classList.toggle('active',curP===0); P2BAN.classList.toggle('active',curP===1);
   switchTab(curP);
   dice.forEach(d=>d.wrapper.remove()); dice=[];
-  holdSlots = [null, null, null, null, null]; 
-  rollsN=0; rolled=false; flying=false;
+  holdSlots = [null, null, null, null, null];
+  rollsN=0; rolled=false; flying=false; cpuIsThinking=false;
   if(rafId){cancelAnimationFrame(rafId);rafId=null;}
   ROLLDISP.textContent='0'; ROLLBTN.disabled=false;
   initDice(); renderCard(0); renderCard(1); renderSug();
+
+  // If CPU's turn, auto-start
+  if(isCPUMode && curP===1) {
+    setTimeout(() => {
+      if(!cpuIsThinking) {
+        cpuIsThinking = true;
+        ROLLBTN.disabled = true;
+        document.getElementById('cpu-thinking').classList.add('show');
+        setTimeout(() => {
+          cpuIsThinking = false;
+          document.getElementById('cpu-thinking').classList.remove('show');
+          ROLLBTN.disabled = false;
+          rollDice();
+        }, 800);
+      }
+    }, 300);
+  }
 }
 
 // ================================================================ SCORECARD
@@ -801,7 +1020,6 @@ function switchTab(p){
   document.getElementById('panel-p1').classList.toggle('visible',p===0);
   document.getElementById('panel-p2').classList.toggle('visible',p===1);
 }
-
 function renderCard(p){
   const panel=document.getElementById(`panel-p${p+1}`);
   const isCur=p===curP, sc=SD[p], cls=`p${p+1}-card`;
@@ -810,18 +1028,15 @@ function renderCard(p){
   const matchingNumber = vals[0];
   const matchingUpperKey = isWld ? UPPER[matchingNumber - 1].key : null;
   const forceUpper = isWld && sc[matchingUpperKey] === null;
-
   const sug=new Set();
-  if(isCur&&rolled&&!flying){
+  // Only show suggestions for human players
+  const isHumanTurn = isCur && !(isCPUMode && p===1);
+  if(isHumanTurn&&rolled&&!flying){
     [...UPPER,...LOWER].forEach(cat=>{
       if(sc[cat.key]===null) {
-        if (forceUpper) {
-          if (cat.key === matchingUpperKey) sug.add(cat.key);
-        } else if (isWld) {
-          sug.add(cat.key);
-        } else if (calcScore(cat.key,vals)>0) {
-          sug.add(cat.key);
-        }
+        if (forceUpper) { if (cat.key === matchingUpperKey) sug.add(cat.key); }
+        else if (isWld) { sug.add(cat.key); }
+        else if (calcScore(cat.key,vals)>0) { sug.add(cat.key); }
       }
     });
   }
@@ -829,18 +1044,20 @@ function renderCard(p){
   let h=`<div class="sc-section-label">UPPER SECTION</div>`;
   UPPER.forEach(cat=>{
     const v=sc[cat.key],f=v!==null,s=sug.has(cat.key);
-    const rc=[f?'sc-filled':'',s?'sc-suggested':'',!isCur?'sc-disabled':'',cls].filter(Boolean).join(' ');
-    h+=`<div class="sc-row ${rc}" onclick="scoreCategory('${cat.key}')" title="${cat.hint}"><span class="sc-name">${cat.name}</span><span class="sc-val${f?'':' sc-empty'}">${f?v:'—'}</span></div>`;
+    const canClick = isCur && !(isCPUMode && p===1);
+    const rc=[f?'sc-filled':'',s?'sc-suggested':'',!canClick?'sc-disabled':'',cls].filter(Boolean).join(' ');
+    h+=`<div class="sc-row ${rc}" onclick="${canClick?`scoreCategory('${cat.key}')`:''}"><span class="sc-name">${cat.name}</span><span class="sc-val${f?'':' sc-empty'}">${f?v:'—'}</span></div>`;
   });
   h+=`<div class="sc-bonus-row"><span>Bonus (need ${need} more)</span><span>${bon?'+35 ✓':'—'}</span></div>`;
   h+=`<div class="sc-section-label">LOWER SECTION</div>`;
   LOWER.forEach(cat=>{
     const v=sc[cat.key],f=v!==null,s=sug.has(cat.key);
-    const rc=[f?'sc-filled':'',s?'sc-suggested':'',!isCur?'sc-disabled':'',cls].filter(Boolean).join(' ');
-    h+=`<div class="sc-row ${rc}" onclick="scoreCategory('${cat.key}')" title="${cat.hint}"><span class="sc-name">${cat.name}</span><span class="sc-val${f?'':' sc-empty'}">${f?v:'—'}</span></div>`;
+    const canClick = isCur && !(isCPUMode && p===1);
+    const rc=[f?'sc-filled':'',s?'sc-suggested':'',!canClick?'sc-disabled':'',cls].filter(Boolean).join(' ');
+    h+=`<div class="sc-row ${rc}" onclick="${canClick?`scoreCategory('${cat.key}')`:''}"><span class="sc-name">${cat.name}</span><span class="sc-val${f?'':' sc-empty'}">${f?v:'—'}</span></div>`;
   });
   const b1=yb>=1?'scored':'',b2=yb>=2?'scored':'',b3=yb>=3?'scored':'';
-  h+=`<div class="sc-ybonus-row ${cls}" onclick="scoreCategory('yahtzee')" style="cursor:pointer;" title="Click if rolling a subsequent Yahtzee for bonus tracking"><span>Yahtzee Bonus×100</span><div class="yb-boxes"><div class="yb-box ${b1}">${yb>=1?'✕':''}</div><div class="yb-box ${b2}">${yb>=2?'✕':''}</div><div class="yb-box ${b3}">${yb>=3?'✕':''}</div></div></div>`;
+  h+=`<div class="sc-ybonus-row ${cls}" title="Yahtzee bonuses"><span>Yahtzee Bonus×100</span><div class="yb-boxes"><div class="yb-box ${b1}">${yb>=1?'✕':''}</div><div class="yb-box ${b2}">${yb>=2?'✕':''}</div><div class="yb-box ${b3}">${yb>=3?'✕':''}</div></div></div>`;
   h+=`<div class="sc-total-row ${cls}"><span>TOTAL</span><span>${grandTotal(p)}</span></div>`;
   panel.innerHTML=h;
   document.getElementById(`p${p+1}score`).textContent=grandTotal(p);
@@ -849,28 +1066,28 @@ function renderCard(p){
 // ================================================================ SUGGESTIONS
 function renderSug(){
   const list=document.getElementById('suggest-list'), p=curP;
+  // Don't show suggestions during CPU turn
+  if(isCPUMode && curP===1) {
+    list.innerHTML=`<p class="sug-dim" style="text-align:center;padding:14px 0">CPU is deciding…</p>`;
+    return;
+  }
   if(!rolled||flying){list.innerHTML=`<p class="sug-dim" style="text-align:center;padding:14px 0">Roll to see options</p>`;return;}
   const vals=dice.map(d=>d.value);
   const isWld = isYahtzeeWildcard(p, vals);
   const matchingNumber = vals[0];
   const matchingUpperKey = isWld ? UPPER[matchingNumber - 1].key : null;
   const forceUpper = isWld && SD[p][matchingUpperKey] === null;
-
   const opts=[...UPPER,...LOWER].filter(c=>SD[p][c.key]===null).map(c=>{
     let pts = 0;
-    if (forceUpper) {
-      pts = c.key === matchingUpperKey ? calcScore(c.key, vals) : 0;
-    } else if (isWld) {
+    if (forceUpper) { pts = c.key === matchingUpperKey ? calcScore(c.key, vals) : 0; }
+    else if (isWld) {
       if (c.key === 'fullHouse') pts = 25;
       else if (c.key === 'smStr') pts = 30;
       else if (c.key === 'lgStr') pts = 40;
       else pts = calcScore(c.key, vals);
-    } else {
-      pts = calcScore(c.key, vals);
-    }
+    } else { pts = calcScore(c.key, vals); }
     return {...c, pts};
   }).sort((a,b)=>b.pts-a.pts);
-
   if(!opts.length){list.innerHTML='<p class="sug-dim" style="text-align:center">All filled</p>';return;}
   const best=opts[0].pts, pCls=`p${p+1}-sug`;
   list.innerHTML=opts.map((o,i)=>{
@@ -881,7 +1098,9 @@ function renderSug(){
 
 // ================================================================ LOG
 function addLog(msg){
-  const li=document.createElement('li');li.textContent=`P${curP+1}: ${msg}`;
+  const li=document.createElement('li');
+  const label = (isCPUMode && curP===1) ? '🤖 CPU' : `P${curP+1}`;
+  li.textContent=`${label}: ${msg}`;
   li.style.color=curP===0?'#fbbf24':'#60a5fa';
   document.getElementById('log-list').prepend(li);
 }
@@ -891,30 +1110,30 @@ function showWinner(){
   const t0=grandTotal(0),t1=grandTotal(1);
   const w=t0>t1?0:t1>t0?1:-1;
   const wc=w===0?'#fbbf24':w===1?'#60a5fa':'#94a3b8';
-  const wn=w===-1?"IT'S A TIE!":`PLAYER ${w+1} WINS!`;
-
+  const p1label='Player 1', p2label=isCPUMode?'CPU 🤖':'Player 2';
+  let wn;
+  if(w===-1) wn="IT'S A TIE!";
+  else if(w===0) wn="PLAYER 1 WINS!";
+  else wn=isCPUMode?"CPU WINS!":"PLAYER 2 WINS!";
   const cv=document.createElement('canvas'); cv.id='fireworks-canvas';
   cv.width=window.innerWidth; cv.height=window.innerHeight;
   document.body.appendChild(cv);
   const ctx=cv.getContext('2d');
-
   const ov=document.createElement('div'); ov.id='winner-overlay';
   ov.innerHTML=`<div id="winner-box">
     <div class="winner-trophy">🏆</div>
     <h1 class="winner-title" style="color:${wc};text-shadow:0 0 30px ${wc}">${wn}</h1>
     <div class="winner-scoreboard">
-      <div class="winner-player ${w===0?'winner-active':''}"><span class="wp-label">Player 1</span><span class="wp-score" style="${w===0?'color:#fbbf24':''}">${t0}</span></div>
+      <div class="winner-player ${w===0?'winner-active':''}"><span class="wp-label">${p1label}</span><span class="wp-score" style="${w===0?'color:#fbbf24':''}">${t0}</span></div>
       <div class="winner-vs">VS</div>
-      <div class="winner-player ${w===1?'winner-active':''}"><span class="wp-label">Player 2</span><span class="wp-score" style="${w===1?'color:#60a5fa':''}">${t1}</span></div>
+      <div class="winner-player ${w===1?'winner-active':''}"><span class="wp-label">${p2label}</span><span class="wp-score" style="${w===1?'color:#60a5fa':''}">${t1}</span></div>
     </div>
     <button onclick="location.reload()">Play Again 🎲</button>
   </div>`;
   document.body.appendChild(ov);
   requestAnimationFrame(()=>ov.classList.add('show'));
-
   const PAL=['#fbbf24','#60a5fa','#a855f7','#f43f5e','#34d399','#fb923c','#ffffff','#fde68a'];
   let parts=[], lastL=-9999, fwId;
-
   function Sp(x,y){
     const a=Math.random()*Math.PI*2,sp=2+Math.random()*5;
     this.x=x;this.y=y;this.vx=Math.cos(a)*sp;this.vy=Math.sin(a)*sp;
@@ -928,10 +1147,8 @@ function showWinner(){
     ctx.shadowBlur=8;ctx.shadowColor=this.col;
     ctx.beginPath();ctx.arc(this.x,this.y,this.r*this.life,0,Math.PI*2);ctx.fill();ctx.restore();
   };
-
   function burst(x,y,n){for(let i=0;i<n;i++)parts.push(new Sp(x,y));}
   burst(cv.width*.25,cv.height*.22,70); burst(cv.width*.75,cv.height*.18,65); burst(cv.width*.5,cv.height*.3,75);
-
   function loop(ts){
     ctx.clearRect(0,0,cv.width,cv.height);
     if(ts-lastL>380+Math.random()*420){
@@ -952,15 +1169,15 @@ function showToast(msg){
   t.textContent=msg; t.style.transform='translateX(-50%) translateY(0)';
   clearTimeout(ttid); ttid=setTimeout(()=>{t.style.transform='translateX(-50%) translateY(50px)';},2200);
 }
-
 function confirmNew(){if(confirm('Start a new game? All progress will be lost.'))location.reload();}
 
 // ================================================================ BOOT
-initHoldSlots();
-function initDice(){for(let i=0;i<NUM_DICE;i++)mkDie(i);}
-ROLLBTN.addEventListener('click',rollDice);
+// Don't init until mode is selected — initHoldSlots and initDice called from startGame
+ROLLBTN.addEventListener('click', () => {
+  if(isCPUMode && curP===1) return; // Block manual roll during CPU turn
+  rollDice();
+});
 P1BAN.classList.add('active');
-initDice(); renderCard(0); renderCard(1); switchTab(0);
 </script>
 </body>
 </html>
