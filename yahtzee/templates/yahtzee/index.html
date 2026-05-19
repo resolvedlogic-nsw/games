@@ -301,6 +301,17 @@ button:disabled { background:#2d5f47; color:#4a7c5e; cursor:not-allowed; box-sha
 .winner-vs { font-size:1rem; color:#4a7c5e; font-weight:700; letter-spacing:2px; }
 #winner-box button { font-size:1.1rem; padding:14px 44px; background:linear-gradient(135deg,#fbbf24,#f59e0b); border-radius:14px; box-shadow:0 4px 18px rgba(251,191,36,0.4); }
 #winner-box button:hover { transform:scale(1.06); }
+yahtzee-title {
+  font-size: 6rem;       /* your large H1 size */
+  line-height: 0.8;
+  text-align: center;
+  margin: 0 0 10px;
+}
+
+.yahtzee-title span {
+  display: block;
+margin: 0 0 3px;
+}
 </style>
 </head>
 <body>
@@ -308,8 +319,12 @@ button:disabled { background:#2d5f47; color:#4a7c5e; cursor:not-allowed; box-sha
 <!-- MODE SELECT -->
 <div id="mode-overlay">
   <div id="mode-box">
-    <h1>🎲 CINQO</h1>
-    <p>Yahtzee · Select Mode</p>
+    <h1 class="yahtzee-title">
+  <span>🎲🎲🎲</span><br>
+  <span>YAHTZEE</span><br>
+  <span>🎲🎲</span>
+</h1>
+    <p>Select Mode</p>
     <button class="mode-btn mode-btn-p2" onclick="startGame(false)">
       2 Players
       <span class="mode-sub">Pass & play on one screen</span>
@@ -378,17 +393,18 @@ function startGame(cpu) {
   isCPUMode = cpu;
   const overlay = document.getElementById('mode-overlay');
   overlay.classList.add('hide');
-  setTimeout(() => { overlay.style.display='none'; }, 400);
+  setTimeout(() => {
+    overlay.style.display='none';
+    initHoldSlots();
+    initDice();
+    renderCard(0); renderCard(1); switchTab(0);
+  }, 420);
 
   // Update labels
   if (cpu) {
     document.getElementById('p2-banner').innerHTML = '🤖 CPU: <span id="p2score">0</span>';
     document.getElementById('tab-p2').textContent = 'CPU CARD';
   }
-
-  initHoldSlots();
-  initDice();
-  renderCard(0); renderCard(1); switchTab(0);
 }
 
 // ================================================================ CATEGORIES
@@ -495,7 +511,8 @@ function mkDie(id){
   const cube=document.createElement('div'); cube.className='cube';
   w.appendChild(cube); TABLE.appendChild(w);
   const tr=TABLE.getBoundingClientRect();
-  const die={id,wrapper:w,cube,x:tr.width/2+rand(-110,110)-40,y:-90,vx:0,vy:0,angV:0,rot:{x:rand(0,360),y:rand(0,360),z:rand(0,360)},value:1,zone:'table',settled:true,collided:false,sf:0,preRoll:true,currentSlot:null};
+  const cx=tr.width>0?tr.width/2:400;
+  const die={id,wrapper:w,cube,x:cx+rand(-110,110)-40,y:-90,vx:0,vy:0,angV:0,rot:{x:rand(0,360),y:rand(0,360),z:rand(0,360)},value:1,zone:'table',settled:true,collided:false,sf:0,preRoll:true,currentSlot:null};
   buildFaces(die,true);
 
   w.addEventListener('mousedown',e=>{
@@ -668,7 +685,19 @@ function rollDice(){
   const td=dice.filter(d=>d.zone==='table');
   if(!td.length){showToast('All dice are held!');return;}
   rollsN++; ROLLDISP.textContent=rollsN; rolled=true; flying=true;
-  td.forEach(d=>{d.preRoll=false;wakeDie(d);d.value=Math.floor(Math.random()*6)+1;buildFaces(d,false);d.vx=rand(-9,9);d.vy=rand(-17,-11);d.angV=rand(-20,20);});
+  const tr=TABLE.getBoundingClientRect();
+  td.forEach((d,i)=>{
+    // Ensure valid starting position using current rect
+    if(d.preRoll || d.x<=0 || d.x>=tr.width-85) {
+      d.x = Math.max(20, Math.min(tr.width/2 + rand(-120,120) - 40, tr.width-105));
+    }
+    d.y = -90;
+    d.preRoll=false; wakeDie(d);
+    d.value=Math.floor(Math.random()*6)+1;
+    buildFaces(d,false);
+    d.vx=rand(-9,9); d.vy=rand(-17,-11); d.angV=rand(-20,20);
+    d.wrapper.style.left=d.x+'px'; d.wrapper.style.top=d.y+'px';
+  });
   if(!rafId) animate();
   ROLLBTN.disabled=rollsN>=MAX_ROLLS;
   renderSug();
@@ -831,9 +860,9 @@ function doCPUTurn() {
   if(shouldRollAgain) {
     // Decide which dice to hold
     const holdIndices = cpuChooseDiceToHold(vals);
-    // Move un-held dice back to table zone (they're already there), hold the chosen ones
-    // Actually: current dice in table zone will be rerolled, held zone will be kept
-    // First release all held dice back to table
+    const cpuTR = TABLE.getBoundingClientRect();
+
+    // Release all currently held dice back to table first
     dice.forEach(d => {
       if(d.zone === 'hold') {
         holdSlots[d.currentSlot] = null;
@@ -841,9 +870,8 @@ function doCPUTurn() {
         d.currentSlot = null;
         d.wrapper.classList.remove('held-die');
         TABLE.appendChild(d.wrapper);
-        const tr = TABLE.getBoundingClientRect();
-        d.x = tr.width/2 + rand(-100,100) - 40;
-        d.y = tr.height * 0.4 + rand(-20,20);
+        d.x = Math.max(20, Math.min(cpuTR.width/2 + rand(-100,100) - 40, cpuTR.width-105));
+        d.y = Math.max(20, cpuTR.height * 0.4 + rand(-20,20));
         d.wrapper.style.left = d.x + 'px';
         d.wrapper.style.top = d.y + 'px';
       }
@@ -861,11 +889,17 @@ function doCPUTurn() {
     cpuIsThinking = false;
     document.getElementById('cpu-thinking').classList.remove('show');
 
-    // Now roll the remaining table dice
+    // Now roll the remaining table dice using rollDice() which handles positioning
     setTimeout(() => {
       rollsN++; ROLLDISP.textContent=rollsN; rolled=true; flying=true;
+      const tr = TABLE.getBoundingClientRect();
       const td = dice.filter(d => d.zone==='table');
       td.forEach(d=>{
+        // Ensure valid position before launching
+        d.x = Math.max(20, Math.min(tr.width/2 + rand(-120,120) - 40, tr.width-105));
+        d.y = -90;
+        d.wrapper.style.left = d.x + 'px';
+        d.wrapper.style.top = d.y + 'px';
         d.preRoll=false; wakeDie(d);
         d.value=Math.floor(Math.random()*6)+1;
         buildFaces(d,false);
@@ -915,8 +949,6 @@ function scoreCategory(key){
     return;
   }
   if(sc[key]!==null){showToast('Already scored!');return;}
-  // Only block human scoring on their turn
-  if(isCPUMode && curP===1 && !cpuIsThinking) return;
   let pts = 0;
   if (isYahtzeeWildcard(p, vals)) {
     const matchingNumber = vals[0];
@@ -1172,7 +1204,8 @@ function showToast(msg){
 function confirmNew(){if(confirm('Start a new game? All progress will be lost.'))location.reload();}
 
 // ================================================================ BOOT
-// Don't init until mode is selected — initHoldSlots and initDice called from startGame
+function initDice(){ for(let i=0;i<NUM_DICE;i++) mkDie(i); }
+
 ROLLBTN.addEventListener('click', () => {
   if(isCPUMode && curP===1) return; // Block manual roll during CPU turn
   rollDice();
