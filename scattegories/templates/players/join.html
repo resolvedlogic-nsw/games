@@ -144,7 +144,9 @@ body {
     spellcheck="false"
   >
   <div class="error-msg" id="error-msg">Please enter your name to continue.</div>
-  <button class="join-btn" id="join-btn" onclick="joinGame()">JOIN THE GAME →</button>
+  <button class="join-btn" id="join-btn" onclick="joinGame('player')">JOIN THE GAME →</button>
+  <button class="join-btn" id="join-btn" onclick="joinGame('host')" style="margin-top: 12px; background: var(--amber); color: var(--slate);">HOST A GAME →</button>
+
 
   <div class="rules-hint">
     <h3>Quick Rules</h3>
@@ -160,7 +162,7 @@ body {
 <script>
 const STORAGE_KEY = 'scattegories_uuid';
 
-async function joinGame() {
+async function joinGame(role = 'player') {
   const nameInput = document.getElementById('name-input');
   const errorMsg = document.getElementById('error-msg');
   const name = nameInput.value.trim();
@@ -183,7 +185,7 @@ async function joinGame() {
   const data = await res.json();
   if (data.uuid) {
     localStorage.setItem(STORAGE_KEY, data.uuid);
-    window.location.href = '/scattegories/lobby/';
+    window.location.href = role === 'host' ? '/scattegories/game/host/' : '/scattegories/lobby/';
   }
 }
 
