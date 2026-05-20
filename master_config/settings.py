@@ -22,9 +22,11 @@ INSTALLED_APPS = [
     'fivecrowns',
     'cinqo',
     'blokus',
-    #'scattegories',
     'yahtzee',
-    'jezzball'
+    'jezzball',
+    'scattegories.players',
+    'scattegories.game_core',
+    'scattegories.answers',
 ]
 
 MIDDLEWARE = [
