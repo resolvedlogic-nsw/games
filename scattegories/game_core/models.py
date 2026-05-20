@@ -1,5 +1,5 @@
 from django.db import models
-from players.models import Player
+from scattegories.players.models import Player
 
 
 GAME_STATUS = [
