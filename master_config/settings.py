@@ -47,7 +47,7 @@ TEMPLATES = [
         'DIRS': [
             BASE_DIR / 'gamehub' / 'templates',
             BASE_DIR / 'labyrinth' / 'templates',
-            #BASE_DIR / 'scattegories/templates',
+            BASE_DIR / 'scattegories' / 'templates',
             BASE_DIR / 'blokus' / 'templates',
         ],
         'APP_DIRS': True,
