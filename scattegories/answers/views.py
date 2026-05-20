@@ -4,8 +4,8 @@ from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404
 
 from .models import Answer, AnswerReview
-from players.models import Player
-from game_core.models import Question, Round
+from scattegories.players.models import Player
+from scattegories.game_core.models import Question, Round
 
 
 def get_player(request):

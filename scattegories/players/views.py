@@ -106,7 +106,7 @@ def player_jury_vote(request):
     vote = data.get('vote')  # True or False
     context_label = data.get('context_label', 'Jury Vote')
 
-    from game_core.models import Round
+    from scattegories.game_core.models import Round
     round_obj = get_object_or_404(Round, id=round_id)
 
     JuryVote.objects.update_or_create(

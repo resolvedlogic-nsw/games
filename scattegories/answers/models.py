@@ -1,6 +1,6 @@
 from django.db import models
 from scattegories.players.models import Player
-from game_core.models import Question, Round
+from scattegories.game_core.models import Question, Round
 
 
 class Answer(models.Model):

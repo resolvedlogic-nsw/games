@@ -9,8 +9,8 @@ from django.db import transaction
 from django.db.models import Sum
 
 from .models import Game, Round, Question, LETTERS, DEFAULT_QUESTIONS
-from players.models import Player
-from answers.models import Answer, AnswerReview, JuryVote
+from scattegories.players.models import Player
+from scattegories.answers.models import Answer, AnswerReview, JuryVote
 
 
 # ─── Host authentication helper ─────────────────────────────────────────────
