@@ -301,17 +301,6 @@ button:disabled { background:#2d5f47; color:#4a7c5e; cursor:not-allowed; box-sha
 .winner-vs { font-size:1rem; color:#4a7c5e; font-weight:700; letter-spacing:2px; }
 #winner-box button { font-size:1.1rem; padding:14px 44px; background:linear-gradient(135deg,#fbbf24,#f59e0b); border-radius:14px; box-shadow:0 4px 18px rgba(251,191,36,0.4); }
 #winner-box button:hover { transform:scale(1.06); }
-yahtzee-title {
-  font-size: 6rem;       /* your large H1 size */
-  line-height: 0.8;
-  text-align: center;
-  margin: 0 0 10px;
-}
-
-.yahtzee-title span {
-  display: block;
-margin: 0 0 3px;
-}
 </style>
 </head>
 <body>
@@ -319,12 +308,8 @@ margin: 0 0 3px;
 <!-- MODE SELECT -->
 <div id="mode-overlay">
   <div id="mode-box">
-    <h1 class="yahtzee-title">
-  <span>🎲🎲🎲</span><br>
-  <span>YAHTZEE</span><br>
-  <span>🎲🎲</span>
-</h1>
-    <p>Select Mode</p>
+    <h1>🎲 CINQO</h1>
+    <p>Yahtzee · Select Mode</p>
     <button class="mode-btn mode-btn-p2" onclick="startGame(false)">
       2 Players
       <span class="mode-sub">Pass & play on one screen</span>
@@ -364,7 +349,7 @@ margin: 0 0 3px;
     <div id="dice-table">
       <button id="rollBtn">Roll Dice</button>
       <button id="newGameBtn" onclick="confirmNew()">New Game</button>
-      <div id="dbl-hint">Double-click a die to hold/release · click scorecard or suggestion to score</div>
+      <div id="dbl-hint">Click a die to hold/release · drag to place in a specific slot</div>
     </div>
     <div id="right-sidebar">
       <div id="suggest-panel">
@@ -516,9 +501,9 @@ function mkDie(id){
   buildFaces(die,true);
 
   w.addEventListener('mousedown',e=>{
-    if(e.detail===1 && !cpuIsThinking) startDrag(e,die);
+    if(cpuIsThinking) return;
+    startDrag(e, die);
   });
-  w.addEventListener('dblclick',()=>{ if(!transitBusy && !cpuIsThinking) toggleDieZoneAnimated(die); });
   w.addEventListener('touchstart',e=>{ if(!cpuIsThinking) startDrag(e.touches[0],die); },{passive:true});
   dice.push(die);
   return die;
@@ -618,22 +603,61 @@ function moveDieToSlotDirect(die, slotIdx) {
 }
 
 // ================================================================ DRAG
+let dragStartX=0, dragStartY=0, dragMoved=false;
+const DRAG_THRESHOLD = 6; // px before we consider it a drag not a click
+
 function startDrag(e,die){
   if(!rolled||flying||transitBusy) return;
-  dragged=die; die.wrapper.classList.add('dragging');
-  const r=die.wrapper.getBoundingClientRect();
-  die.wrapper.style.position='fixed';
-  die.wrapper.style.left=r.left+'px'; die.wrapper.style.top=r.top+'px';
-  die.wrapper.style.zIndex='10000';
-  document.getElementById('app').appendChild(die.wrapper);
+  dragStartX = e.clientX; dragStartY = e.clientY; dragMoved = false;
+  dragged=die;
+  // Don't detach yet — wait until mouse actually moves past threshold
 }
-document.addEventListener('mousemove',e=>{if(!dragged)return;dragged.wrapper.style.left=(e.clientX-40)+'px';dragged.wrapper.style.top=(e.clientY-40)+'px';});
-document.addEventListener('touchmove',e=>{if(!dragged)return;dragged.wrapper.style.left=(e.touches[0].clientX-40)+'px';dragged.wrapper.style.top=(e.touches[0].clientY-40)+'px';},{passive:true});
+document.addEventListener('mousemove',e=>{
+  if(!dragged) return;
+  const dx=e.clientX-dragStartX, dy=e.clientY-dragStartY;
+  if(!dragMoved && Math.sqrt(dx*dx+dy*dy) < DRAG_THRESHOLD) return;
+  if(!dragMoved) {
+    // Commit to drag: detach die and add dragging style
+    dragMoved = true;
+    dragged.wrapper.classList.add('dragging');
+    const r=dragged.wrapper.getBoundingClientRect();
+    dragged.wrapper.style.position='fixed';
+    dragged.wrapper.style.left=r.left+'px'; dragged.wrapper.style.top=r.top+'px';
+    dragged.wrapper.style.zIndex='10000';
+    document.getElementById('app').appendChild(dragged.wrapper);
+  }
+  dragged.wrapper.style.left=(e.clientX-40)+'px';
+  dragged.wrapper.style.top=(e.clientY-40)+'px';
+});
+document.addEventListener('touchmove',e=>{
+  if(!dragged) return;
+  const tx=e.touches[0].clientX, ty=e.touches[0].clientY;
+  const dx=tx-dragStartX, dy=ty-dragStartY;
+  if(!dragMoved && Math.sqrt(dx*dx+dy*dy) < DRAG_THRESHOLD) return;
+  if(!dragMoved) {
+    dragMoved = true;
+    dragged.wrapper.classList.add('dragging');
+    const r=dragged.wrapper.getBoundingClientRect();
+    dragged.wrapper.style.position='fixed';
+    dragged.wrapper.style.left=r.left+'px'; dragged.wrapper.style.top=r.top+'px';
+    dragged.wrapper.style.zIndex='10000';
+    document.getElementById('app').appendChild(dragged.wrapper);
+  }
+  dragged.wrapper.style.left=(tx-40)+'px';
+  dragged.wrapper.style.top=(ty-40)+'px';
+},{passive:true});
 document.addEventListener('mouseup',e=>endDrag(e));
 document.addEventListener('touchend',e=>endDrag(e.changedTouches[0]));
 function endDrag(e){
   if(!dragged) return;
   const die=dragged; dragged=null;
+
+  // Pure click (no drag movement) — toggle hold zone
+  if(!dragMoved) {
+    if(!transitBusy && !cpuIsThinking) toggleDieZoneAnimated(die);
+    return;
+  }
+
   die.wrapper.classList.remove('dragging');
   const cx = e.clientX, cy = e.clientY;
   const tr = TABLE.getBoundingClientRect();
