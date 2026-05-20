@@ -174,7 +174,7 @@ async function joinGame() {
 
   const existingUUID = localStorage.getItem(STORAGE_KEY);
 
-  const res = await fetch('/api/register/', {
+  const res = await fetch('/scattegories/api/register/', {
     method: 'POST',
     headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
     body: JSON.stringify({ display_name: name, uuid: existingUUID }),
@@ -183,7 +183,7 @@ async function joinGame() {
   const data = await res.json();
   if (data.uuid) {
     localStorage.setItem(STORAGE_KEY, data.uuid);
-    window.location.href = '/lobby/';
+    window.location.href = '/scattegories/lobby/';
   }
 }
 
