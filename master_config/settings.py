@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'scattegories.players',
     'scattegories.game_core',
     'scattegories.answers',
+    
 ]
 
 MIDDLEWARE = [
@@ -49,6 +50,7 @@ TEMPLATES = [
             BASE_DIR / 'labyrinth' / 'templates',
             BASE_DIR / 'scattegories' / 'templates',
             BASE_DIR / 'blokus' / 'templates',
+            
         ],
         'APP_DIRS': True,
         'OPTIONS': {

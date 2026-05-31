@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rocket Test</title>
+    <style>
+        body { margin: 0; background: #000; }
+        canvas { display: block; margin: 0 auto; background: #111; }
+    </style>
+</head>
+<body>
+<canvas id="game" width="800" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let keys = {};
+document.addEventListener("keydown", e => keys[e.code] = true);
+document.addEventListener("keyup", e => keys[e.code] = false);
+
+// Ship physics
+let ship = {
+    x: 400,
+    y: 300,
+    vx: 0,
+    vy: 0,
+    angle: -Math.PI/2   // should face UP
+};
+
+const thrustPower = 0.1;
+
+function update() {
+    // Rotate
+    if (keys["ArrowLeft"]) ship.angle -= 0.05;
+    if (keys["ArrowRight"]) ship.angle += 0.05;
+
+    // Thrust
+    if (keys["ArrowUp"]) {
+        ship.vx += Math.cos(ship.angle) * thrustPower;
+        ship.vy += Math.sin(ship.angle) * thrustPower;
+    }
+
+    // Move
+    ship.x += ship.vx;
+    ship.y += ship.vy;
+
+    // Wrap screen
+    if (ship.x < 0) ship.x = canvas.width;
+    if (ship.x > canvas.width) ship.x = 0;
+    if (ship.y < 0) ship.y = canvas.height;
+    if (ship.y > canvas.height) ship.y = 0;
+}
+
+function drawShip() {
+    ctx.save();
+    ctx.translate(ship.x, ship.y);
+
+    // IMPORTANT: rotate sprite so angle = -90° points UP
+    ctx.rotate(ship.angle + Math.PI/2);
+
+    // Body (nose at top)
+    ctx.fillStyle = "white";
+    ctx.fillRect(-5, -10, 10, 20);
+
+    // Flame at tail
+    if (keys["ArrowUp"]) {
+        ctx.fillStyle = "orange";
+        ctx.fillRect(-3, 10, 6, 12);
+    }
+
+    ctx.restore();
+}
+
+function loop() {
+    update();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawShip();
+    requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
