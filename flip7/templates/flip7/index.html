@@ -451,9 +451,9 @@ function showSetup() {
 
 function selectMode(mode) {
   state.mode = mode;
-  ['original','vengeance','vengeanceplus'].forEach(m => {
-    document.getElementById('mode' + m.charAt(0).toUpperCase() + m.slice(1)).classList.toggle('selected', m === mode);
-  });
+  //['original','vengeance','vengeanceplus'].forEach(m => {
+  //  document.getElementById('mode' + m.charAt(0).toUpperCase() + m.slice(1)).classList.toggle('selected', m === mode);
+  //});
   // fix capitalisation for element IDs
   document.getElementById('modeOriginal').classList.toggle('selected', mode==='original');
   document.getElementById('modeVengeance').classList.toggle('selected', mode==='vengeance');
