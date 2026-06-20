@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'scattegories.players',
     'scattegories.game_core',
     'scattegories.answers',
+    'flip7',
     
 ]
 

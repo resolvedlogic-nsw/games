@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Flip 7 Scorecard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --navy: #070d1f;
+      --navy2: #0d1635;
+      --gold: #f5c842;
+      --gold-dim: #a8882c;
+      --glass: rgba(255,255,255,0.08);
+      --glass-border: rgba(255,255,255,0.18);
+      --text: #e8eaf6;
+      --text-dim: rgba(232,234,246,0.55);
+      --green: #2ecc71;
+      --red: #e74c3c;
+      --shadow-gold: 0 0 18px rgba(245,200,66,0.35);
+
+      /* number card colours */
+      --c0: #70a5f3; --c1: #c7b19a; --c2: #d5ea1f; --c3: #f15264;
+      --c4: #54c8bf; --c5: #40b54a; --c6: #c354a3; --c7: #d98372;
+      --c8: #b1da74; --c9: #ff9138; --c10: #eb121b; --c11: #79aed6;
+      --c12: #9c847a; --c13: #078dd6; --cL13: #70a5f3;
+      /* modifier colours */
+      --mod-pos-text: #e0665b; --mod-pos-bg: #feaf4a;
+      --mod-neg-text: #dddddd; --mod-neg-bg: #f0634f;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--navy) url('./backgroundregular.png') center/cover fixed;
+      min-height: 100vh;
+      color: var(--text);
+      overflow-x: hidden;
+    }
+    body.vengeance {
+      background-image: url('./backgroundvengeance.png');
+    }
+
+    /* ── SCREENS ── */
+    .screen { display: none; min-height: 100vh; }
+    .screen.active { display: block; }
+
+    /* ══════════════════════════════════
+       SETUP SCREEN
+    ══════════════════════════════════ */
+    #setupScreen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 32px 16px 40px;
+      gap: 24px;
+      background: rgba(7,13,31,0.7);
+    }
+    #setupScreen.active { display: flex; }
+
+    .setup-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: var(--gold);
+      text-shadow: 0 0 24px rgba(245,200,66,0.6), 0 2px 0 rgba(0,0,0,0.5);
+      letter-spacing: 0.04em;
+      text-align: center;
+    }
+    .setup-sub {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      text-align: center;
+      margin-top: -16px;
+    }
+
+    .mode-cards {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+      max-width: 480px;
+    }
+    .mode-card {
+      flex: 1 1 180px;
+      background: var(--glass);
+      border: 2px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 24px 16px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .mode-card:active { transform: scale(0.97); }
+    .mode-card.selected {
+      border-color: var(--gold);
+      background: rgba(245,200,66,0.12);
+      box-shadow: var(--shadow-gold);
+    }
+    .mode-card-icon { font-size: 2.4rem; margin-bottom: 8px; }
+    .mode-card-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 4px;
+    }
+    .mode-card-desc { font-size: 0.78rem; color: var(--text-dim); line-height: 1.4; }
+
+    .setup-section {
+      width: 100%;
+      max-width: 480px;
+    }
+    .setup-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      color: var(--gold-dim);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .player-setup-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+    .player-setup-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 8px 10px;
+    }
+    .player-setup-row input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .player-setup-row input::placeholder { color: var(--text-dim); }
+    .del-btn {
+      background: rgba(231,76,60,0.2);
+      border: 1px solid rgba(231,76,60,0.4);
+      color: var(--red);
+      border-radius: 8px;
+      width: 32px; height: 32px;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .del-btn:active { background: rgba(231,76,60,0.4); }
+
+    .name-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .name-chip {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: var(--text);
+    }
+    .name-chip:active { background: rgba(245,200,66,0.2); border-color: var(--gold); }
+
+    .add-player-row {
+      display: flex;
+      gap: 8px;
+    }
+    .add-player-input {
+      flex: 1;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    .add-player-input::placeholder { color: var(--text-dim); }
+
+    .btn-gold {
+      background: linear-gradient(135deg, #f5c842, #e0a020);
+      border: none;
+      border-radius: 10px;
+      color: #0a0f2e;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 900;
+      font-size: 0.95rem;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-gold:active { transform: scale(0.96); }
+    .btn-gold:disabled { opacity: 0.35; cursor: default; }
+
+    .btn-start {
+      width: 100%;
+      max-width: 480px;
+      padding: 16px;
+      font-size: 1.1rem;
+      letter-spacing: 0.05em;
+      border-radius: 14px;
+    }
+
+    /* ══════════════════════════════════
+       GAME SCREEN
+    ══════════════════════════════════ */
+    #gameScreen { display: none; flex-direction: column; }
+    #gameScreen.active { display: flex; }
+
+    /* top bar */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(7,13,31,0.88);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--glass-border);
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .top-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-shadow: 0 0 10px rgba(245,200,66,0.5);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .mode-badge {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+    .top-right { display: flex; gap: 8px; align-items: center; }
+    .icon-btn-sm {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      transition: all 0.15s;
+    }
+    .icon-btn-sm:active { background: rgba(245,200,66,0.15); color: var(--gold); }
+
+    .game-body { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+
+    /* round nav */
+    .round-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .round-nav-btn {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 50%;
+      width: 40px; height: 40px;
+      font-size: 1.3rem;
+      color: var(--gold);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .round-nav-btn:active { background: rgba(245,200,66,0.2); transform: scale(0.92); }
+    .round-nav-btn:disabled { opacity: 0.25; cursor: default; }
+    .round-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-shadow: 0 0 14px rgba(245,200,66,0.5);
+      min-width: 160px;
+      text-align: center;
+    }
+
+    /* calculator panel */
+    .calc-panel {
+      background: rgba(13,22,53,0.75);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 14px;
+    }
+    .calc-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      color: var(--gold-dim);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .btn-grid {
+      display: grid;
+      gap: 7px;
+      margin-bottom: 10px;
+    }
+    .btn-grid-original { grid-template-columns: repeat(7, 1fr); }
+    .btn-grid-vengeance { grid-template-columns: repeat(7, 1fr); }
+    .btn-grid-mods-orig { grid-template-columns: repeat(6, 1fr); }
+    .btn-grid-mods-veng { grid-template-columns: repeat(6, 1fr); }
+
+    .card-btn {
+      aspect-ratio: 1;
+      border-radius: 10px;
+      border: 2px solid;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.12s;
+      display: flex; align-items: center; justify-content: center;
+      line-height: 1;
+      padding: 2px;
+      user-select: none;
+    }
+    .card-btn:active { transform: scale(0.9); }
+
+    /* number buttons — generated via JS using CSS vars */
+    .mod-btn {
+      aspect-ratio: unset;
+      padding: 8px 4px;
+      border-radius: 10px;
+      border: 2px solid;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.12s;
+      display: flex; align-items: center; justify-content: center;
+      user-select: none;
+    }
+    .mod-btn:active { transform: scale(0.9); }
+
+    .calc-total-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .calc-total-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+    }
+    .calc-total-val {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--gold);
+      text-shadow: 0 0 16px rgba(245,200,66,0.55);
+      min-width: 80px;
+      text-align: right;
+    }
+    .btn-clear {
+      background: rgba(231,76,60,0.15);
+      border: 1px solid rgba(231,76,60,0.35);
+      border-radius: 10px;
+      color: var(--red);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 900;
+      font-size: 0.9rem;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-clear:active { background: rgba(231,76,60,0.35); }
+
+    /* player rows */
+    .players-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .player-row {
+      background: rgba(13,22,53,0.65);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: border-color 0.2s;
+    }
+    .player-row.bust-row {
+      border-color: rgba(231,76,60,0.5);
+      background: rgba(231,76,60,0.08);
+    }
+    .player-name {
+      flex: 1;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .add-score-btn {
+      background: rgba(245,200,66,0.15);
+      border: 1px solid rgba(245,200,66,0.4);
+      border-radius: 8px;
+      color: var(--gold);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 900;
+      font-size: 0.8rem;
+      padding: 6px 10px;
+      cursor: pointer;
+      flex-shrink: 0;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .add-score-btn:active { background: rgba(245,200,66,0.35); }
+
+    .bust-btn {
+      background: rgba(231,76,60,0.15);
+      border: 1px solid rgba(231,76,60,0.35);
+      border-radius: 8px;
+      color: var(--red);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 900;
+      font-size: 0.8rem;
+      padding: 6px 8px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .bust-btn.busted {
+      background: rgba(231,76,60,0.45);
+      color: #fff;
+      border-color: var(--red);
+    }
+    .bust-btn:active { transform: scale(0.93); }
+
+    .round-input {
+      width: 62px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 6px 4px;
+      outline: none;
+      flex-shrink: 0;
+      transition: border-color 0.2s;
+    }
+    .round-input:focus { border-color: var(--gold); }
+    .round-input.busted-input {
+      color: var(--red);
+      border-color: rgba(231,76,60,0.5);
+    }
+
+    .player-total {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: var(--gold);
+      min-width: 48px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .player-total.winner-glow {
+      color: #fff;
+      text-shadow: 0 0 16px var(--gold), 0 0 32px var(--gold);
+    }
+
+    /* ── MODALS ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: linear-gradient(160deg, #0d1635, #070d1f);
+      border: 1px solid var(--glass-border);
+      border-radius: 22px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(245,200,66,0.2);
+    }
+    .modal-icon { font-size: 3.5rem; margin-bottom: 10px; }
+    .modal-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 900;
+      color: var(--gold);
+      text-shadow: var(--shadow-gold);
+      margin-bottom: 8px;
+    }
+    .modal-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      margin-bottom: 22px;
+      line-height: 1.5;
+    }
+    .modal-winner-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 0 20px var(--gold);
+      margin-bottom: 20px;
+    }
+    .modal-btns { display: flex; flex-direction: column; gap: 10px; }
+    .modal-btn {
+      padding: 13px;
+      border-radius: 12px;
+      border: none;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 900;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .modal-btn:active { transform: scale(0.97); }
+    .modal-btn-primary {
+      background: linear-gradient(135deg, #f5c842, #e0a020);
+      color: #070d1f;
+    }
+    .modal-btn-secondary {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      color: var(--text);
+    }
+    .modal-btn-danger {
+      background: rgba(231,76,60,0.15);
+      border: 1px solid rgba(231,76,60,0.35);
+      color: var(--red);
+    }
+
+    /* confirm modal */
+    #confirmModal .modal-title { font-size: 1rem; }
+  </style>
+</head>
+<body>
+
+<!-- ══ SETUP SCREEN ══ -->
+<div id="setupScreen" class="screen">
+  <div class="setup-title">FLIP 7</div>
+  <div class="setup-sub">Scorecard</div>
+
+  <div class="setup-section">
+    <div class="setup-label">Game Mode</div>
+    <div class="mode-cards">
+      <div class="mode-card" id="modeOriginal" onclick="selectMode('original')">
+        <div class="mode-card-icon">🃏</div>
+        <div class="mode-card-name">Original</div>
+        <div class="mode-card-desc">Classic press-your-luck.<br>Positive modifiers only.</div>
+      </div>
+      <div class="mode-card" id="modeVengeance" onclick="selectMode('vengeance')">
+        <div class="mode-card-icon">💀</div>
+        <div class="mode-card-name">Vengeance</div>
+        <div class="mode-card-desc">Hard mode chaos.<br>Steal, slash, and survive.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="setup-section">
+    <div class="setup-label">Players</div>
+    <div class="name-chips" id="nameChips"></div>
+    <div class="player-setup-list" id="playerSetupList"></div>
+    <div class="add-player-row">
+      <input type="text" class="add-player-input" id="newPlayerInput" placeholder="Type a name…" maxlength="20"/>
+      <button class="btn-gold" onclick="addPlayerFromInput()">+ Add</button>
+    </div>
+  </div>
+
+  <button class="btn-gold btn-start" id="startBtn" onclick="startGame()" disabled>Start Game</button>
+</div>
+
+<!-- ══ GAME SCREEN ══ -->
+<div id="gameScreen" class="screen">
+  <div class="top-bar">
+    <div>
+      <div class="top-title">FLIP 7</div>
+      <div class="mode-badge" id="topModeBadge"></div>
+    </div>
+    <div class="top-right">
+      <button class="icon-btn-sm" onclick="confirmNewGame()">⚙ New Game</button>
+    </div>
+  </div>
+
+  <div class="game-body">
+
+    <!-- round nav -->
+    <div class="round-nav">
+      <button class="round-nav-btn" id="btnBack" onclick="goRound(-1)">‹</button>
+      <div class="round-label" id="roundLabel">Round 1</div>
+      <button class="round-nav-btn" id="btnNext" onclick="goRound(1)">›</button>
+    </div>
+
+    <!-- calculator -->
+    <div class="calc-panel">
+      <div class="calc-label">Calculator</div>
+      <div class="btn-grid" id="numGrid"></div>
+      <div class="btn-grid" id="modGrid"></div>
+      <div class="calc-total-row">
+        <div>
+          <div class="calc-label">Round Total</div>
+          <div class="calc-total-val" id="calcTotal">0</div>
+        </div>
+        <button class="btn-clear" onclick="clearCalc()">Clear</button>
+      </div>
+    </div>
+
+    <!-- players -->
+    <div class="players-panel" id="playersPanel"></div>
+
+  </div>
+</div>
+
+<!-- ══ WINNER MODAL ══ -->
+<div class="modal-overlay" id="winnerModal">
+  <div class="modal-box">
+    <div class="modal-icon">🏆</div>
+    <div class="modal-title">We have a winner!</div>
+    <div class="modal-winner-name" id="winnerName"></div>
+    <div class="modal-subtitle" id="winnerScore"></div>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-primary" onclick="restartSamePlayers()">Restart — Same Players</button>
+      <button class="modal-btn modal-btn-secondary" onclick="goToSetup()">New Game</button>
+      <button class="modal-btn modal-btn-danger" onclick="closeWinner()">Continue Playing</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONFIRM MODAL ══ -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <div class="modal-title" id="confirmTitle"></div>
+    <div class="modal-subtitle" id="confirmMsg"></div>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-danger" id="confirmOkBtn">Confirm</button>
+      <button class="modal-btn modal-btn-secondary" onclick="closeConfirm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+const SAVE_KEY = 'flip7_state';
+
+const PRESET_NAMES = ['Alice','Bob','Charlie','Dave','Emma','Frank','Grace','Hayley','Isaac','Jason','Karen','Liam','Mia','Nathan','Olivia','Pete'];
+
+// Number card colours
+const NUM_COLORS = {
+  0:'#70a5f3',1:'#c7b19a',2:'#d5ea1f',3:'#f15264',4:'#54c8bf',
+  5:'#40b54a',6:'#c354a3',7:'#d98372',8:'#b1da74',9:'#ff9138',
+  10:'#eb121b',11:'#79aed6',12:'#9c847a',13:'#078dd6','L13':'#70a5f3'
+};
+
+const ORIGINAL_NUMS  = [0,1,2,3,4,5,6,7,8,9,10,11,12];
+const VENGEANCE_NUMS = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,'L13'];
+
+const ORIGINAL_MODS  = ['+2','+4','+6','+8','+10','×2'];
+const VENGEANCE_MODS = ['-2','-4','-6','-8','-10','÷2'];
+
+let state = {
+  mode: null,           // 'original' | 'vengeance'
+  players: [],          // [{name, rounds:[null|number]}]
+  currentRound: 0,      // 0-indexed
+  maxRound: 0,          // highest round reached (0-indexed)
+};
+
+// calculator state
+let calcNums  = new Set();   // selected number card labels (as strings)
+let calcMods  = new Set();   // selected modifier labels
+
+// debounce timers per player
+let inputTimers = {};
+
+// ══════════════════════════════════════════════
+// PERSISTENCE
+// ══════════════════════════════════════════════
+function saveState() {
+  localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (!s || !s.players || !s.mode) return false;
+    state = s;
+    return true;
+  } catch(e) { return false; }
+}
+
+// ══════════════════════════════════════════════
+// SETUP
+// ══════════════════════════════════════════════
+function showSetup() {
+  document.getElementById('setupScreen').classList.add('active');
+  document.getElementById('gameScreen').classList.remove('active');
+  renderSetup();
+}
+
+function selectMode(mode) {
+  state.mode = mode;
+  document.getElementById('modeOriginal').classList.toggle('selected', mode === 'original');
+  document.getElementById('modeVengeance').classList.toggle('selected', mode === 'vengeance');
+  updateStartBtn();
+}
+
+function renderSetup() {
+  // mode buttons
+  if (state.mode) {
+    document.getElementById('modeOriginal').classList.toggle('selected', state.mode === 'original');
+    document.getElementById('modeVengeance').classList.toggle('selected', state.mode === 'vengeance');
+  }
+
+  // player list
+  const list = document.getElementById('playerSetupList');
+  list.innerHTML = '';
+  state.players.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'player-setup-row';
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.value = p.name;
+    inp.placeholder = 'Player name';
+    inp.oninput = e => { state.players[i].name = e.target.value; saveState(); };
+    const del = document.createElement('button');
+    del.className = 'del-btn';
+    del.textContent = '✕';
+    del.onclick = () => { state.players.splice(i,1); saveState(); renderSetup(); };
+    row.appendChild(inp);
+    row.appendChild(del);
+    list.appendChild(row);
+  });
+
+  // name chips
+  const chips = document.getElementById('nameChips');
+  chips.innerHTML = '';
+  const used = state.players.map(p => p.name.toLowerCase());
+  PRESET_NAMES.forEach(name => {
+    if (used.includes(name.toLowerCase())) return;
+    const chip = document.createElement('div');
+    chip.className = 'name-chip';
+    chip.textContent = name;
+    chip.onclick = () => addPlayer(name);
+    chips.appendChild(chip);
+  });
+
+  updateStartBtn();
+}
+
+function updateStartBtn() {
+  document.getElementById('startBtn').disabled = !(state.mode && state.players.length >= 2);
+}
+
+function addPlayer(name) {
+  if (state.players.length >= 10) return;
+  state.players.push({ name, rounds: [] });
+  saveState();
+  renderSetup();
+}
+
+function addPlayerFromInput() {
+  const inp = document.getElementById('newPlayerInput');
+  const name = inp.value.trim();
+  if (!name) return;
+  addPlayer(name);
+  inp.value = '';
+  inp.focus();
+}
+
+document.getElementById('newPlayerInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addPlayerFromInput();
+});
+
+// ══════════════════════════════════════════════
+// GAME START
+// ══════════════════════════════════════════════
+function startGame() {
+  state.currentRound = 0;
+  state.maxRound = 0;
+  // ensure all players have enough round slots
+  state.players.forEach(p => { if (!p.rounds) p.rounds = []; });
+  saveState();
+  showGame();
+}
+
+function showGame() {
+  document.getElementById('setupScreen').classList.remove('active');
+  document.getElementById('gameScreen').classList.add('active');
+  // background
+  document.body.classList.toggle('vengeance', state.mode === 'vengeance');
+  document.getElementById('topModeBadge').textContent = state.mode === 'vengeance' ? 'With a Vengeance' : 'Original';
+  buildCalcButtons();
+  renderRound();
+}
+
+// ══════════════════════════════════════════════
+// ROUND NAVIGATION
+// ══════════════════════════════════════════════
+function goRound(dir) {
+  if (dir === -1 && state.currentRound === 0) return;
+  if (dir === 1) {
+    state.currentRound++;
+    if (state.currentRound > state.maxRound) state.maxRound = state.currentRound;
+  } else {
+    state.currentRound--;
+  }
+  saveState();
+  clearCalc();
+  renderRound();
+}
+
+function updateRoundLabel() {
+  const n = state.currentRound + 1;
+  const y = state.maxRound + 1;
+  const lbl = document.getElementById('roundLabel');
+  lbl.textContent = (n < y) ? `Round ${n} of ${y}` : `Round ${n}`;
+  document.getElementById('btnBack').disabled = state.currentRound === 0;
+}
+
+// ══════════════════════════════════════════════
+// CALCULATOR BUTTONS
+// ══════════════════════════════════════════════
+function buildCalcButtons() {
+  const isVeng = state.mode === 'vengeance';
+  const nums   = isVeng ? VENGEANCE_NUMS : ORIGINAL_NUMS;
+  const mods   = isVeng ? VENGEANCE_MODS : ORIGINAL_MODS;
+
+  const numGrid = document.getElementById('numGrid');
+  numGrid.innerHTML = '';
+  numGrid.className = 'btn-grid btn-grid-original'; // 7 cols for both
+
+  nums.forEach(n => {
+    const key = String(n);
+    const col = NUM_COLORS[n] || '#888';
+    const btn = document.createElement('button');
+    btn.className = 'card-btn';
+    btn.textContent = key;
+    btn.dataset.key = key;
+    btn.dataset.type = 'num';
+    styleNumBtn(btn, col, false);
+    btn.onclick = () => toggleCalcBtn(btn, 'num', key, col);
+    numGrid.appendChild(btn);
+  });
+
+  const modGrid = document.getElementById('modGrid');
+  modGrid.innerHTML = '';
+  modGrid.className = 'btn-grid btn-grid-mods-orig';
+
+  mods.forEach(m => {
+    const isPos = m.startsWith('+') || m === '×2';
+    const bgCol  = isPos ? '#feaf4a' : '#f0634f';
+    const txtCol = isPos ? '#e0665b' : '#dddddd';
+    const btn = document.createElement('button');
+    btn.className = 'mod-btn';
+    btn.textContent = m;
+    btn.dataset.key = m;
+    btn.dataset.type = 'mod';
+    styleModBtn(btn, bgCol, txtCol, false);
+    btn.onclick = () => toggleCalcBtn(btn, 'mod', m, null, bgCol, txtCol);
+    modGrid.appendChild(btn);
+  });
+}
+
+function styleNumBtn(btn, col, selected) {
+  if (selected) {
+    btn.style.background = col;
+    btn.style.borderColor = col;
+    btn.style.color = '#070d1f';
+    btn.style.boxShadow = `0 0 10px ${col}99`;
+  } else {
+    btn.style.background = col + '22';
+    btn.style.borderColor = col;
+    btn.style.color = col;
+    btn.style.boxShadow = 'none';
+  }
+}
+
+function styleModBtn(btn, bgCol, txtCol, selected) {
+  if (selected) {
+    btn.style.background = bgCol;
+    btn.style.borderColor = bgCol;
+    btn.style.color = '#070d1f';
+    btn.style.boxShadow = `0 0 10px ${bgCol}99`;
+  } else {
+    btn.style.background = bgCol + '22';
+    btn.style.borderColor = bgCol;
+    btn.style.color = txtCol;
+    btn.style.boxShadow = 'none';
+  }
+}
+
+function toggleCalcBtn(btn, type, key, col, bgCol, txtCol) {
+  if (type === 'num') {
+    if (calcNums.has(key)) {
+      calcNums.delete(key);
+      styleNumBtn(btn, col, false);
+    } else {
+      calcNums.add(key);
+      styleNumBtn(btn, col, true);
+    }
+  } else {
+    if (calcMods.has(key)) {
+      calcMods.delete(key);
+      styleModBtn(btn, bgCol, txtCol, false);
+    } else {
+      calcMods.add(key);
+      styleModBtn(btn, bgCol, txtCol, true);
+    }
+  }
+  updateCalcTotal();
+}
+
+function clearCalc() {
+  calcNums.clear();
+  calcMods.clear();
+  // reset all button styles
+  document.querySelectorAll('.card-btn').forEach(btn => {
+    const col = NUM_COLORS[btn.dataset.key] || '#888';
+    styleNumBtn(btn, col, false);
+  });
+  document.querySelectorAll('.mod-btn').forEach(btn => {
+    const isPos = btn.dataset.key.startsWith('+') || btn.dataset.key === '×2';
+    const bgCol  = isPos ? '#feaf4a' : '#f0634f';
+    const txtCol = isPos ? '#e0665b' : '#dddddd';
+    styleModBtn(btn, bgCol, txtCol, false);
+  });
+  document.getElementById('calcTotal').textContent = '0';
+}
+
+function updateCalcTotal() {
+  const total = computeCalcTotal();
+  document.getElementById('calcTotal').textContent = total;
+}
+
+function computeCalcTotal() {
+  const isVeng = state.mode === 'vengeance';
+  const numKeys = [...calcNums];
+  const numCount = numKeys.length;
+
+  // In vengeance, 0 blocks score unless >= 7 cards
+  let sum = 0;
+  let hasZero = numKeys.includes('0');
+  let luckyCount = numKeys.filter(k => k === 'L13').length;
+  let regularNums = numKeys.filter(k => k !== 'L13');
+
+  // Sum number cards
+  regularNums.forEach(k => {
+    if (k === '0') return; // zero adds nothing
+    sum += parseInt(k) || 0;
+  });
+  // L13 counts as 13
+  sum += luckyCount * 13;
+
+  // Vengeance: 0 blocks score unless >= 7 cards
+  if (isVeng && hasZero && numCount < 7) {
+    return 0;
+  }
+
+  // Apply ×2 or ÷2 first
+  if (calcMods.has('×2')) sum = sum * 2;
+  if (calcMods.has('÷2')) sum = Math.ceil(sum / 2);
+
+  // Flat modifiers
+  const flatMods = {'+2':2,'+4':4,'+6':6,'+8':8,'+10':10,'-2':-2,'-4':-4,'-6':-6,'-8':-8,'-10':-10};
+  calcMods.forEach(m => {
+    if (flatMods[m] !== undefined) sum += flatMods[m];
+  });
+
+  // Bonus: >= 7 different number cards (including 0 and L13)
+  const uniqueNumKeys = new Set(numKeys);
+  if (uniqueNumKeys.size >= 7) sum += 15;
+
+  return Math.max(0, sum);
+}
+
+// ══════════════════════════════════════════════
+// PLAYER ROWS
+// ══════════════════════════════════════════════
+function renderRound() {
+  updateRoundLabel();
+  const panel = document.getElementById('playersPanel');
+  panel.innerHTML = '';
+  const ri = state.currentRound;
+
+  state.players.forEach((p, pi) => {
+    // ensure slot exists
+    while (p.rounds.length <= ri) p.rounds.push(null);
+
+    const isBust = p.rounds[ri] === 'bust';
+    const row = document.createElement('div');
+    row.className = 'player-row' + (isBust ? ' bust-row' : '');
+    row.id = `prow-${pi}`;
+
+    // name
+    const nameEl = document.createElement('div');
+    nameEl.className = 'player-name';
+    nameEl.textContent = p.name;
+
+    // add→ button
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-score-btn';
+    addBtn.textContent = 'Add →';
+    addBtn.onclick = () => {
+      const val = parseInt(document.getElementById('calcTotal').textContent) || 0;
+      const inp = document.getElementById(`rinput-${pi}`);
+      inp.value = val;
+      inp.classList.remove('busted-input');
+      // mark as not bust
+      p.rounds[ri] = val;
+      saveState();
+      refreshPlayerTotal(pi);
+      row.classList.remove('bust-row');
+      const bustBtn = document.getElementById(`bustbtn-${pi}`);
+      if (bustBtn) bustBtn.classList.remove('busted');
+      checkWinner();
+    };
+
+    // round input
+    const inp = document.createElement('input');
+    inp.type = 'number';
+    inp.className = 'round-input' + (isBust ? ' busted-input' : '');
+    inp.id = `rinput-${pi}`;
+    inp.placeholder = '—';
+    if (!isBust && p.rounds[ri] !== null) inp.value = p.rounds[ri];
+    if (isBust) inp.value = '';
+
+    inp.oninput = () => {
+      clearTimeout(inputTimers[pi]);
+      inputTimers[pi] = setTimeout(() => {
+        const v = inp.value.trim();
+        if (v === '') {
+          p.rounds[ri] = null;
+        } else {
+          const num = parseInt(v);
+          p.rounds[ri] = isNaN(num) ? null : num;
+        }
+        // un-bust if typing
+        row.classList.remove('bust-row');
+        inp.classList.remove('busted-input');
+        const bustBtn = document.getElementById(`bustbtn-${pi}`);
+        if (bustBtn) bustBtn.classList.remove('busted');
+        saveState();
+        refreshPlayerTotal(pi);
+        checkWinner();
+      }, 1000);
+    };
+
+    // bust button
+    const bustBtn = document.createElement('button');
+    bustBtn.className = 'bust-btn' + (isBust ? ' busted' : '');
+    bustBtn.id = `bustbtn-${pi}`;
+    bustBtn.textContent = isBust ? '💥' : 'Bust';
+    bustBtn.title = 'Toggle bust (scores 0 this round)';
+    bustBtn.onclick = () => {
+      const currentlyBust = p.rounds[ri] === 'bust';
+      if (currentlyBust) {
+        // un-bust
+        p.rounds[ri] = null;
+        bustBtn.classList.remove('busted');
+        bustBtn.textContent = 'Bust';
+        row.classList.remove('bust-row');
+        inp.value = '';
+        inp.classList.remove('busted-input');
+      } else {
+        // mark bust
+        p.rounds[ri] = 'bust';
+        bustBtn.classList.add('busted');
+        bustBtn.textContent = '💥';
+        row.classList.add('bust-row');
+        inp.value = '';
+        inp.classList.add('busted-input');
+      }
+      saveState();
+      refreshPlayerTotal(pi);
+    };
+
+    // total
+    const totEl = document.createElement('div');
+    totEl.className = 'player-total';
+    totEl.id = `ptotal-${pi}`;
+    totEl.textContent = playerTotal(pi);
+
+    row.appendChild(nameEl);
+    row.appendChild(addBtn);
+    row.appendChild(inp);
+    row.appendChild(bustBtn);
+    row.appendChild(totEl);
+    panel.appendChild(row);
+  });
+}
+
+function playerTotal(pi) {
+  return state.players[pi].rounds.reduce((acc, v) => {
+    if (v === null || v === 'bust') return acc;
+    return acc + v;
+  }, 0);
+}
+
+function refreshPlayerTotal(pi) {
+  const el = document.getElementById(`ptotal-${pi}`);
+  if (el) {
+    const t = playerTotal(pi);
+    el.textContent = t;
+    el.classList.toggle('winner-glow', t >= 200);
+  }
+}
+
+// ══════════════════════════════════════════════
+// WINNER CHECK
+// ══════════════════════════════════════════════
+let winnerShown = false;
+function checkWinner() {
+  if (winnerShown) return;
+  for (let i = 0; i < state.players.length; i++) {
+    const t = playerTotal(i);
+    if (t >= 200) {
+      winnerShown = true;
+      showWinner(state.players[i].name, t);
+      return;
+    }
+  }
+}
+
+function showWinner(name, score) {
+  document.getElementById('winnerName').textContent = name;
+  document.getElementById('winnerScore').textContent = `${score} points — first to 200!`;
+  document.getElementById('winnerModal').classList.add('open');
+}
+function closeWinner() {
+  document.getElementById('winnerModal').classList.remove('open');
+}
+
+// ══════════════════════════════════════════════
+// RESTART / NEW GAME
+// ══════════════════════════════════════════════
+function restartSamePlayers() {
+  closeWinner();
+  winnerShown = false;
+  state.players.forEach(p => p.rounds = []);
+  state.currentRound = 0;
+  state.maxRound = 0;
+  saveState();
+  clearCalc();
+  renderRound();
+}
+
+function goToSetup() {
+  closeWinner();
+  winnerShown = false;
+  state = { mode: null, players: [], currentRound: 0, maxRound: 0 };
+  saveState();
+  clearCalc();
+  showSetup();
+}
+
+function confirmNewGame() {
+  showConfirm('Start a New Game?', 'This will end the current game and go back to setup.', () => {
+    closeConfirm();
+    goToSetup();
+  });
+}
+
+// ══════════════════════════════════════════════
+// CONFIRM MODAL
+// ══════════════════════════════════════════════
+function showConfirm(title, msg, onOk) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent = msg;
+  document.getElementById('confirmOkBtn').onclick = onOk;
+  document.getElementById('confirmModal').classList.add('open');
+}
+function closeConfirm() {
+  document.getElementById('confirmModal').classList.remove('open');
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+window.onload = function() {
+  const resumed = loadState();
+  if (resumed && state.mode && state.players.length >= 2) {
+    winnerShown = false;
+    showGame();
+  } else {
+    // fresh start — seed some preset names for convenience
+    if (!state.players || state.players.length === 0) {
+      state.players = [];
+    }
+    showSetup();
+  }
+};
+</script>
+</body>
+</html>
