@@ -443,6 +443,8 @@ function loadState() {
 // SETUP
 // ══════════════════════════════════════════════
 function showSetup() {
+  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+
   document.getElementById('setupScreen').classList.add('active');
   document.getElementById('gameScreen').classList.remove('active');
   document.body.className = '';
