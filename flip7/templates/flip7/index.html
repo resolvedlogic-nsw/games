@@ -282,6 +282,22 @@
     .modal-btn-secondary { background: var(--glass); border: 1px solid var(--glass-border); color: var(--text); }
     .modal-btn-danger { background: rgba(231,76,60,0.14); border: 1px solid rgba(231,76,60,0.35); color: var(--red); }
     #confirmModal .modal-title { font-size: 1rem; }
+	
+	@media (max-width: 9900px) {
+	  .card-btn {
+		font-size: clamp(1.4rem, 8vmin, 3rem);
+	  }
+	  .mod-btn {
+		font-size: clamp(1.2rem, 7vmin, 2.6rem);
+	  }
+	  .calc-total-val {
+		font-size: clamp(2rem, 10vmin, 4rem);
+	  }
+    @media (max-width: 9900px) {
+    .btn-grid { gap: 4px; }
+	
+	.player-total {font-size: clamp(1.2rem, 7vmin, 2.6rem)
+}
   </style>
 </head>
 <body>
