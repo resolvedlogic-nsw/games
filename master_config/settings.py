@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'scattegories.answers',
     'flip7',
     'finances',
+    'churchfinances'
     
 ]
 
@@ -84,3 +85,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 TIME_ZONE = 'Australia/Melbourne'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
