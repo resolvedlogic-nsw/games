@@ -5,5 +5,5 @@ app_name = 'gamehub'
 
 urlpatterns = [
     path('', views.hub_home, name='home'),
-    path('finances/', include('churchfinances.urls'))
+    
 ]

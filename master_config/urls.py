@@ -14,5 +14,6 @@ urlpatterns = [
     path('blokus/', include('blokus.urls', namespace='blokus')),
     path('flip7/', include('flip7.urls')),
     path('finances/', include('finances.urls')),
+    path('finances/', include('churchfinances.urls'))
     
 ]
