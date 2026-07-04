@@ -28,7 +28,6 @@ INSTALLED_APPS = [
     'scattegories.game_core',
     'scattegories.answers',
     'flip7',
-    'finances',
     'churchfinances'
     
 ]
