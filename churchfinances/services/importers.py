@@ -1,7 +1,8 @@
 import re
 from datetime import datetime
 import pandas as pd
-
+import html
+from django.db import transaction as db_transaction
 from ..models import Transaction
 from .classify import clean_val, build_item_library, build_pattern_rules, classify
 
@@ -131,6 +132,11 @@ def import_square(df, batch):
 # classification needed, just column mapping.
 # ---------------------------------------------------------------------------
 
+def clean_text(raw_text):
+    if pd.isna(raw_text) or not isinstance(raw_text, str):
+        return ""
+    return html.unescape(raw_text).replace('â€™', "'").strip()
+
 def import_stripe(df, batch):
     ministry_col = next((c for c in df.columns if 'Event Name' in c), None) or 'reporting_category'
     gross_col = 'gross' if 'gross' in df.columns else 'Amount'
@@ -145,17 +151,54 @@ def import_stripe(df, batch):
         gross = clean_val(row.get(gross_col))
         fee = clean_val(row.get(fee_col))
         net = clean_val(row.get(net_col)) if net_col in df.columns else round(gross - fee, 2)
-        ministry = str(row.get(ministry_col) or 'Unknown').strip()
+        
+        # Clean text to remove HTML entities and bad quotes
+        ministry = clean_text(str(row.get(ministry_col) or 'Unknown'))
+        item_desc = clean_text(str(row.get(ref_col) or ''))
+        
+        # Combine Event Name and Description if both exist
+        event_name = clean_text(str(row.get('payment_metadata[Event Name]') or ''))
+        if event_name and item_desc and event_name != item_desc:
+            item_desc = f"{event_name} ({item_desc})"
+        elif event_name:
+            item_desc = event_name
+
         date_val = pd.to_datetime(row.get(date_col), errors='coerce')
         if pd.isna(date_val):
             continue
+            
+        external_id = str(row.get(id_col, '')).strip()
 
         objs.append(Transaction(
             batch=batch, source='stripe', date=date_val.date(), ministry=ministry,
-            item=ministry, qty=1, gross=gross, fees=-abs(fee), net=net,
-            external_id=str(row.get(id_col, '')),
-            extra={'reference': str(row.get(ref_col, ''))} if ref_col else {},
+            item=item_desc, qty=1, gross=gross, fees=fee, net=net, external_id=external_id
         ))
-
     Transaction.objects.bulk_create(objs)
-    return len(objs)
+    batch.row_count = len(objs)
+    batch.save(update_fields=['row_count'])
+
+def import_stripe_ytd(df, batch):
+    """Links the YTD customer names to existing Stripe transactions."""
+    id_col = 'id'
+    name_col = 'Card Name'
+    if id_col not in df.columns or name_col not in df.columns:
+        return
+    
+    card_names = dict(zip(df[id_col], df[name_col].fillna('')))
+    
+    updated_count = 0
+    stripe_txns = Transaction.objects.filter(source='stripe')
+    
+    with db_transaction.atomic():
+        for txn in stripe_txns:
+            if txn.external_id in card_names:
+                name = clean_text(card_names[txn.external_id])
+                if name:
+                    txn.extra['customer_name'] = name
+                    txn.save(update_fields=['extra'])
+                    updated_count += 1
+                    
+    batch.row_count = updated_count
+    batch.save(update_fields=['row_count'])
+
+# (For import_square, just wrap `row[desc_col]` in `clean_text(str(row[desc_col]))` to fix its encoding too).

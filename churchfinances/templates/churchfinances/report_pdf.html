@@ -40,12 +40,12 @@
         </tr>
     </table>
 
-    <h2>Daily Totals</h2>
+    <h2>{{ time_label }} Totals</h2>
     <table>
-        <tr><th>Date</th><th class="num">Gross</th><th class="num">Fees</th><th class="num">Net</th></tr>
-        {% for row in by_day %}
+        <tr><th>{{ time_label }}</th><th class="num">Gross</th><th class="num">Fees</th><th class="num">Net</th></tr>
+        {% for row in by_time %}
         <tr>
-            <td>{{ row.date|date:"d/m/Y" }}</td>
+            <td>{{ row.time_period|date:"d/m/Y" }}</td>
             <td class="num">${{ row.gross|floatformat:2 }}</td>
             <td class="num">${{ row.fees|floatformat:2 }}</td>
             <td class="num">${{ row.net|floatformat:2 }}</td>
@@ -60,11 +60,12 @@
         <tr>
             <td>{{ t.date|date:"d/m/Y" }}</td>
             <td>{{ t.ministry }}</td>
-            <td>{{ t.item }}</td>
-            <td class="num">{{ t.qty }}</td>
-            <td class="num">${{ t.gross|floatformat:2 }}</td>
-            <td class="num">${{ t.fees|floatformat:2 }}</td>
-            <td class="num">${{ t.net|floatformat:2 }}</td>
+            <td>
+                {{ t.item }}
+                {% if t.extra.customer_name %}
+                    <br><small style="color: #666;">(Paid by: {{ t.extra.customer_name }})</small>
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </table>

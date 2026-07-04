@@ -24,8 +24,14 @@
     <p class="sub">{{ batch.label }}</p>
 
     <div class="toolbar">
-        <form method="get" style="display:flex; gap:8px; align-items:center;">
-            <label>Ministry:</label>
+        <form method="get" style="display:flex; gap:8px; align-items:center; margin-right:auto;">
+            <label>Month:</label>
+            <select name="batch_id" onchange="this.form.submit()">
+                {% for b in batches %}
+                <option value="{{ b.id }}" {% if b.id == batch.id %}selected{% endif %}>{{ b.label }} ({{ b.get_source_display }})</option>
+                {% endfor %}
+            </select>
+            <label style="margin-left:12px;">Ministry:</label>
             <select name="ministry" onchange="this.form.submit()">
                 <option value="">All</option>
                 {% for m in ministries %}
@@ -33,10 +39,8 @@
                 {% endfor %}
             </select>
         </form>
-        <a class="btn" href="{% url 'churchfinances:report_pdf' batch.id %}{% if selected_ministry %}?ministry={{ selected_ministry }}{% endif %}">
-            📄 Download printable PDF
-        </a>
-        <a class="btn" href="{% url 'churchfinances:upload' %}" style="background:#777;">Upload another report</a>
+        <a href="{% url 'churchfinances:report_pdf' batch.id %}{% if selected_ministry %}?ministry={{ selected_ministry|urlencode }}{% endif %}" class="btn" target="_blank">Download PDF</a>
+        <a href="{% url 'churchfinances:upload' %}" class="btn" style="background:#555;">Upload New</a>
     </div>
 
     <h2>Payment per Ministry</h2>
@@ -59,12 +63,12 @@
         </tr>
     </table>
 
-    <h2>Daily Totals</h2>
+	<h2>{{ time_label }} Totals</h2>
     <table>
-        <tr><th>Date</th><th class="num">Gross</th><th class="num">Fees</th><th class="num">Net</th></tr>
-        {% for row in by_day %}
+        <tr><th>{{ time_label }}</th><th class="num">Gross</th><th class="num">Fees</th><th class="num">Net</th></tr>
+        {% for row in by_time %}
         <tr>
-            <td>{{ row.date|date:"d/m/Y" }}</td>
+            <td>{{ row.time_period|date:"d/m/Y" }}</td>
             <td class="num">${{ row.gross|floatformat:2 }}</td>
             <td class="num">${{ row.fees|floatformat:2 }}</td>
             <td class="num">${{ row.net|floatformat:2 }}</td>
@@ -79,7 +83,12 @@
         <tr>
             <td>{{ t.date|date:"d/m/Y" }}</td>
             <td>{{ t.ministry }}</td>
-            <td>{{ t.item }}</td>
+            <td>
+                {{ t.item }}
+                {% if t.extra.customer_name %}
+                    <br><small style="color: #666;">(Paid by: {{ t.extra.customer_name }})</small>
+                {% endif %}
+            </td>
             <td class="num">{{ t.qty }}</td>
             <td class="num">${{ t.gross|floatformat:2 }}</td>
             <td class="num">${{ t.fees|floatformat:2 }}</td>

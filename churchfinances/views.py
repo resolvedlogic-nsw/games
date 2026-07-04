@@ -7,7 +7,9 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
 from xhtml2pdf import pisa
-
+from django.db.models.functions import TruncWeek
+from django.db.models import F
+import html
 from .forms import UploadForm
 from .models import ImportBatch, Transaction
 from .services import importers
@@ -18,9 +20,9 @@ def _read_upload(batch):
     is_excel = path.lower().endswith(('.xlsx', '.xls'))
     if batch.source == 'square':
         return pd.read_excel(path, sheet_name=0) if is_excel else pd.read_csv(path)
-    # Stripe: use the itemised reconciliation-style sheet if this is a
-    # multi-sheet workbook like your existing Stripe export; otherwise
-    # assume a flat CSV/sheet with the same columns.
+    if batch.source == 'stripe_ytd':
+        return pd.read_csv(path)
+    
     if is_excel:
         xl = pd.ExcelFile(path)
         sheet = next((s for s in xl.sheet_names if 'itemised' in s.lower() or 'reconcil' in s.lower()), xl.sheet_names[0])
@@ -37,49 +39,63 @@ def upload_view(request):
             try:
                 df = _read_upload(batch)
                 if batch.source == 'square':
-                    count = importers.import_square(df, batch)
-                else:
-                    count = importers.import_stripe(df, batch)
-                batch.row_count = count
-                batch.save(update_fields=['row_count'])
+                    importers.import_square(df, batch)
+                elif batch.source == 'stripe':
+                    importers.import_stripe(df, batch)
+                elif batch.source == 'stripe_ytd':
+                    importers.import_stripe_ytd(df, batch)
+                
+                if batch.source == 'stripe_ytd':
+                    return redirect('churchfinances:upload')
+                return redirect('churchfinances:report', batch_id=batch.id)
             except Exception as e:
                 batch.delete()
-                form.add_error(None, f"Could not process that file: {e}")
-            else:
-                return redirect('churchfinances:report', batch_id=batch.id)
+                form.add_error(None, f"Error processing file: {str(e)}")
     else:
         form = UploadForm()
-
-    return render(request, 'churchfinances/upload.html', {
-        'form': form,
-        'batches': ImportBatch.objects.all()[:15],
-    })
-
+    
+    batches = ImportBatch.objects.all()
+    return render(request, 'churchfinances/upload.html', {'form': form, 'batches': batches})
 
 def _report_context(batch, qs):
     by_ministry = qs.values('ministry').annotate(
         gross=Sum('gross'), fees=Sum('fees'), net=Sum('net'), qty=Sum('qty')
     ).order_by('ministry')
-    by_day = qs.values('date').annotate(
-        gross=Sum('gross'), fees=Sum('fees'), net=Sum('net')
-    ).order_by('date')
+
+    if batch.source == 'stripe':
+        by_time = qs.annotate(time_period=TruncWeek('date')).values('time_period').annotate(
+            gross=Sum('gross'), fees=Sum('fees'), net=Sum('net')
+        ).order_by('time_period')
+        time_label = 'Week Starting (Mon)'
+    else:
+        by_time = qs.annotate(time_period=F('date')).values('time_period').annotate(
+            gross=Sum('gross'), fees=Sum('fees'), net=Sum('net')
+        ).order_by('time_period')
+        time_label = 'Date'
+
     by_item = qs.values('ministry', 'item').annotate(
         gross=Sum('gross'), fees=Sum('fees'), net=Sum('net'), qty=Sum('qty')
     ).order_by('ministry', 'item')
     totals = qs.aggregate(gross=Sum('gross'), fees=Sum('fees'), net=Sum('net'))
+    
     return {
         'batch': batch, 'transactions': qs.order_by('date', 'ministry'),
-        'by_ministry': by_ministry, 'by_day': by_day, 'by_item': by_item,
-        'totals': totals,
+        'by_ministry': by_ministry, 'by_time': by_time, 'time_label': time_label,
+        'by_item': by_item, 'totals': totals,
     }
 
-
-@staff_member_required
 def report_view(request, batch_id=None):
-    batches = ImportBatch.objects.all()
-    batch = get_object_or_404(ImportBatch, id=batch_id) if batch_id else batches.first()
+    # Exclude YTD files from the main report dropdown
+    batches = ImportBatch.objects.exclude(source='stripe_ytd')
+    requested_batch_id = request.GET.get('batch_id') or batch_id
+    
+    if requested_batch_id:
+        batch = get_object_or_404(ImportBatch, id=requested_batch_id)
+    else:
+        batch = batches.first()
+
     if batch is None:
-        return render(request, 'churchfinances/upload.html', {'form': UploadForm(), 'batches': []})
+        return redirect('churchfinances:upload')
 
     qs = Transaction.objects.filter(batch=batch)
     ministry = request.GET.get('ministry') or ''

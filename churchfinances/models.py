@@ -7,6 +7,7 @@ class ImportBatch(models.Model):
     SOURCE_CHOICES = [
         ('square', 'Square'),
         ('stripe', 'Stripe'),
+        ('stripe_ytd', 'Stripe YTD Unified'),
     ]
 
     source = models.CharField(max_length=10, choices=SOURCE_CHOICES)
