@@ -283,7 +283,7 @@
     .modal-btn-danger { background: rgba(231,76,60,0.14); border: 1px solid rgba(231,76,60,0.35); color: var(--red); }
     #confirmModal .modal-title { font-size: 1rem; }
 	
-	@media (max-width: 9900px) {
+	@media (max-width: 1200px) {
 	  .card-btn {
 		font-size: clamp(1.4rem, 8vmin, 3rem);
 	  }
@@ -293,10 +293,19 @@
 	  .calc-total-val {
 		font-size: clamp(2rem, 10vmin, 4rem);
 	  }
-    @media (max-width: 9900px) {
+	@media (max-width: 1200px) {
+  .btn-grid-7 {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  .btn-grid-6 {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+    @media (max-width: 1200px) {
     .btn-grid { gap: 4px; }
 	
 	.player-total {font-size: clamp(1.2rem, 7vmin, 2.6rem)
+
 }
   </style>
 </head>
